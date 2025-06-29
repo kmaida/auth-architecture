@@ -81,7 +81,7 @@ app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 
 // TODO: remove this when the frontend is ready
-app.use('/static', express.static(path.join(__dirname, '../static/')));
+app.use('/bff/static', express.static(path.join(__dirname, '../static/')));
 
 /*----------- GET /auth/pkce ------------*/
 
@@ -225,6 +225,7 @@ app.get('/', async (req, res) => {
     res.cookie(userSession, { stateValue, verifier: pkcePair.code_verifier, challenge: pkcePair.code_challenge }, { httpOnly: true });
 
     // TODO: This currently loads the homepage but no rendering will be necessary when calling from the frontend
+    console.log(__dirname);
     res.sendFile(path.join(__dirname, '../templates/home.html'));
   }
 });
