@@ -47,7 +47,6 @@ const validateUser = async (userTokenCookie: { access_token: string }) => {
   }
 }
 
-
 const getKey: GetPublicKeyOrSecret = async (header, callback) => {
   const jwks = jwksClient({
     jwksUri: `${fusionAuthURL}/.well-known/jwks.json`
@@ -86,7 +85,7 @@ app.get("/", async (req, res) => {
 });
 
 // Login
-app.get('/login', (req, res, next) => {
+app.get('/auth/login', (req, res, next) => {
   const userSessionCookie = req.cookies[userSession];
 
   // Cookie was cleared, just send back (hacky way)
@@ -97,7 +96,7 @@ app.get('/login', (req, res, next) => {
   res.redirect(302, `${fusionAuthURL}/oauth2/authorize?client_id=${clientId}&response_type=code&redirect_uri=http://localhost:${port}/auth/callback&state=${userSessionCookie?.stateValue}&code_challenge=${userSessionCookie?.challenge}&code_challenge_method=S256`)
 });
 
-// Redirect
+// Redirect after logging in
 app.get('/auth/callback', async (req, res, next) => {
   // Capture query params
   const stateFromFusionAuth = `${req.query?.state}`;
@@ -205,12 +204,12 @@ app.post("/make-change", async (req, res) => {
 });
 
 // Logout
-app.get('/logout', (req, res, next) => {
+app.get('/auth/logout', (req, res, next) => {
   res.redirect(302, `${fusionAuthURL}/oauth2/logout?client_id=${clientId}`);
 });
 
 // Route to clean up cookies and redirect to home
-app.get('/auth/logout', (req, res, next) => {
+app.get('/auth/logout/callback', (req, res, next) => {
   console.log('Logging out...')
   res.clearCookie(userSession);
   res.clearCookie(userToken);
