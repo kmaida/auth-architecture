@@ -126,7 +126,8 @@ app.get('/auth/login', (req, res, next) => {
 
   // Something went wrong
   if (!userSessionCookie?.stateValue || !userSessionCookie?.challenge) {
-    res.redirect(302, '/');
+    // Redirect user to frontend homepage
+    res.redirect(302, `${process.env.FRONTEND_URL}`);
   }
 
   // TODO: make this production ready by removing the hardcoded localhost and port
@@ -153,7 +154,7 @@ app.get('/auth/callback', async (req, res, next) => {
     console.log("State doesn't match. uh-oh.");
     console.log("Saw: " + stateFromFusionAuth + ", but expected: " + userSessionCookie?.stateValue);
     // Redirect user to frontend homepage
-    res.redirect(302, `${process.env.FRONTEND_URL}`)
+    res.redirect(302, `${process.env.FRONTEND_URL}`);
     return;
   }
   try {
@@ -176,12 +177,12 @@ app.get('/auth/callback', async (req, res, next) => {
     if (!userResponse?.user) {
       console.error('Failed to get user');
       // Redirect user to frontend homepage
-      res.redirect(302, `${process.env.FRONTEND_URL}`)
+      res.redirect(302, `${process.env.FRONTEND_URL}`);
     }
     // Set user details cookie (not Http-Only, so it can be accessed by the frontend)
     res.cookie(userDetails, userResponse.user);
     // Redirect user to frontend homepage
-    res.redirect(302, `${process.env.FRONTEND_URL}`)
+    res.redirect(302, `${process.env.FRONTEND_URL}`);
   } catch (err: any) {
     console.error(err);
     res.status(err?.statusCode || 500).json(JSON.stringify({
@@ -210,9 +211,8 @@ app.get('/auth/logout/callback', (req, res, next) => {
   res.clearCookie(userSession);
   res.clearCookie(userToken);
   res.clearCookie(userDetails);
-
   // Redirect user to frontend homepage
-  res.redirect(302, `${process.env.FRONTEND_URL}`)
+  res.redirect(302, `${process.env.FRONTEND_URL}`);
 });
 
 /*---------------------------------
