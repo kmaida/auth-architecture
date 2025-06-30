@@ -97,14 +97,12 @@ app.use('/bff/static', express.static(path.join(__dirname, '../static/')));
 
 /*----------- GET /auth/pkce ------------*/
 
-// Endpoint to set up PKCE (checkSession on the front end)
-app.get('/auth/pkce', async (req, res) => {
+// Endpoint to check the user's session and set up PKCE if needed
+app.get('/auth/checksession', async (req, res) => {
   const userTokenCookie = req.cookies[userToken];
 
   if (await verifyJWT(userTokenCookie)) {
     // Logged in user
-    // UNCOMMENT TO TEST IN BACKEND APP
-    // res.redirect(302, '/account');
     res.status(200).json({ loggedIn: true });
   } else {
     // Generate a random state value and PKCE challenge

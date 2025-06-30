@@ -27,7 +27,7 @@ export default function Header() {
             className="btn btn-logout"
             onClick={initLogout}
           >
-            Log out
+            Log Out
           </button>
         </div>
       ) : (
@@ -35,7 +35,7 @@ export default function Header() {
           className="btn btn-login"
           onClick={initLogin}
         >
-          Log in
+          Log In
         </button>
       )}
     </header>

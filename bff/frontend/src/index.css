@@ -98,6 +98,7 @@ header {
   border-radius: 12px;
   box-shadow: var(--shadow);
   padding: 2rem;
+  text-align: left;
 }
 
 /*-- Headings --*/
@@ -106,6 +107,10 @@ h1, h2, h3 {
   color: var(--primary);
   font-weight: 700;
   margin: 0 0 .8em 0;
+  text-align: center;
+}
+h2, h3 {
+  margin: 1em 0;
 }
 
 /*-- Body text styles --*/
@@ -113,7 +118,19 @@ h1, h2, h3 {
 .container-content p {
   font-size: .85rem;
   line-height: 2;
-  text-align: left;
+}
+.container-content ul,
+.container-content ol {
+  font-size: .85rem;
+  padding-inline-start: 1em;
+}
+.container-content ul li,
+.container-content ol li {
+  margin: .7em 0;
+  line-height: 1.5;
+}
+strong {
+  color: var(--primary);
 }
 
 /*-- Buttons --*/
@@ -121,7 +138,7 @@ h1, h2, h3 {
 .btn {
   border-radius: 6px;
   border: 1px solid var(--primary);
-  padding: 0.4em 1em;
+  padding: 0.4em 0.8em;
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
@@ -149,6 +166,7 @@ pre {
   overflow-x: auto;
   border: 1px solid var(--border);
   color: yellowgreen;
+  text-align: center;
 }
 code {
   background: #1e293b;

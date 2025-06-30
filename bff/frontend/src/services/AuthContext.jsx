@@ -11,7 +11,7 @@ export function AuthProvider({ children }) {
   // If not logged in, API sets up PKCE 
   const checkSession = async () => {
     try {
-      const response = await fetch(`${apiUrl}/auth/pkce`, {
+      const response = await fetch(`${apiUrl}/auth/checksession`, {
         credentials: 'include',
       });
       const data = await response.json();
