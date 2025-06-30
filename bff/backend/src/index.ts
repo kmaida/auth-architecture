@@ -216,55 +216,8 @@ app.get('/auth/logout/callback', (req, res, next) => {
 });
 
 /*---------------------------------
-          Static Routes
+        API protected data
 ---------------------------------*/
-
-// TODO: when the frontend is ready, these should be some kind of API routes that return JSON responses, not HTML files
-
-// TODO: DELETE - this should be deleted, it's just for visual testing purposes when there isn't a frontend yet
-app.get('/', async (req, res) => {
-  const userTokenCookie = req.cookies[userToken];
-
-  if (await verifyJWT(userTokenCookie)) {
-    // Logged in user
-    // TODO: return success instead of redirecting, or redirect to a frontend route
-    res.redirect(302, '/account');
-  } else {
-    // Generate a random state value and PKCE challenge
-    // This is used to prevent CSRF attacks and to verify the authenticity of the request
-    const stateValue = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-    const pkcePair = await pkceChallenge();
-    res.cookie(userSession, { stateValue, verifier: pkcePair.code_verifier, challenge: pkcePair.code_challenge }, { httpOnly: true });
-
-    // TODO: This currently loads the homepage but no rendering will be necessary when calling from the frontend
-    console.log(__dirname);
-    res.sendFile(path.join(__dirname, '../templates/home.html'));
-  }
-});
-
-// Account
-// TODO: DELETE
-app.get('/account', async (req, res) => {
-  const userTokenCookie = req.cookies[userToken];
-  if (!await verifyJWT(userTokenCookie)) {
-    res.redirect(302, '/');
-  } else {
-    res.sendFile(path.join(__dirname, '../templates/account.html'));
-  }
-});
-
-// Protected navigation route
-// TODO: DELETE
-app.get('/make-change', async (req, res) => {
-  const userTokenCookie = req.cookies[userToken];
-  if (!await verifyJWT(userTokenCookie)) {
-    res.redirect(302, '/');
-  } else {
-    res.sendFile(path.join(__dirname, '../templates/make-change.html'));
-  }
-});
-
-/*----------- GET /api/protected-data ------------*/
 
 // Sample API endpoint that returns protected data (replace this with your actual API logic)
 // This endpoint is protected and requires the user to be authenticated
