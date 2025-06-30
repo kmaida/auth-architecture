@@ -7,7 +7,7 @@ import ProtectedPage from './pages/ProtectedPage';
 import './App.css'
 
 function App() {
-  const { loggedIn, checkSession } = useAuth();
+  const { checkSession } = useAuth();
   const location = useLocation();
 
   useEffect(() => {
@@ -28,4 +28,4 @@ function App() {
   )
 }
 
-export default App
+export default App;

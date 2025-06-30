@@ -1,13 +1,10 @@
-import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../services/AuthContext';
 
 export default function Header() {
-  // const [loggedIn, setLoggedIn] = useState(true); // Use state for login status
-  const userInfo = { email: "kim.maida@fusionauth.io" }; // Placeholder for user info
+  const { loggedIn, userInfo } = useAuth();
 
-  const { loggedIn, setLoggedIn } = useAuth();
-
+  // OAuth 2.0 routes
   const initLogin = () => {
     window.location.href = 'http://localhost:4001/auth/login';
   };
