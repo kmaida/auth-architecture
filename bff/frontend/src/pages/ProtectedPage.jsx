@@ -22,9 +22,9 @@ function ProtectedPage() {
       <h2>Protected Page</h2>
       {error && <div style={{color: 'red'}}>Error: {error.message}</div>}
       {data ? (
-        <pre>{JSON.stringify(data, null, 2)}</pre>
+        <pre>{JSON.stringify(data.message, null, 2)}</pre>
       ) : (
-        <div>Loading...</div>
+        <div>Fetching protected data...</div>
       )}
     </div>
   );

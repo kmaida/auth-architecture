@@ -8,12 +8,22 @@ import ProtectedPage from './pages/ProtectedPage';
 import './App.css'
 
 function App() {
-  const { checkSession } = useAuth();
+  const { checkSession, loggedIn } = useAuth();
   const location = useLocation();
 
   useEffect(() => {
     checkSession();
   }, [location, checkSession]);
+
+  // Add body class for authentication state
+  useEffect(() => {
+    document.body.classList.toggle('logged-in', loggedIn);
+    document.body.classList.toggle('logged-out', !loggedIn);
+    // Cleanup
+    return () => {
+      document.body.classList.remove('logged-in', 'logged-out');
+    };
+  }, [loggedIn]);
 
   return (
     <>
