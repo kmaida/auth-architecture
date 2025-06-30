@@ -1,12 +1,18 @@
-import { useState } from 'react'
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { useEffect } from 'react'
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { useAuth } from './services/AuthContext';
 import Header from './components/Header';
 import HomePage from './pages/HomePage';
 import ProtectedPage from './pages/ProtectedPage';
 import './App.css'
 
 function App() {
-  const [count, setCount] = useState(0)
+  const { loggedIn, checkSession } = useAuth();
+  const location = useLocation();
+
+  useEffect(() => {
+    checkSession();
+  }, [location, checkSession]);
 
   return (
     <>

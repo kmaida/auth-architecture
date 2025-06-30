@@ -5,6 +5,7 @@ import pkceChallenge from 'pkce-challenge';
 import { GetPublicKeyOrSecret, JwtPayload, verify } from 'jsonwebtoken';
 import jwksClient, { RsaSigningKey } from 'jwks-rsa';
 import * as path from 'path';
+import cors from 'cors';
 
 // Import environment variables
 import * as dotenv from "dotenv";
@@ -30,11 +31,22 @@ if (!process.env.FUSION_AUTH_URL) {
   console.error('Missing FUSION_AUTH_URL from .env');
   process.exit();
 }
+if (!process.env.FRONTEND_URL) {
+  console.error('Missing FRONTEND_URL from .env');
+  process.exit();
+}
 const clientId = process.env.CLIENT_ID;
 const clientSecret = process.env.CLIENT_SECRET;
 const fusionAuthURL = process.env.FUSION_AUTH_URL;
+const frontendURL = process.env.FRONTEND_URL;
 
 /*----------- Helpers, middleware, setup ------------*/
+
+// Add CORS middleware to allow connections from frontend
+app.use(cors({
+  origin: frontendURL,
+  credentials: true
+}));
 
 // Get the public key from FusionAuth's JWKS endpoint
 // This is used to verify the JWT signature
@@ -49,7 +61,7 @@ const getKey: GetPublicKeyOrSecret = async (header, callback) => {
 
 // Access token verification middleware
 // Check user's cookie, verify JWT access token signature, and decode the token
-// Decoded JWT is only available in the backend; it is never sent to the client
+// Decoded access token is only available in the backend; it is never sent to the client
 const verifyJWT = async (userTokenCookie: { access_token: string }) => {
   // Check if the cookie exists and contains an access token (if not, user is not logged in)
   if (!userTokenCookie || !userTokenCookie?.access_token) {
@@ -85,16 +97,15 @@ app.use('/bff/static', express.static(path.join(__dirname, '../static/')));
 
 /*----------- GET /auth/pkce ------------*/
 
-// Endpoint to set up PKCE (call onLoad of the frontend App file)
-// TODO: when there is a frontend, this should be called onLoad of the homepage
-
+// Endpoint to set up PKCE (checkSession on the front end)
 app.get('/auth/pkce', async (req, res) => {
   const userTokenCookie = req.cookies[userToken];
 
   if (await verifyJWT(userTokenCookie)) {
     // Logged in user
-    // TODO: return success instead of redirecting, or redirect to a frontend route
-    res.redirect(302, '/account');
+    // UNCOMMENT TO TEST IN BACKEND APP
+    // res.redirect(302, '/account');
+    res.status(200).json({ loggedIn: true });
   } else {
     // Generate a random state value and PKCE challenge
     // This is used to prevent CSRF attacks and to verify the authenticity of the request
@@ -102,8 +113,7 @@ app.get('/auth/pkce', async (req, res) => {
     const pkcePair = await pkceChallenge();
     res.cookie(userSession, { stateValue, verifier: pkcePair.code_verifier, challenge: pkcePair.code_challenge }, { httpOnly: true });
 
-    // TODO: This currently loads the homepage but no rendering will be necessary when calling from the frontend
-    res.sendFile(path.join(__dirname, '../templates/home.html'));
+    res.status(200).json({ loggedIn: false });
   }
 });
 
