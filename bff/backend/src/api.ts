@@ -243,8 +243,13 @@ app.get('/api/protected-data', async (req, res) => {
 });
 
 /*---------------------------------
-         Express Server
+         In conclusion...
 ---------------------------------*/
+
+// Redirect all other un-named routes to the frontend homepage
+app.all('*', async (req, res) => {
+  res.redirect(302, `${process.env.FRONTEND_URL}`);
+});
 
 // Start the Express server
 app.listen(port, () => {

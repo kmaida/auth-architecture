@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Backend for Frontend (BFF) for FusionAuth",
   "scripts": {
-    "dev": "ts-node-dev --exit-child src/index.ts"
+    "dev": "ts-node-dev --exit-child src/api.ts"
   },
   "author": "Kim Maida",
   "license": "Apache-2.0",
