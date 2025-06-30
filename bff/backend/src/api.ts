@@ -216,7 +216,7 @@ app.get('/auth/logout/callback', (req, res, next) => {
 });
 
 /*---------------------------------
-        API protected data
+        Protected API
 ---------------------------------*/
 
 // Sample API endpoint that returns protected data (replace this with your actual API logic)
@@ -243,7 +243,7 @@ app.get('/api/protected-data', async (req, res) => {
 });
 
 /*---------------------------------
-         In conclusion...
+        Express Conclusion
 ---------------------------------*/
 
 // Redirect all other un-named routes to the frontend homepage
