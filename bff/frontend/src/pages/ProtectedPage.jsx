@@ -3,9 +3,10 @@ import { useEffect, useState } from 'react';
 function ProtectedPage() {
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
+  const apiUrl = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
-    fetch('http://localhost:4001/api/protected-data', {
+    fetch(`${apiUrl}/api/protected-data`, {
       credentials: 'include', // send cookies
     })
       .then((res) => {

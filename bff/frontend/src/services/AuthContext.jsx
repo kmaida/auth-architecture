@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 
 const AuthContext = createContext();
+const apiUrl = import.meta.env.VITE_API_URL;
 
 const getCookie = (cookieName) => {
   const value = `; ${document.cookie}`;
@@ -14,7 +15,7 @@ export function AuthProvider({ children }) {
 
   const checkSession = async () => {
     try {
-      const response = await fetch('http://localhost:4001/auth/pkce', {
+      const response = await fetch(`${apiUrl}/auth/pkce`, {
         credentials: 'include',
       });
       const data = await response.json();

@@ -3,13 +3,14 @@ import { useAuth } from '../services/AuthContext';
 
 export default function Header() {
   const { loggedIn, userInfo } = useAuth();
+  const apiUrl = import.meta.env.VITE_API_URL;
 
   // OAuth 2.0 routes
   const initLogin = () => {
-    window.location.href = 'http://localhost:4001/auth/login';
+    window.location.href = `${apiUrl}/auth/login`;
   };
   const initLogout = () => {
-    window.location.href = 'http://localhost:4001/auth/logout';
+    window.location.href = `${apiUrl}/auth/logout`;
   };
 
   return (
