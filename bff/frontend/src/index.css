@@ -1,4 +1,3 @@
-/* Use a clean, modern font and a dark background */
 :root {
   font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
   color-scheme: dark;
@@ -20,7 +19,8 @@ body,
   max-width: 100% !important;
 }
 
-/* Header styles */
+/*-- Header styles --*/
+
 header {
   background: var(--surface);
   box-shadow: var(--shadow);
@@ -40,6 +40,9 @@ header {
   font-weight: 400;
   color: var(--primary);
 }
+
+/*-- Nav styles --*/
+
 .header-nav {
   display: flex;
   gap: 1.5rem;
@@ -86,7 +89,8 @@ header {
   transform: scaleX(1);
 }
 
-/* Container for main content */
+/*-- Container for main content --*/
+
 .container-content {
   max-width: 700px;
   margin: 2rem auto;
@@ -96,7 +100,24 @@ header {
   padding: 2rem;
 }
 
-/* Buttons */
+/*-- Headings --*/
+
+h1, h2, h3 {
+  color: var(--primary);
+  font-weight: 700;
+  margin: 0 0 .8em 0;
+}
+
+/*-- Body text styles --*/
+
+.container-content p {
+  font-size: .85rem;
+  line-height: 2;
+  text-align: left;
+}
+
+/*-- Buttons --*/
+
 .btn {
   border-radius: 6px;
   border: 1px solid var(--primary);
@@ -118,14 +139,8 @@ header {
   outline: none;
 }
 
-/* Headings */
-h1, h2, h3 {
-  color: var(--primary);
-  font-weight: 700;
-  margin: 0 0 .8em 0;
-}
+/*-- Code styles --*/
 
-/* Card-like look for protected data */
 pre {
   background: #1e293b;
   border-radius: 8px;
@@ -133,10 +148,21 @@ pre {
   font-size: 1em;
   overflow-x: auto;
   border: 1px solid var(--border);
-  color: #e5e7eb;
+  color: yellowgreen;
+}
+code {
+  background: #1e293b;
+  border: 1px solid var(--border);
+  color: cyan;
+  display: inline-block;
+  font-size: .94em;
+  line-height: .94em;
+  padding: 4px 5px;
+  border-radius: 4px;
 }
 
-/* Responsive adjustments */
+/*-- Responsive adjustments --*/
+
 @media (max-width: 600px) {
   .container-content {
     padding: 1rem;
