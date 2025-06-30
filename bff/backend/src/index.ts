@@ -152,7 +152,8 @@ app.get('/auth/callback', async (req, res, next) => {
   if (stateFromFusionAuth !== userSessionCookie?.stateValue) {
     console.log("State doesn't match. uh-oh.");
     console.log("Saw: " + stateFromFusionAuth + ", but expected: " + userSessionCookie?.stateValue);
-    res.redirect(302, '/');
+    // Redirect user to frontend homepage
+    res.redirect(302, `${process.env.FRONTEND_URL}`)
     return;
   }
   try {
@@ -174,13 +175,13 @@ app.get('/auth/callback', async (req, res, next) => {
     const userResponse = (await client.retrieveUserUsingJWT(accessToken.access_token)).response;
     if (!userResponse?.user) {
       console.error('Failed to get user');
-      // TODO: in an API, this should return an error response, not redirect
-      res.redirect(302, '/');
+      // Redirect user to frontend homepage
+      res.redirect(302, `${process.env.FRONTEND_URL}`)
     }
     // Set user details cookie (not Http-Only, so it can be accessed by the frontend)
     res.cookie(userDetails, userResponse.user);
-    // TODO: in an API, this should return a success response, not redirect (the frontend should redirect upon success)
-    res.redirect(302, '/account');
+    // Redirect user to frontend homepage
+    res.redirect(302, `${process.env.FRONTEND_URL}`)
   } catch (err: any) {
     console.error(err);
     res.status(err?.statusCode || 500).json(JSON.stringify({
