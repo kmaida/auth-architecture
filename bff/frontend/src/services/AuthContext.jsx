@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 
 const AuthContext = createContext();
 
@@ -10,7 +10,7 @@ const getCookie = (cookieName) => {
 
 export function AuthProvider({ children }) {
   const [loggedIn, setLoggedIn] = useState(false);
-  // const [userInfo, setUserInfo] = useState(false);
+  const [userInfo, setUserInfo] = useState(false);
 
   const checkSession = async () => {
     try {
@@ -18,23 +18,31 @@ export function AuthProvider({ children }) {
         credentials: 'include',
       });
       const data = await response.json();
-      console.log(data);
       setLoggedIn(data.loggedIn);
-      // getUserInfo();
     } catch (error) {
       console.error('Error checking session:', error);
       setLoggedIn(false);
     }
   };
 
-  const getUserInfo = () => {
-    let cookieUserInfo = getCookie('userInfo');
-    setUserInfo(cookieUserInfo);
-    console.log(cookieUserInfo);
-  };
+  useEffect(() => {
+    if (loggedIn) {
+      const cookie = document.cookie
+        .split('; ')
+        .find(row => row.startsWith('userDetails='));
+      if (cookie) {
+        const user = JSON.parse(
+          decodeURIComponent(cookie.split('=')[1]).replace('j:', '')
+        );
+        setUserInfo(user);
+      }
+    } else {
+      setUserInfo(null);
+    }
+  }, [loggedIn]);
 
   return (
-    <AuthContext.Provider value={{ loggedIn, setLoggedIn, checkSession }}>
+    <AuthContext.Provider value={{ loggedIn, setLoggedIn, checkSession, userInfo }}>
       {children}
     </AuthContext.Provider>
   );
