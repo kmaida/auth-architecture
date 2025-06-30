@@ -200,7 +200,7 @@ app.get('/auth/logout', (req, res, next) => {
 
 /*----------- GET /auth/logout/callback ------------*/
 
-// Clean up cookies and redirect to home
+// Clean up cookies and redirect to frontend homepage
 // FusionAuth will redirect to this endpoint after logging out
 // This (full) URL must be registered in FusionAuth as a valid logout redirect URL
 
@@ -209,8 +209,9 @@ app.get('/auth/logout/callback', (req, res, next) => {
   res.clearCookie(userSession);
   res.clearCookie(userToken);
   res.clearCookie(userDetails);
-  // Make sure this redirect works with the frontend, or return a JSON response instead, or navigate to a frontend route
-  res.redirect(302, '/')
+
+  // Redirect user to frontend homepage
+  res.redirect(302, `${process.env.FRONTEND_URL}`)
 });
 
 /*---------------------------------

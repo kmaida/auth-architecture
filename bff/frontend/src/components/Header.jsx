@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../services/AuthContext';
 
-
 export default function Header() {
   // const [loggedIn, setLoggedIn] = useState(true); // Use state for login status
   const userInfo = { email: "kim.maida@fusionauth.io" }; // Placeholder for user info
@@ -10,12 +9,10 @@ export default function Header() {
   const { loggedIn, setLoggedIn } = useAuth();
 
   const initLogin = () => {
-    console.log('Call localhost:3000/auth/login');
-    setLoggedIn(true);
+    window.location.href = 'http://localhost:4001/auth/login';
   };
   const initLogout = () => {
-    console.log('Call localhost:3000/auth/logout');
-    setLoggedIn(false);
+    window.location.href = 'http://localhost:4001/auth/logout';
   };
 
   return (
