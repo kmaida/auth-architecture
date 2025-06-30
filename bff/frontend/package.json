@@ -1,7 +1,7 @@
 {
-  "name": "frontend",
+  "name": "fusionauth-bff-frontend",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
   "type": "module",
   "scripts": {
     "dev": "vite --port 5173",
@@ -9,6 +9,7 @@
     "lint": "eslint .",
     "preview": "vite preview"
   },
+  "author": "Kim Maida",
   "dependencies": {
     "react": "^19.1.0",
     "react-dom": "^19.1.0"

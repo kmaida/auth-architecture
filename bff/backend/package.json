@@ -1,7 +1,7 @@
 {
-  "name": "fusionauth-bff",
-  "version": "1.0.0",
-  "description": "Backend for Frontend (BFF) for FusionAuth",
+  "name": "fusionauth-bff-backend",
+  "version": "0.1.0",
+  "description": "Express API backend for Frontend (BFF) using FusionAuth",
   "scripts": {
     "dev": "ts-node-dev --exit-child src/api.ts"
   },

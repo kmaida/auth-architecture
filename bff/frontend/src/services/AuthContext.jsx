@@ -3,16 +3,12 @@ import { createContext, useContext, useState, useEffect } from 'react';
 const AuthContext = createContext();
 const apiUrl = import.meta.env.VITE_API_URL;
 
-const getCookie = (cookieName) => {
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${cookieName}=`);
-  if (parts.length === 2) return parts.pop().split(';').shift();
-}
-
 export function AuthProvider({ children }) {
   const [loggedIn, setLoggedIn] = useState(false);
   const [userInfo, setUserInfo] = useState(false);
 
+  // Check if user is logged in by sending cookie to auth API
+  // If not logged in, API sets up PKCE 
   const checkSession = async () => {
     try {
       const response = await fetch(`${apiUrl}/auth/pkce`, {
@@ -26,6 +22,7 @@ export function AuthProvider({ children }) {
     }
   };
 
+  // If logged in, get userInfo from the userDetails cookie
   useEffect(() => {
     if (loggedIn) {
       const cookie = document.cookie
