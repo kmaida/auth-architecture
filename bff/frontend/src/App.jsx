@@ -3,8 +3,6 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import Header from './components/Header';
 import HomePage from './pages/HomePage';
 import ProtectedPage from './pages/ProtectedPage';
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
 import './App.css'
 
 function App() {

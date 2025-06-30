@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { NavLink } from 'react-router-dom';
 
 export default function Header() {
   const [isLoggedIn, setIsLoggedIn] = useState(true); // Use state for login status
@@ -35,6 +36,10 @@ export default function Header() {
           Log in
         </button>
       )}
+      <nav className="header-nav">
+        <NavLink to="/" className="nav-link">Home</NavLink>
+        { isLoggedIn ? <NavLink to="/protected" className="nav-link">Protected Page</NavLink> : ''}
+      </nav>
     </header>
   );
 }
