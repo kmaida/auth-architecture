@@ -75,28 +75,38 @@ const getKey: GetPublicKeyOrSecret = async (header, callback) => {
 // Check user's cookie, verify JWT access token signature, and decode the token
 // Decoded access token is only available in the backend; it is never sent to the client
 // Optionally refresh tokens
+import { verify as jwtVerify } from 'jsonwebtoken';
+
+// Helper to promisify JWT verification
+function verifyJwtAsync(token: string, getKey: any): Promise<string | JwtPayload | undefined> {
+  return new Promise((resolve, reject) => {
+    jwtVerify(token, getKey, undefined, (err, decoded) => {
+      if (err) return reject(err);
+      resolve(decoded);
+    });
+  });
+}
+
 const verifyJWT = async (
   userTokenCookie: string,
   refreshTokenCookie?: string,
   res?: express.Response
-) => {
-  console.log(userTokenCookie, refreshTokenCookie, !!res);
+): Promise<{ decoded: string | JwtPayload | undefined, user?: any } | false> => {
   if (userTokenCookie) {
     try {
-      let decodedFromJwt: string | JwtPayload | undefined;
-      await verify(userTokenCookie, await getKey, undefined, (err, decoded) => {
-        decodedFromJwt = decoded;
-      });
-      return decodedFromJwt;
+      const decodedFromJwt = await verifyJwtAsync(userTokenCookie, await getKey);
+      console.log('verifyJWT: access token valid');
+      return { decoded: decodedFromJwt };
     } catch (err) {
-      console.log('Invalid or missing access token, attempting refresh');
+      console.log('verifyJWT: Invalid or missing access token, attempting refresh', err);
+      // Now fall through to refresh logic
     }
   }
   if (refreshTokenCookie && res) {
+    console.log('verifyJWT: Trying refresh token');
     const newTokens = await refreshTokens(refreshTokenCookie);
 
     if (newTokens && newTokens.access_token) {
-      // Set cookies with correct values and options
       res.cookie(userToken, newTokens.access_token, { httpOnly: true, sameSite: 'lax', path: '/' });
       if (newTokens.refresh_token) {
         res.cookie(refreshToken, newTokens.refresh_token, { httpOnly: true, sameSite: 'lax', path: '/' });
@@ -104,20 +114,19 @@ const verifyJWT = async (
       try {
         const userResponse = (await client.retrieveUserUsingJWT(newTokens.access_token)).response;
         if (userResponse?.user) {
-          res.cookie(userInfo, userResponse.user, { sameSite: 'lax', path: '/' });
+          res.cookie(userInfo, 'j:' + JSON.stringify(userResponse.user), { sameSite: 'lax', path: '/' });
+          const decodedFromJwt = await verifyJwtAsync(newTokens.access_token, await getKey);
+          console.log('verifyJWT: refreshed successfully');
+          return { decoded: decodedFromJwt, user: userResponse.user };
         }
       } catch (err) {
-        console.error('Failed to retrieve user info after refresh:', err);
+        console.error('verifyJWT: Failed to retrieve user info after refresh:', err);
       }
-      let decodedFromJwt: string | JwtPayload | undefined;
-      await verify(newTokens.access_token, await getKey, undefined, (err, decoded) => {
-        decodedFromJwt = decoded;
-      });
-      
-      console.log('refreshed successfully, authenticated state maintained');
-      return decodedFromJwt;
+    } else {
+      console.log('verifyJWT: refreshTokens did not return new tokens');
     }
   }
+  console.log('verifyJWT: returning false');
   return false;
 };
 
@@ -133,7 +142,7 @@ const refreshTokens = async (refreshTokenValue: string) => {
     );
     return response.response;
   } catch (err) {
-    console.error('Failed to refresh tokens:', err);
+    console.error('refreshTokens: Failed to refresh tokens:', err);
     return null;
   }
 };
@@ -145,15 +154,42 @@ app.get('/auth/checksession', async (req, res) => {
   const userTokenCookie = req.cookies[userToken];
   const refreshTokenCookie = req.cookies[refreshToken];
 
-  if (await verifyJWT(userTokenCookie, refreshTokenCookie, res)) {
-    // Logged in user (either original or after refresh)
-    res.status(200).json({ loggedIn: true });
+  const verifyResult = await verifyJWT(userTokenCookie, refreshTokenCookie, res);
+
+  if (verifyResult && verifyResult.decoded) {
+    let user = verifyResult.user;
+    // If user is not present (i.e., not from refresh), try to get from cookie
+    if (!user) {
+      const userInfoCookie = req.cookies[userInfo];
+      if (userInfoCookie) {
+        try {
+          user = JSON.parse(decodeURIComponent(userInfoCookie).replace(/^j:/, ''));
+        } catch (e) {
+          user = null;
+        }
+      }
+      // If still no user, fetch from FusionAuth
+      if (!user && userTokenCookie) {
+        try {
+          const userResponse = (await client.retrieveUserUsingJWT(userTokenCookie)).response;
+          if (userResponse?.user) {
+            user = userResponse.user;
+            res.cookie(userInfo, 'j:' + JSON.stringify(user), { sameSite: 'lax', path: '/' });
+          }
+        } catch (e) {
+          user = null;
+        }
+      }
+    }
+    console.log('returning loggedIn: true');
+    res.status(200).json({ loggedIn: true, user });
   } else {
     // Generate a random state value and PKCE challenge
     const stateValue = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
     const pkcePair = await pkceChallenge();
     res.cookie(userSession, { stateValue, verifier: pkcePair.code_verifier, challenge: pkcePair.code_challenge }, { httpOnly: true });
 
+    console.log('returning logged in: false');
     res.status(200).json({ loggedIn: false });
   }
 });
@@ -169,6 +205,7 @@ app.get('/auth/login', (req, res, next) => {
   if (!userSessionCookie?.stateValue || !userSessionCookie?.challenge) {
     // Redirect user to frontend homepage
     res.redirect(302, `${process.env.FRONTEND_URL}`);
+    return;
   }
 
   // TODO: make this production ready by removing the hardcoded localhost and port
@@ -223,7 +260,7 @@ app.get('/auth/callback', async (req, res, next) => {
       res.redirect(302, `${process.env.FRONTEND_URL}`);
     }
     // Set user details cookie (not Http-Only, so it can be accessed by the frontend)
-    res.cookie(userInfo, userResponse.user);
+    res.cookie(userInfo, 'j:' + JSON.stringify(userResponse.user), { sameSite: 'lax', path: '/' });
 
     // Redirect user to frontend homepage
     res.redirect(302, `${process.env.FRONTEND_URL}`);

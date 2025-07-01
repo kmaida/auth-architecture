@@ -13,7 +13,7 @@ function App() {
 
   useEffect(() => {
     checkSession();
-  }, [location, checkSession]);
+  }, [location]);
 
   // Add body class for authentication state
   useEffect(() => {
