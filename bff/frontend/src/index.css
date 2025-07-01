@@ -122,11 +122,12 @@ h2, h3 {
 .container-content ul,
 .container-content ol {
   font-size: .85rem;
-  padding-inline-start: 1em;
+  padding-inline-start: 2.5em;
+  margin: 2.5em 0;
 }
 .container-content ul li,
 .container-content ol li {
-  margin: .7em 0;
+  margin: 1em 0;
   line-height: 1.5;
 }
 strong {

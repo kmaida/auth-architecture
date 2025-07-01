@@ -22,12 +22,12 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // If logged in, get userInfo from the userDetails cookie
+  // If logged in, get userInfo from the userInfo cookie
   useEffect(() => {
     if (loggedIn) {
       const cookie = document.cookie
         .split('; ')
-        .find(row => row.startsWith('userDetails='));
+        .find(row => row.startsWith('userInfo='));
       if (cookie) {
         const user = JSON.parse(
           decodeURIComponent(cookie.split('=')[1]).replace('j:', '')

@@ -23,7 +23,8 @@ function HomePage() {
       </li>
     </ul>
 
-    <h2>How it Works</h2>
+    <h2>How BFF Authentication Works</h2>
+    <p>Here are all the steps for authentication in this BFF example in explicit detail. With this explanation, you should be able to trace the entire authentication lifecycle through both the backend (where the important stuff takes place) and the frontend (where the user interacts).</p>
     <ol>
       <li>
         User navigates to the frontend app
@@ -32,7 +33,7 @@ function HomePage() {
         Frontend calls the backend <code>/auth/checksession</code> endpoint with <code>credentials: include</code> to attach cookies, if they exist
       </li>
       <li>
-        Backend checks the user's provided credentials (access token cookie and session cookie), and if present, verifies the JSON Web Token access token (because cookies are <code>HttpOnly</code>, only the backend can use the contents of the cookie)
+        Backend checks the user's provided credentials (access token cookie and session cookie), and if present, <a href="https://www.youtube.com/shorts/zRY-ElxVa_U" target="_blank">verifies the JSON Web Token access token</a> (because cookies are <code>HttpOnly</code>, only the backend can use the contents of the cookie)
       </li>
       <li>
         If the user session and access token are valid and not expired, the user's authenticated state is maintained and they are logged into the frontend app
@@ -44,31 +45,34 @@ function HomePage() {
         ...a <code>code_verifier</code> and a hash of the code verifier called a <code>code_challenge</code>, which is created by hashing the verifier with a function called a <code>code_challenge_method</code>
       </li>
       <li>
+        Backend sets an <code>HttpOnly</code> user session cookie with the <code>state</code>, <code>code_verifier</code>, and <code>code_challenge</code>
+      </li>
+      <li>
         Backend returns a response informing the frontend that the user is not authenticated
       </li>
       <li>
         User clicks the <code>Log In</code> button
       </li>
       <li>
-        Frontend sends a request to the backend <code>/auth/login</code> endpoint
+        Frontend sends a request to the backend <code>/auth/login</code> endpoint with appropriate configuration
       </li>
       <li>
-        Backend composes an authorization request with the necessary configuration (e.g., <code>client_id</code>, <code>client_secret</code>, <code>state</code>, etc.) and the <code>code_challenge</code>, and sends the request to FusionAuth's <code>oauth2/authorize</code> endpoint
+        Backend composes an authorization request with the necessary configuration (e.g., <code>client_id</code>, <code>client_secret</code>, <code>state</code>, etc.) and the <code>code_challenge</code>, and sends the request to the authorization server's (FusionAuth's) <code>/oauth2/authorize</code> endpoint
       </li>
       <li>
-        FusionAuth validates the authorization request, authenticates the user, and redirects to the backend <code>/auth/callback</code> endpoint with a <code>code</code> and the same <code>state</code> it received with the authorization request
+        Authorization server validates the authorization request, authenticates the user, and redirects to the backend <code>/auth/callback</code> endpoint with a <code>code</code> and the same <code>state</code> it received with the authorization request
       </li>
       <li>
-        Backend verifies the <code>state</code> FusionAuth returned is the same <code>state</code> the backend sent with the authorization request (steps 4 and 9)
+        Backend verifies the <code>state</code> authorization server returned is the same <code>state</code> the backend sent with the authorization request (steps 5 and 11)
       </li>
       <li>
-        Backend sends a token request to FusionAuth with the <code>code</code> and <code>code_verifier</code>
+        Backend sends a token request to the authorization server with the <code>code</code> and <code>code_verifier</code>
       </li>
       <li>
-        FusionAuth validates the token request, verifies the <code>code</code> is the same <code>code</code> it sent in step 10, and uses the <code>code_challenge_method</code> to hash the <code>code_verifier</code> and recreate a copy of the <code>code_challenge</code>
+        Authorization server validates the token request, verifies the <code>code</code> is the same <code>code</code> it sent in step 12, and uses the <code>code_challenge_method</code> to hash the <code>code_verifier</code> and recreate a copy of the <code>code_challenge</code>
       </li>
       <li>
-        Authorization server compares its new <code>code_challenge</code> to the backend's <code>code_challenge</code> (steps 5 and 9) and verifies they are identical
+        Authorization server compares its new <code>code_challenge</code> to the backend's <code>code_challenge</code> (steps 6 and 11) and verifies they are identical
       </li>
       <li>
         Authorization server sends an access token to the backend
@@ -86,10 +90,44 @@ function HomePage() {
         Backend then redirects the user to the frontend where they are now authenticated
       </li>
       <li>
-        Frontend reads the information from the transparent <code>userInfo</code> cookie and uses the information to set user-specific variables, etc.
+        Frontend reads the data from the transparent <code>userInfo</code> cookie and uses the information to set user-specific variables, etc.
       </li>
-      
+      <li>
+        When the user clicks the <code>Log Out</code> button, the frontend sends a request to the backend <code>/auth/logout</code> endpoint
+      </li>
+      <li>
+        Backend sends a request to the authorization server's <code>/oauth2/logout</code> endpoint with appropriate configuration
+      </li>
+      <li>
+        Authorization server logs the user out and redirects to the backend <code>/auth/logout/callaback</code> endpoint
+      </li>
+      <li>
+        Backend clears the cookies and redirects the unauthenticated user to the frontend homepage
+      </li>
     </ol>
+
+    <h2>How BFF Authorization Works</h2>
+    <p>Fortunately, this is much simpler and shorter than the authentication piece. Once the user is logged in, the access token cookie is already present in the browser.</p>
+    <ol>
+      <li>
+        User navigates to a frontend page that calls protected resources
+      </li>
+      <li>
+        Frontend makes a request to the backend API for protected resources with <code>credentials: include</code> to attach cookies (for example, to the <code>/api/protected-data</code> endpoint)
+      </li>
+      <li>
+        Backend uses middleware to verify the JWT access token in the access token cookie
+      </li>
+      <li>
+        If the user isn't logged in or there's a problem with the cookie, the backend responds with a <code>401: Unauthorized</code> status
+      </li>
+      <li>
+        If the access token is successfully verified, protected data is returned to the frontend
+      </li>
+    </ol>
+
+    <h2>Other Auth Architectures</h2>
+    <p>Backend-for-Frontend is one of three authentication and authorization architecture choices for browser-based apps. The other two architectures are <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#name-token-mediating-backend" target="_blank">Token-Mediating Backend</a> and <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#name-browser-based-oauth-20-clie" target="_blank">Browser-based OAuth 2.0 client</a>. Each architecture has different trade-offs and benefits. Demos of both of these architectures are in progress and will be linked once they are available.</p>
     </>
   );
 }

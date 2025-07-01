@@ -84,7 +84,7 @@ const verifyJWT = async (userTokenCookie: { access_token: string }) => {
 // Set cookies
 const userSession = 'userSession';
 const userToken = 'userToken';
-const userDetails = 'userDetails'; // User info is not Http-Only
+const userInfo = 'userInfo'; // User info is not Http-Only
 // Initialize FusionAuth client
 const client = new FusionAuthClient('noapikeyneeded', fusionAuthURL);
 
@@ -178,7 +178,7 @@ app.get('/auth/callback', async (req, res, next) => {
       res.redirect(302, `${process.env.FRONTEND_URL}`);
     }
     // Set user details cookie (not Http-Only, so it can be accessed by the frontend)
-    res.cookie(userDetails, userResponse.user);
+    res.cookie(userInfo, userResponse.user);
     // Redirect user to frontend homepage
     res.redirect(302, `${process.env.FRONTEND_URL}`);
   } catch (err: any) {
@@ -208,7 +208,7 @@ app.get('/auth/logout/callback', (req, res, next) => {
   console.log('Logging out...')
   res.clearCookie(userSession);
   res.clearCookie(userToken);
-  res.clearCookie(userDetails);
+  res.clearCookie(userInfo);
   // Redirect user to frontend homepage
   res.redirect(302, `${process.env.FRONTEND_URL}`);
 });
