@@ -157,14 +157,12 @@ app.get('/auth/callback', async (req, res, next) => {
     return;
   }
   try {
-    // Exchange authorization code and code verifier for an access token
+    // Exchange authorization code and code verifier for tokens (includes access_token, refresh_token, expires_in)
     const tokenResponse = (await client.exchangeOAuthCodeForAccessTokenUsingPKCE(authCode,
       clientId,
       clientSecret,
       `http://localhost:${port}/auth/callback`, // TODO: for production, this should not be hardcoded as localhost:port
       userSessionCookie.verifier)).response;
-
-    console.log(tokenResponse);
 
     if (!tokenResponse.access_token) {
       console.error('Failed to get access token');
@@ -173,7 +171,7 @@ app.get('/auth/callback', async (req, res, next) => {
     // Set cookie for the user session with value of the full token response
     res.cookie(userToken, tokenResponse, { httpOnly: true });
     // Set cookie for refresh token
-    res.cookie(refreshToken, tokenResponse.refresh_token, { httpOnly: true});
+    res.cookie(refreshToken, { refresh_token: tokenResponse.refresh_token, refresh_token_id: tokenResponse.refresh_token_id }, { httpOnly: true});
 
     // Retrieve user info (authorized by the access token)
     const userResponse = (await client.retrieveUserUsingJWT(tokenResponse.access_token)).response;
@@ -215,6 +213,7 @@ app.get('/auth/logout/callback', (req, res, next) => {
   res.clearCookie(userSession);
   res.clearCookie(userToken);
   res.clearCookie(userInfo);
+  res.clearCookie(refreshToken);
   // Redirect user to frontend homepage
   res.redirect(302, `${process.env.FRONTEND_URL}`);
 });
