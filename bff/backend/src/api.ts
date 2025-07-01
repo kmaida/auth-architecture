@@ -60,16 +60,19 @@ app.use(cors({
   credentials: true
 }));
 
+const jwks = jwksClient({
+  jwksUri: `${fusionAuthURL}/.well-known/jwks.json`
+});
+
 // Get the public key from FusionAuth's JWKS endpoint
 // This is used to verify the JWT signature
-const getKey: GetPublicKeyOrSecret = async (header, callback) => {
-  const jwks = jwksClient({
-    jwksUri: `${fusionAuthURL}/.well-known/jwks.json`
+const getKey: GetPublicKeyOrSecret = (header, callback) => {
+  jwks.getSigningKey(header.kid, (err, key) => {
+    if (err) return callback(err, undefined);
+    const signingKey = (key as RsaSigningKey)?.getPublicKey() || (key as RsaSigningKey)?.rsaPublicKey;
+    callback(null, signingKey);
   });
-  const key = await jwks.getSigningKey(header.kid) as RsaSigningKey;
-  var signingKey = key?.getPublicKey() || key?.rsaPublicKey;
-  callback(null, signingKey);
-}
+};
 
 // Helper to promisify JWT verification
 function verifyJwtAsync(token: string, getKey: any): Promise<string | JwtPayload | undefined> {
