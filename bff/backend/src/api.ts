@@ -49,15 +49,15 @@ const backendURL = process.env.BACKEND_URL;
 // Decode form URL encoded data
 app.use(express.urlencoded({ extended: true }));
 
+// Initialize FusionAuth client
+const client = new FusionAuthClient('noapikeyneeded', fusionAuthURL);
+
 // Cookie setup
 app.use(cookieParser());
 const userSession = 'userSession';
 const userToken = 'userToken';
 const refreshToken = 'refreshToken';
 const userInfo = 'userInfo'; // User info is not httpOnly (should be accessible to frontend)
-
-// Initialize FusionAuth client
-const client = new FusionAuthClient('noapikeyneeded', fusionAuthURL);
 
 // Add CORS middleware to allow connections from frontend
 app.use(cors({
@@ -240,27 +240,27 @@ app.get('/auth/login', (req, res, next) => {
 
 /*----------- GET /auth/callback ------------*/
 
-// Callback URL that FusionAuth redirects to after user authentication
+// Callback route that FusionAuth redirects to after user authentication
 // Must be registered in FusionAuth as a valid redirect URL
-// This URL will never be called by the frontend, it's only for FusionAuth
+// /auth/callback will never be called by the frontend, it's only for FusionAuth
 
 app.get('/auth/callback', async (req, res, next) => {
   // Capture query params
   const stateFromFusionAuth = `${req.query?.state}`;
   const authCode = `${req.query?.code}`;
 
-  // Validate cookie state matches FusionAuth's returned state
+  // Validate state in cookie matches FusionAuth's returned state
   // This prevents CSRF attacks
   const userSessionCookie = req.cookies[userSession];
   if (stateFromFusionAuth !== userSessionCookie?.stateValue) {
-    console.log("Error: state must match to protect against CSRF attacks.");
+    console.log("Error: state mismatch");
     console.log("Received: " + stateFromFusionAuth + ", but expected: " + userSessionCookie?.stateValue);
     // Redirect user to frontend homepage
     res.redirect(302, `${process.env.FRONTEND_URL}`);
     return;
   }
   try {
-    // Exchange authorization code and code verifier for tokens (includes access_token, refresh_token, expires_in)
+    // Exchange authorization code and code verifier for tokens (access_token, refresh_token, expires_in)
     const tokenResponse = (await client.exchangeOAuthCodeForAccessTokenUsingPKCE(authCode,
       clientId,
       clientSecret,
@@ -271,12 +271,12 @@ app.get('/auth/callback', async (req, res, next) => {
       console.error('Failed to get access token');
       return;
     }
-    // Set cookie for the user session with value of the access token string
+    // Set userToken cookie with value of the access token string
     res.cookie(userToken, tokenResponse.access_token, { httpOnly: true, sameSite: 'lax', path: '/' });
-    // Set cookie for refresh token
+    // Set refreshToken cookie for refresh token
     res.cookie(refreshToken, tokenResponse.refresh_token, { httpOnly: true, sameSite: 'lax', path: '/' });
 
-    // Retrieve user info (authorized by the access token)
+    // Retrieve user info from FusionAuth (authorized by the access token)
     const userResponse = (await client.retrieveUserUsingJWT(tokenResponse.access_token)).response;
     if (!userResponse?.user) {
       console.error('Failed to get user');
@@ -290,9 +290,7 @@ app.get('/auth/callback', async (req, res, next) => {
     res.redirect(302, `${process.env.FRONTEND_URL}`);
   } catch (err: any) {
     console.error(err);
-    res.status(err?.statusCode || 500).json(JSON.stringify({
-      error: err
-    }))
+    res.status(err?.statusCode || 500).json(JSON.stringify({ error: err }));
   }
 });
 
@@ -307,12 +305,12 @@ app.get('/auth/logout', (req, res, next) => {
 
 /*----------- GET /auth/logout/callback ------------*/
 
+// Callback after FusionAuth logout
 // Clean up cookies and redirect to frontend homepage
 // FusionAuth will redirect to this endpoint after logging out
 // This (full) URL must be registered in FusionAuth as a valid logout redirect URL
 
 app.get('/auth/logout/callback', (req, res, next) => {
-  console.log('Logging out...')
   res.clearCookie(userSession);
   res.clearCookie(userToken);
   res.clearCookie(userInfo);
