@@ -42,6 +42,18 @@ const frontendURL = process.env.FRONTEND_URL;
 
 /*----------- Helpers, middleware, setup ------------*/
 
+// Cookie setup
+app.use(cookieParser());
+// Decode form URL encoded data
+app.use(express.urlencoded({ extended: true }));
+const userSession = 'userSession';
+const userToken = 'userToken';
+const refreshToken = 'refreshToken';
+const userInfo = 'userInfo'; // User info is not Http-Only
+
+// Initialize FusionAuth client
+const client = new FusionAuthClient('noapikeyneeded', fusionAuthURL);
+
 // Add CORS middleware to allow connections from frontend
 app.use(cors({
   origin: frontendURL,
@@ -62,52 +74,82 @@ const getKey: GetPublicKeyOrSecret = async (header, callback) => {
 // Access token verification middleware
 // Check user's cookie, verify JWT access token signature, and decode the token
 // Decoded access token is only available in the backend; it is never sent to the client
-const verifyJWT = async (userTokenCookie: { access_token: string }) => {
-  // Check if the cookie exists and contains an access token (if not, user is not logged in)
-  if (!userTokenCookie || !userTokenCookie?.access_token) {
-    return false;
+// Optionally refresh tokens
+// Change userToken cookie to store only the access_token string
+const verifyJWT = async (
+  userTokenCookie: string,
+  refreshTokenCookie?: string,
+  res?: express.Response
+) => {
+  console.log(userTokenCookie, refreshTokenCookie, !!res);
+  if (userTokenCookie) {
+    try {
+      let decodedFromJwt: string | JwtPayload | undefined;
+      await verify(userTokenCookie, await getKey, undefined, (err, decoded) => {
+        decodedFromJwt = decoded;
+      });
+      return decodedFromJwt;
+    } catch (err) {
+      console.log('Invalid or missing access token, attempting refresh');
+    }
   }
+  if (refreshTokenCookie && res) {
+    const newTokens = await refreshTokens(refreshTokenCookie);
+
+    if (newTokens && newTokens.access_token) {
+      // Set cookies with correct values and options
+      res.cookie(userToken, newTokens.access_token, { httpOnly: true, sameSite: 'lax', path: '/' });
+      if (newTokens.refresh_token) {
+        res.cookie(refreshToken, newTokens.refresh_token, { httpOnly: true, sameSite: 'lax', path: '/' });
+      }
+      try {
+        const userResponse = (await client.retrieveUserUsingJWT(newTokens.access_token)).response;
+        if (userResponse?.user) {
+          res.cookie(userInfo, userResponse.user, { sameSite: 'lax', path: '/' });
+        }
+      } catch (err) {
+        console.error('Failed to retrieve user info after refresh:', err);
+      }
+      let decodedFromJwt: string | JwtPayload | undefined;
+      await verify(newTokens.access_token, await getKey, undefined, (err, decoded) => {
+        decodedFromJwt = decoded;
+      });
+      console.log('refreshed successfully, authenticated state maintained');
+      return decodedFromJwt;
+    }
+  }
+  return false;
+};
+
+// Helper to refresh tokens using the refresh token
+const refreshTokens = async (refreshTokenValue: string) => {
   try {
-    let decodedFromJwt: string | JwtPayload | undefined;
-    // The await here is important to ensure the key is fetched before verifying the JWT
-    // Even though VS Code says this is unused, it's wrong, so don't remove it
-    await verify(userTokenCookie.access_token, await getKey, undefined, (err, decoded) => {
-      decodedFromJwt = decoded;
-    });
-    return decodedFromJwt;
+    const response = await client.exchangeRefreshTokenForAccessToken(
+      refreshTokenValue,
+      clientId,
+      clientSecret,
+      'offline_access',
+      ''
+    );
+    return response.response;
   } catch (err) {
-    console.error(err);
-    return false;
+    console.error('Failed to refresh tokens:', err);
+    return null;
   }
-}
+};
 
-// Set cookies
-const userSession = 'userSession';
-const userToken = 'userToken';
-const refreshToken = 'refreshToken';
-const userInfo = 'userInfo'; // User info is not Http-Only
-// Initialize FusionAuth client
-const client = new FusionAuthClient('noapikeyneeded', fusionAuthURL);
-
-app.use(cookieParser());
-// Decode form URL encoded data
-app.use(express.urlencoded({ extended: true }));
-
-// TODO: remove this when the frontend is ready
-app.use('/bff/static', express.static(path.join(__dirname, '../static/')));
-
-/*----------- GET /auth/pkce ------------*/
+/*----------- GET /auth/checksession ------------*/
 
 // Endpoint to check the user's session and set up PKCE if needed
 app.get('/auth/checksession', async (req, res) => {
   const userTokenCookie = req.cookies[userToken];
+  const refreshTokenCookie = req.cookies[refreshToken];
 
-  if (await verifyJWT(userTokenCookie)) {
-    // Logged in user
+  if (await verifyJWT(userTokenCookie, refreshTokenCookie, res)) {
+    // Logged in user (either original or after refresh)
     res.status(200).json({ loggedIn: true });
   } else {
     // Generate a random state value and PKCE challenge
-    // This is used to prevent CSRF attacks and to verify the authenticity of the request
     const stateValue = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
     const pkcePair = await pkceChallenge();
     res.cookie(userSession, { stateValue, verifier: pkcePair.code_verifier, challenge: pkcePair.code_challenge }, { httpOnly: true });
@@ -171,7 +213,7 @@ app.get('/auth/callback', async (req, res, next) => {
     // Set cookie for the user session with value of the full token response
     res.cookie(userToken, tokenResponse, { httpOnly: true });
     // Set cookie for refresh token
-    res.cookie(refreshToken, { refresh_token: tokenResponse.refresh_token, refresh_token_id: tokenResponse.refresh_token_id }, { httpOnly: true});
+    res.cookie(refreshToken, tokenResponse.refresh_token, { httpOnly: true});
 
     // Retrieve user info (authorized by the access token)
     const userResponse = (await client.retrieveUserUsingJWT(tokenResponse.access_token)).response;
@@ -227,8 +269,9 @@ app.get('/auth/logout/callback', (req, res, next) => {
 
 app.get('/api/protected-data', async (req, res) => {
   const userTokenCookie = req.cookies[userToken];
+  const refreshTokenCookie = req.cookies[refreshToken];
 
-  if (!await verifyJWT(userTokenCookie)) {
+  if (!await verifyJWT(userTokenCookie, refreshTokenCookie, res)) {
     // If the user is not authenticated, return a 401 Unauthorized response
     res.status(401).json({ 
       status: 401,
