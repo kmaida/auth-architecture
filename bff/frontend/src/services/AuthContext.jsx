@@ -13,27 +13,16 @@ const checkSession = async () => {
     const response = await fetch(`${apiUrl}/auth/checksession`, {
       credentials: 'include',
     });
-    const data = await response.json();
+    const data = await response.json(); // data: { loggedIn: boolean, user: object|null }
     setLoggedIn(data.loggedIn);
 
     if (data.loggedIn) {
       if (data.user) {
         setUserInfo(data.user); // Always trust the backend response
-      } else {
-        // fallback to cookie ONLY if user not in response (should rarely happen)
-        const cookie = document.cookie
-          .split('; ')
-          .find(row => row.startsWith('userInfo='));
-        if (cookie) {
-          const user = JSON.parse(
-            decodeURIComponent(cookie.split('=')[1]).replace('j:', '')
-          );
-          setUserInfo(user);
-        } else {
-          setUserInfo(null);
-        }
       }
+      // NOTE: Could add fallback logic to check cookies if needed, but backend should always provide user info
     } else {
+      // User is not logged in, no user info
       setUserInfo(null);
     }
   } catch (error) {

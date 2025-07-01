@@ -32,7 +32,10 @@ function HomePage() {
         No tokens exposed to the frontend
       </li>
       <li>
-        Access tokens and refresh tokens handled in the backend
+        Authentication handled in the backend
+      </li>
+      <li>
+        Session persistence with refresh token
       </li>
     </ul>
 

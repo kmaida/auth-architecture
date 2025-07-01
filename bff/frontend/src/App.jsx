@@ -11,6 +11,7 @@ function App() {
   const { checkSession, loggedIn } = useAuth();
   const location = useLocation();
 
+  // Check authentication session on initial load and location change
   useEffect(() => {
     checkSession();
   }, [location]);

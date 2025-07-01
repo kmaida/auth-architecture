@@ -46,14 +46,15 @@ const backendURL = process.env.BACKEND_URL;
 
 /*----------- Helpers, middleware, setup ------------*/
 
-// Cookie setup
-app.use(cookieParser());
 // Decode form URL encoded data
 app.use(express.urlencoded({ extended: true }));
+
+// Cookie setup
+app.use(cookieParser());
 const userSession = 'userSession';
 const userToken = 'userToken';
 const refreshToken = 'refreshToken';
-const userInfo = 'userInfo'; // User info is not Http-Only
+const userInfo = 'userInfo'; // User info is not httpOnly (should be accessible to frontend)
 
 // Initialize FusionAuth client
 const client = new FusionAuthClient('noapikeyneeded', fusionAuthURL);
@@ -64,7 +65,7 @@ app.use(cors({
   credentials: true
 }));
 
-// JWKS
+// Get public key from FusionAuth's JSON Web Key Set to verify JWT signatures
 const jwks = jwksClient({
   jwksUri: `${fusionAuthURL}/.well-known/jwks.json`
 });
@@ -80,6 +81,7 @@ const getKey: GetPublicKeyOrSecret = (header, callback) => {
 };
 
 // Helper to promisify JWT verification
+// Params: access token and FusionAuth public key
 function verifyJwtAsync(token: string, getKey: any): Promise<string | JwtPayload | undefined> {
   return new Promise((resolve, reject) => {
     verify(token, getKey, undefined, (err, decoded) => {
@@ -89,28 +91,28 @@ function verifyJwtAsync(token: string, getKey: any): Promise<string | JwtPayload
   });
 }
 
-// Helper to refresh tokens using the refresh token
-// Promisify to ensure proper execution sequence
+// Helper to request new tokens using the refresh token
+// Async to ensure proper execution sequence
 const refreshTokens = async (refreshTokenValue: string) => {
   try {
     const response = await client.exchangeRefreshTokenForAccessToken(
       refreshTokenValue,
       clientId,
       clientSecret,
-      'offline_access',
+      'offline_access', // Scope to request a new refresh token
       ''
     );
     return response.response;
   } catch (err) {
-    console.error('refreshTokens: Failed to refresh tokens:', err);
+    console.error('Failed to refresh tokens:', err);
     return null;
   }
 };
 
-// Verify JWT middleware
-// Runs in checksession and on protected API requests
+// Middleware to verify tokens
+// For checksession and on protected API requests
 // If JWT invalid or expired, check for refresh token 
-// Refresh with FusionAuth if necessary
+// Refresh to get new tokens from FusionAuth if necessary
 const verifyJWT = async (
   userTokenCookie: string,
   refreshTokenCookie?: string,
@@ -118,16 +120,17 @@ const verifyJWT = async (
 ): Promise<{ decoded: string | JwtPayload | undefined, user?: any } | false> => {
   if (userTokenCookie) {
     try {
-      // Verify and decode JWT from userTokenCookie; send back new decoded token
+      // Verify and decode JWT from userToken cookie; return decoded token
+      // Decoded token only for use in backend
       const decodedFromJwt = await verifyJwtAsync(userTokenCookie, await getKey);
       return { decoded: decodedFromJwt };
     } catch (err) {
-      console.log('Invalid or missing access token, attempting to fetch new tokens via refresh token');
+      console.log('Invalid or missing access token: initializing refresh token grant');
       // Fall through to refresh logic
     }
   }
   if (refreshTokenCookie && res) {
-    // Fetch new tokens with exchangeRefreshTokenForAccessToken (see refreshTokens helper above)
+    // Fetch new tokens with FusionAuth SDK's exchangeRefreshTokenForAccessToken (see refreshTokens helper above)
     const newTokens = await refreshTokens(refreshTokenCookie);
 
     if (newTokens && newTokens.access_token) {
@@ -140,13 +143,14 @@ const verifyJWT = async (
       }
 
       try {
-        // Get user info
+        // Get user info by sending access token to FusionAuth's /api/user endpoint
         const userResponse = (await client.retrieveUserUsingJWT(newTokens.access_token)).response;
 
         if (userResponse?.user) {
           // Set userInfo cookie
           res.cookie(userInfo, 'j:' + JSON.stringify(userResponse.user), { sameSite: 'lax', path: '/' });
-
+          
+          // Decode new access token to return it
           const decodedFromJwt = await verifyJwtAsync(newTokens.access_token, await getKey);
           console.log('Tokens and user info refreshed successfully');
           return { decoded: decodedFromJwt, user: userResponse.user };
@@ -155,34 +159,39 @@ const verifyJWT = async (
         console.error('Failed to retrieve user info after refresh:', err);
       }
     } else {
-      console.log('Could not get new tokens upon refresh attempt with authorization server');
+      console.log('Could not get new tokens from FusionAuth using refresh token; user is not authenticated');
     }
   }
+  // If we reach here, the user is not logged in
   return false;
 };
 
 /*----------- GET /auth/checksession ------------*/
 
-// Endpoint to check the user's session and set up PKCE if needed
+// Endpoint to check the user's session, refresh tokens if possible, and set up PKCE if needed
 app.get('/auth/checksession', async (req, res) => {
   const userTokenCookie = req.cookies[userToken];
   const refreshTokenCookie = req.cookies[refreshToken];
 
+  // Check if user is authenticated by verifying JWT and refreshing tokens if necessary
   const verifyResult = await verifyJWT(userTokenCookie, refreshTokenCookie, res);
 
+  // Token verified and decoded
   if (verifyResult && verifyResult.decoded) {
     let user = verifyResult.user;
-    // If user is not present (i.e., not from refresh), try to get from cookie
+    // If no user from token verification, try userInfo cookie
     if (!user) {
       const userInfoCookie = req.cookies[userInfo];
       if (userInfoCookie) {
         try {
+          // If userInfo in cookie, parse it
+          // (Cookie is prefixed with 'j:' to indicate it's a JSON object)
           user = JSON.parse(decodeURIComponent(userInfoCookie).replace(/^j:/, ''));
         } catch (e) {
           user = null;
         }
       }
-      // If still no user, fetch from FusionAuth
+      // If no user in token or cookie, but there IS an access token, fetch user info from FusionAuth
       if (!user && userTokenCookie) {
         try {
           const userResponse = (await client.retrieveUserUsingJWT(userTokenCookie)).response;
@@ -195,17 +204,17 @@ app.get('/auth/checksession', async (req, res) => {
         }
       }
     }
-    // Session checked, user is logged in! Tell the frontend
+    // Session checked, user is logged in; return loggedIn status and user info
     res.status(200).json({ loggedIn: true, user });
-
   } else {
-    // User not authenticated and has no refresh token
-    // Generate a random state value and PKCE challenge in preparation for login
+    // JWT verification failed or user is not authenticated
+    // Generate a random state value and PKCE challenge pair in preparation for login
     const stateValue = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    // Generate code_verifier and code_challenge for PKCE and store in cookie
     const pkcePair = await pkceChallenge();
     res.cookie(userSession, { stateValue, verifier: pkcePair.code_verifier, challenge: pkcePair.code_challenge }, { httpOnly: true });
 
-    // User is not logged in
+    // Return user unauthenticated status
     res.status(200).json({ loggedIn: false });
   }
 });
