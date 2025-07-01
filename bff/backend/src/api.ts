@@ -84,6 +84,7 @@ const verifyJWT = async (userTokenCookie: { access_token: string }) => {
 // Set cookies
 const userSession = 'userSession';
 const userToken = 'userToken';
+const refreshToken = 'refreshToken';
 const userInfo = 'userInfo'; // User info is not Http-Only
 // Initialize FusionAuth client
 const client = new FusionAuthClient('noapikeyneeded', fusionAuthURL);
@@ -129,7 +130,7 @@ app.get('/auth/login', (req, res, next) => {
   }
 
   // TODO: make this production ready by removing the hardcoded localhost and port
-  const oauth2Url = `${fusionAuthURL}/oauth2/authorize?client_id=${clientId}&response_type=code&redirect_uri=http://localhost:${port}/auth/callback&state=${userSessionCookie?.stateValue}&code_challenge=${userSessionCookie?.challenge}&code_challenge_method=S256`;
+  const oauth2Url = `${fusionAuthURL}/oauth2/authorize?client_id=${clientId}&response_type=code&redirect_uri=http://localhost:${port}/auth/callback&state=${userSessionCookie?.stateValue}&code_challenge=${userSessionCookie?.challenge}&code_challenge_method=S256&scope=offline_access`;
 
   res.redirect(302, oauth2Url);
 });
@@ -157,21 +158,25 @@ app.get('/auth/callback', async (req, res, next) => {
   }
   try {
     // Exchange authorization code and code verifier for an access token
-    const accessToken = (await client.exchangeOAuthCodeForAccessTokenUsingPKCE(authCode,
+    const tokenResponse = (await client.exchangeOAuthCodeForAccessTokenUsingPKCE(authCode,
       clientId,
       clientSecret,
       `http://localhost:${port}/auth/callback`, // TODO: for production, this should not be hardcoded as localhost:port
       userSessionCookie.verifier)).response;
 
-    if (!accessToken.access_token) {
+    console.log(tokenResponse);
+
+    if (!tokenResponse.access_token) {
       console.error('Failed to get access token');
       return;
     }
-    // Set cookies for the user session and access token
-    res.cookie(userToken, accessToken, { httpOnly: true })
+    // Set cookie for the user session with value of the full token response
+    res.cookie(userToken, tokenResponse, { httpOnly: true });
+    // Set cookie for refresh token
+    res.cookie(refreshToken, tokenResponse.refresh_token, { httpOnly: true});
 
     // Retrieve user info (authorized by the access token)
-    const userResponse = (await client.retrieveUserUsingJWT(accessToken.access_token)).response;
+    const userResponse = (await client.retrieveUserUsingJWT(tokenResponse.access_token)).response;
     if (!userResponse?.user) {
       console.error('Failed to get user');
       // Redirect user to frontend homepage
@@ -179,6 +184,7 @@ app.get('/auth/callback', async (req, res, next) => {
     }
     // Set user details cookie (not Http-Only, so it can be accessed by the frontend)
     res.cookie(userInfo, userResponse.user);
+
     // Redirect user to frontend homepage
     res.redirect(302, `${process.env.FRONTEND_URL}`);
   } catch (err: any) {
