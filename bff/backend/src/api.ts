@@ -4,7 +4,6 @@ import cookieParser from 'cookie-parser';
 import pkceChallenge from 'pkce-challenge';
 import { GetPublicKeyOrSecret, JwtPayload, verify } from 'jsonwebtoken';
 import jwksClient, { RsaSigningKey } from 'jwks-rsa';
-import * as path from 'path';
 import cors from 'cors';
 
 // Import environment variables
@@ -35,10 +34,15 @@ if (!process.env.FRONTEND_URL) {
   console.error('Missing FRONTEND_URL from .env');
   process.exit();
 }
+if (!process.env.BACKEND_URL) {
+  console.error('Missing BACKEND_URL from .env');
+  process.exit();
+}
 const clientId = process.env.CLIENT_ID;
 const clientSecret = process.env.CLIENT_SECRET;
 const fusionAuthURL = process.env.FUSION_AUTH_URL;
 const frontendURL = process.env.FRONTEND_URL;
+const backendURL = process.env.BACKEND_URL;
 
 /*----------- Helpers, middleware, setup ------------*/
 
@@ -60,6 +64,7 @@ app.use(cors({
   credentials: true
 }));
 
+// JWKS
 const jwks = jwksClient({
   jwksUri: `${fusionAuthURL}/.well-known/jwks.json`
 });
@@ -219,8 +224,7 @@ app.get('/auth/login', (req, res, next) => {
     return;
   }
 
-  // TODO: make this production ready by removing the hardcoded localhost and port
-  const oauth2Url = `${fusionAuthURL}/oauth2/authorize?client_id=${clientId}&response_type=code&redirect_uri=http://localhost:${port}/auth/callback&state=${userSessionCookie?.stateValue}&code_challenge=${userSessionCookie?.challenge}&code_challenge_method=S256&scope=offline_access`;
+  const oauth2Url = `${fusionAuthURL}/oauth2/authorize?client_id=${clientId}&response_type=code&redirect_uri=${backendURL}/auth/callback&state=${userSessionCookie?.stateValue}&code_challenge=${userSessionCookie?.challenge}&code_challenge_method=S256&scope=offline_access`;
 
   res.redirect(302, oauth2Url);
 });
@@ -251,7 +255,7 @@ app.get('/auth/callback', async (req, res, next) => {
     const tokenResponse = (await client.exchangeOAuthCodeForAccessTokenUsingPKCE(authCode,
       clientId,
       clientSecret,
-      `http://localhost:${port}/auth/callback`, // TODO: for production, this should not be hardcoded as localhost:port
+      `${backendURL}/auth/callback`,
       userSessionCookie.verifier)).response;
 
     if (!tokenResponse.access_token) {
@@ -347,5 +351,5 @@ app.all('*', async (req, res) => {
 
 // Start the Express server
 app.listen(port, () => {
-  console.log(`server started at http://localhost:${port}`);
+  console.log(`server started at ${backendURL}`);
 });

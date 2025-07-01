@@ -2,7 +2,7 @@ function HomePage() {
   return (
     <>
     <h1>Backend-for-Frontend Auth</h1>
-    <p>This is a demo of the <strong>Backend-for-Frontend (BFF)</strong> architecture pattern, specifically as described in the <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#name-backend-for-frontend-bff" target="_blank">OAuth 2.0 for Browser-Based Applications</a> specification draft. The backend is a confidential client that handles all of the authentication and authorization interactions with the authorization server. No tokens are exposed to the frontend, preventing JavaScript token theft attacks through the use of <code>HttpOnly</code> session cookies.</p>
+    <p>This is a demo of the <strong>Backend-for-Frontend (BFF)</strong> architecture pattern, specifically as described in the <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#name-backend-for-frontend-bff" target="_blank">OAuth 2.0 for Browser-Based Applications</a> specification draft. The backend is a confidential client that handles all of the authentication and authorization interactions with the authorization server. No tokens are exposed to the frontend, preventing JavaScript token theft attacks through the use of <code>httpOnly</code> session cookies.</p>
 
     <h2>Architecture Overview</h2>
     <ul>
@@ -23,6 +23,19 @@ function HomePage() {
       </li>
     </ul>
 
+    <h2>Features</h2>
+    <ul>
+      <li>
+        User authentication with FusionAuth
+      </li>
+      <li>
+        No tokens exposed to the frontend
+      </li>
+      <li>
+        Access tokens and refresh tokens handled in the backend
+      </li>
+    </ul>
+
     <h2>How BFF Authentication Works</h2>
     <p>Here are all the steps for authentication in this BFF example in explicit detail. With this explanation, you should be able to trace the entire authentication lifecycle through both the backend (where the important stuff takes place) and the frontend (where the user interacts).</p>
     <ol>
@@ -33,19 +46,22 @@ function HomePage() {
         Frontend calls the backend <code>/auth/checksession</code> endpoint with <code>credentials: include</code> to attach cookies, if they exist
       </li>
       <li>
-        Backend checks the user's provided credentials (access token cookie and session cookie), and if present, <a href="https://www.youtube.com/shorts/zRY-ElxVa_U" target="_blank">verifies the JSON Web Token access token</a> (because cookies are <code>HttpOnly</code>, only the backend can use the contents of the cookie)
+        Backend checks the user's provided credentials (access token cookie and refresh token cookie), and if present, <a href="https://www.youtube.com/shorts/zRY-ElxVa_U" target="_blank">verifies the JSON Web Token access token</a> (because cookies are <code>httpOnly</code>, only the backend can use the contents of the cookie)
+      </li>
+      <li>
+        If verification shows that the access token is expired, the backend checks for a refresh token and initiates a <a href="https://datatracker.ietf.org/doc/html/rfc6749#section-1.5" target="_blank">refresh grant</a> to get new tokens, if possible
       </li>
       <li>
         If the user session and access token are valid and not expired, the user's authenticated state is maintained and they are logged into the frontend app
       </li>
       <li>
-        If there are no cookies or the user's session has expired, the backend prepares for an authorization request using <a href="https://datatracker.ietf.org/doc/html/rfc6749#section-4.1" target="_blank">OAuth 2.0 Authorization Code flow</a> with <a href="https://datatracker.ietf.org/doc/html/rfc7636" target="_blank">PKCE</a> by generating a <code>state</code> and...
+        If there are no cookies, the user's session is invalid, and and/or there is no refresh token, the backend prepares for an authorization request using <a href="https://datatracker.ietf.org/doc/html/rfc6749#section-4.1" target="_blank">OAuth 2.0 Authorization Code flow</a> with <a href="https://datatracker.ietf.org/doc/html/rfc7636" target="_blank">PKCE</a> by generating a <code>state</code> and...
       </li>
       <li>
         ...a <code>code_verifier</code> and a hash of the code verifier called a <code>code_challenge</code>, which is created by hashing the verifier with a function called a <code>code_challenge_method</code>
       </li>
       <li>
-        Backend sets an <code>HttpOnly</code> user session cookie with the <code>state</code>, <code>code_verifier</code>, and <code>code_challenge</code>
+        Backend sets an <code>httpOnly</code> user session cookie with the <code>state</code>, <code>code_verifier</code>, and <code>code_challenge</code>
       </li>
       <li>
         Backend returns a response informing the frontend that the user is not authenticated
@@ -63,28 +79,28 @@ function HomePage() {
         Authorization server validates the authorization request, authenticates the user, and redirects to the backend <code>/auth/callback</code> endpoint with a <code>code</code> and the same <code>state</code> it received with the authorization request
       </li>
       <li>
-        Backend verifies the <code>state</code> authorization server returned is the same <code>state</code> the backend sent with the authorization request (steps 5 and 11)
+        Backend verifies the <code>state</code> authorization server returned is the same <code>state</code> the backend sent with the authorization request (steps 6 and 12)
       </li>
       <li>
         Backend sends a token request to the authorization server with the <code>code</code> and <code>code_verifier</code>
       </li>
       <li>
-        Authorization server validates the token request, verifies the <code>code</code> is the same <code>code</code> it sent in step 12, and uses the <code>code_challenge_method</code> to hash the <code>code_verifier</code> and recreate a copy of the <code>code_challenge</code>
+        Authorization server validates the token request, verifies the <code>code</code> is the same <code>code</code> it sent in step 13, and uses the <code>code_challenge_method</code> to hash the <code>code_verifier</code> and recreate a copy of the <code>code_challenge</code>
       </li>
       <li>
-        Authorization server compares its new <code>code_challenge</code> to the backend's <code>code_challenge</code> (steps 6 and 11) and verifies they are identical
+        Authorization server compares its new <code>code_challenge</code> to the backend's <code>code_challenge</code> (steps 7 and 12) and verifies they are identical
       </li>
       <li>
         Authorization server sends an access token to the backend
       </li>
       <li>
-        Backend sets <code>HttpOnly</code> cookies for the user's session and access token 
+        Backend sets <code>httpOnly</code> cookies for the user's session and access token 
       </li>
       <li>
         Backend uses the access token to authorize a request for <code>userInfo</code> from the authorization server
       </li>
       <li>
-        Backend sets the received <code>userInfo</code> in a cookie that is transparent to the frontend (not <code>HttpOnly</code>)
+        Backend sets the received <code>userInfo</code> in a cookie that is transparent to the frontend (not <code>httpOnly</code>)
       </li>
       <li>
         Backend then redirects the user to the frontend where they are now authenticated
@@ -119,10 +135,10 @@ function HomePage() {
         Backend uses middleware to verify the JWT access token in the access token cookie
       </li>
       <li>
-        If the user isn't logged in or there's a problem with the cookie, the backend responds with a <code>401: Unauthorized</code> status
+        If the user isn't logged in or there's a problem with the access token, the backend checks for a refresh token and executes a refresh grant if possible; otherise, it returns a <code>401: Unauthorized</code> status
       </li>
       <li>
-        If the access token is successfully verified, protected data is returned to the frontend
+        If the access token is successfully verified (or the user is successfully reauthenticated through the refresh grant), protected data is returned to the frontend
       </li>
     </ol>
 
