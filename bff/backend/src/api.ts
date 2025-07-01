@@ -81,50 +81,8 @@ function verifyJwtAsync(token: string, getKey: any): Promise<string | JwtPayload
   });
 }
 
-const verifyJWT = async (
-  userTokenCookie: string,
-  refreshTokenCookie?: string,
-  res?: express.Response
-): Promise<{ decoded: string | JwtPayload | undefined, user?: any } | false> => {
-  if (userTokenCookie) {
-    try {
-      const decodedFromJwt = await verifyJwtAsync(userTokenCookie, await getKey);
-      console.log('verifyJWT: access token valid');
-      return { decoded: decodedFromJwt };
-    } catch (err) {
-      console.log('verifyJWT: Invalid or missing access token, attempting refresh', err);
-      // Now fall through to refresh logic
-    }
-  }
-  if (refreshTokenCookie && res) {
-    console.log('verifyJWT: Trying refresh token');
-    const newTokens = await refreshTokens(refreshTokenCookie);
-
-    if (newTokens && newTokens.access_token) {
-      res.cookie(userToken, newTokens.access_token, { httpOnly: true, sameSite: 'lax', path: '/' });
-      if (newTokens.refresh_token) {
-        res.cookie(refreshToken, newTokens.refresh_token, { httpOnly: true, sameSite: 'lax', path: '/' });
-      }
-      try {
-        const userResponse = (await client.retrieveUserUsingJWT(newTokens.access_token)).response;
-        if (userResponse?.user) {
-          res.cookie(userInfo, 'j:' + JSON.stringify(userResponse.user), { sameSite: 'lax', path: '/' });
-          const decodedFromJwt = await verifyJwtAsync(newTokens.access_token, await getKey);
-          console.log('verifyJWT: refreshed successfully');
-          return { decoded: decodedFromJwt, user: userResponse.user };
-        }
-      } catch (err) {
-        console.error('verifyJWT: Failed to retrieve user info after refresh:', err);
-      }
-    } else {
-      console.log('verifyJWT: refreshTokens did not return new tokens');
-    }
-  }
-  console.log('verifyJWT: returning false');
-  return false;
-};
-
 // Helper to refresh tokens using the refresh token
+// Promisify to ensure proper execution sequence
 const refreshTokens = async (refreshTokenValue: string) => {
   try {
     const response = await client.exchangeRefreshTokenForAccessToken(
@@ -139,6 +97,60 @@ const refreshTokens = async (refreshTokenValue: string) => {
     console.error('refreshTokens: Failed to refresh tokens:', err);
     return null;
   }
+};
+
+// Verify JWT middleware
+// Runs in checksession and on protected API requests
+// If JWT invalid or expired, check for refresh token 
+// Refresh with FusionAuth if necessary
+const verifyJWT = async (
+  userTokenCookie: string,
+  refreshTokenCookie?: string,
+  res?: express.Response
+): Promise<{ decoded: string | JwtPayload | undefined, user?: any } | false> => {
+  if (userTokenCookie) {
+    try {
+      // Verify and decode JWT from userTokenCookie; send back new decoded token
+      const decodedFromJwt = await verifyJwtAsync(userTokenCookie, await getKey);
+      return { decoded: decodedFromJwt };
+    } catch (err) {
+      console.log('Invalid or missing access token, attempting to fetch new tokens via refresh token');
+      // Fall through to refresh logic
+    }
+  }
+  if (refreshTokenCookie && res) {
+    // Fetch new tokens with exchangeRefreshTokenForAccessToken (see refreshTokens helper above)
+    const newTokens = await refreshTokens(refreshTokenCookie);
+
+    if (newTokens && newTokens.access_token) {
+      // Set userToken cookie with new access_token (httpOnly)
+      res.cookie(userToken, newTokens.access_token, { httpOnly: true, sameSite: 'lax', path: '/' });
+      
+      if (newTokens.refresh_token) {
+        // Set refreshToken cookie with new refresh_token (httpOnly)
+        res.cookie(refreshToken, newTokens.refresh_token, { httpOnly: true, sameSite: 'lax', path: '/' });
+      }
+
+      try {
+        // Get user info
+        const userResponse = (await client.retrieveUserUsingJWT(newTokens.access_token)).response;
+
+        if (userResponse?.user) {
+          // Set userInfo cookie
+          res.cookie(userInfo, 'j:' + JSON.stringify(userResponse.user), { sameSite: 'lax', path: '/' });
+
+          const decodedFromJwt = await verifyJwtAsync(newTokens.access_token, await getKey);
+          console.log('Tokens and user info refreshed successfully');
+          return { decoded: decodedFromJwt, user: userResponse.user };
+        }
+      } catch (err) {
+        console.error('Failed to retrieve user info after refresh:', err);
+      }
+    } else {
+      console.log('Could not get new tokens upon refresh attempt with authorization server');
+    }
+  }
+  return false;
 };
 
 /*----------- GET /auth/checksession ------------*/
@@ -175,15 +187,17 @@ app.get('/auth/checksession', async (req, res) => {
         }
       }
     }
-    console.log('returning loggedIn: true');
+    // Session checked, user is logged in! Tell the frontend
     res.status(200).json({ loggedIn: true, user });
+
   } else {
-    // Generate a random state value and PKCE challenge
+    // User not authenticated and has no refresh token
+    // Generate a random state value and PKCE challenge in preparation for login
     const stateValue = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
     const pkcePair = await pkceChallenge();
     res.cookie(userSession, { stateValue, verifier: pkcePair.code_verifier, challenge: pkcePair.code_challenge }, { httpOnly: true });
 
-    console.log('returning logged in: false');
+    // User is not logged in
     res.status(200).json({ loggedIn: false });
   }
 });
