@@ -71,16 +71,10 @@ const getKey: GetPublicKeyOrSecret = async (header, callback) => {
   callback(null, signingKey);
 }
 
-// Access token verification middleware
-// Check user's cookie, verify JWT access token signature, and decode the token
-// Decoded access token is only available in the backend; it is never sent to the client
-// Optionally refresh tokens
-import { verify as jwtVerify } from 'jsonwebtoken';
-
 // Helper to promisify JWT verification
 function verifyJwtAsync(token: string, getKey: any): Promise<string | JwtPayload | undefined> {
   return new Promise((resolve, reject) => {
-    jwtVerify(token, getKey, undefined, (err, decoded) => {
+    verify(token, getKey, undefined, (err, decoded) => {
       if (err) return reject(err);
       resolve(decoded);
     });
