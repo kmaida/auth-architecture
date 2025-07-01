@@ -75,7 +75,6 @@ const getKey: GetPublicKeyOrSecret = async (header, callback) => {
 // Check user's cookie, verify JWT access token signature, and decode the token
 // Decoded access token is only available in the backend; it is never sent to the client
 // Optionally refresh tokens
-// Change userToken cookie to store only the access_token string
 const verifyJWT = async (
   userTokenCookie: string,
   refreshTokenCookie?: string,
@@ -114,6 +113,7 @@ const verifyJWT = async (
       await verify(newTokens.access_token, await getKey, undefined, (err, decoded) => {
         decodedFromJwt = decoded;
       });
+      
       console.log('refreshed successfully, authenticated state maintained');
       return decodedFromJwt;
     }
@@ -210,10 +210,10 @@ app.get('/auth/callback', async (req, res, next) => {
       console.error('Failed to get access token');
       return;
     }
-    // Set cookie for the user session with value of the full token response
-    res.cookie(userToken, tokenResponse, { httpOnly: true });
+    // Set cookie for the user session with value of the access token string
+    res.cookie(userToken, tokenResponse.access_token, { httpOnly: true, sameSite: 'lax', path: '/' });
     // Set cookie for refresh token
-    res.cookie(refreshToken, tokenResponse.refresh_token, { httpOnly: true});
+    res.cookie(refreshToken, tokenResponse.refresh_token, { httpOnly: true, sameSite: 'lax', path: '/' });
 
     // Retrieve user info (authorized by the access token)
     const userResponse = (await client.retrieveUserUsingJWT(tokenResponse.access_token)).response;
