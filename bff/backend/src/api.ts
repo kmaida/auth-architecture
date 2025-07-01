@@ -149,8 +149,8 @@ app.get('/auth/callback', async (req, res, next) => {
   // This prevents CSRF attacks
   const userSessionCookie = req.cookies[userSession];
   if (stateFromFusionAuth !== userSessionCookie?.stateValue) {
-    console.log("State doesn't match. uh-oh.");
-    console.log("Saw: " + stateFromFusionAuth + ", but expected: " + userSessionCookie?.stateValue);
+    console.log("Error: state must match to protect against CSRF attacks.");
+    console.log("Received: " + stateFromFusionAuth + ", but expected: " + userSessionCookie?.stateValue);
     // Redirect user to frontend homepage
     res.redirect(302, `${process.env.FRONTEND_URL}`);
     return;
