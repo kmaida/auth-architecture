@@ -129,7 +129,7 @@ function HomePage() {
     </ol>
 
     <h2>How BFF Authorization Works</h2>
-    <p>Fortunately, this is much simpler and shorter than the authentication piece. Once the user is logged in, the access token cookie is already present in the browser.</p>
+    <p>Fortunately, authorizing access to an API (resource server) is much much simpler and shorter once the authentication piece has taken place. Once the user is logged in, the access token cookie is already present in the browser.</p>
     <ol>
       <li>
         User navigates to a frontend page that calls protected resources
