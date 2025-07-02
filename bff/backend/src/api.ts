@@ -26,32 +26,20 @@ const port = process.env.PORT || 4001;
         Authentication API
 ---------------------------------*/
 
-// Validate auth environment variables
-if (!process.env.CLIENT_ID) {
-  console.error('Missing CLIENT_ID from .env');
-  process.exit();
+// Validate and extract required environment variables
+const requiredEnvVars = ['CLIENT_ID', 'CLIENT_SECRET', 'FUSION_AUTH_URL', 'FRONTEND_URL', 'BACKEND_URL'];
+const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
+
+if (missingVars.length > 0) {
+  console.error(`Missing required environment variables: ${missingVars.join(', ')}`);
+  process.exit(1);
 }
-if (!process.env.CLIENT_SECRET) {
-  console.error('Missing CLIENT_SECRET from .env');
-  process.exit();
-}
-if (!process.env.FUSION_AUTH_URL) {
-  console.error('Missing FUSION_AUTH_URL from .env');
-  process.exit();
-}
-if (!process.env.FRONTEND_URL) {
-  console.error('Missing FRONTEND_URL from .env');
-  process.exit();
-}
-if (!process.env.BACKEND_URL) {
-  console.error('Missing BACKEND_URL from .env');
-  process.exit();
-}
-const clientId = process.env.CLIENT_ID;
-const clientSecret = process.env.CLIENT_SECRET;
-const fusionAuthURL = process.env.FUSION_AUTH_URL;
-const frontendURL = process.env.FRONTEND_URL;
-const backendURL = process.env.BACKEND_URL;
+
+const clientId = process.env.CLIENT_ID!;
+const clientSecret = process.env.CLIENT_SECRET!;
+const fusionAuthURL = process.env.FUSION_AUTH_URL!;
+const frontendURL = process.env.FRONTEND_URL!;
+const backendURL = process.env.BACKEND_URL!;
 
 /*----------- Helpers, middleware, setup ------------*/
 
@@ -118,6 +106,67 @@ const refreshTokens = async (refreshTokenValue: string) => {
   }
 };
 
+// Helper to parse user info from cookie
+const parseUserInfoCookie = (userInfoCookie: string): any => {
+  try {
+    // Cookie is prefixed with 'j:' to indicate it's a JSON object
+    return JSON.parse(decodeURIComponent(userInfoCookie).replace(/^j:/, ''));
+  } catch (e) {
+    return null;
+  }
+};
+
+// Helper to fetch user info from FusionAuth and set cookie
+const fetchAndSetUserInfo = async (userTokenCookie: string, res: express.Response): Promise<any> => {
+  try {
+    const userResponse = (await client.retrieveUserUsingJWT(userTokenCookie)).response;
+    if (userResponse?.user) {
+      res.cookie(userInfo, 'j:' + JSON.stringify(userResponse.user), { sameSite: 'lax', path: '/' });
+      return userResponse.user;
+    }
+  } catch (e) {
+    // Silent fail - user will be null
+  }
+  return null;
+};
+
+// Helper to generate state value for OAuth
+const generateStateValue = () => {
+  return Array(6).fill(0).map(() => Math.random().toString(36).substring(2, 15)).join('');
+};
+
+// Helper to set cookies after token refresh
+const setCookiesAfterRefresh = (res: express.Response, tokens: any, user: any) => {
+  res.cookie(userToken, tokens.access_token, { httpOnly: true, sameSite: 'lax', path: '/' });
+  if (tokens.refresh_token) {
+    res.cookie(refreshToken, tokens.refresh_token, { httpOnly: true, sameSite: 'lax', path: '/' });
+  }
+  res.cookie(userInfo, 'j:' + JSON.stringify(user), { sameSite: 'lax', path: '/' });
+};
+
+// Helper to handle refresh token flow
+const handleRefreshToken = async (refreshTokenCookie: string, res: express.Response) => {
+  const newTokens = await refreshTokens(refreshTokenCookie);
+  
+  if (!newTokens?.access_token) {
+    console.log('Could not get new tokens from FusionAuth using refresh token; user is not authenticated');
+    return false;
+  }
+  try {
+    const userResponse = (await client.retrieveUserUsingJWT(newTokens.access_token)).response;
+    
+    if (userResponse?.user) {
+      setCookiesAfterRefresh(res, newTokens, userResponse.user);
+      const decodedFromJwt = await verifyJwtAsync(newTokens.access_token, getKey);
+      console.log('Tokens and user info refreshed successfully');
+      return { decoded: decodedFromJwt, user: userResponse.user };
+    }
+  } catch (err) {
+    console.error('Failed to retrieve user info after refresh:', err);
+  }
+  return false;
+};
+
 // Middleware to verify tokens
 // For checksession and on protected API requests
 // If JWT invalid or expired, check for refresh token 
@@ -127,51 +176,23 @@ const verifyJWT = async (
   refreshTokenCookie?: string,
   res?: express.Response
 ): Promise<{ decoded: string | JwtPayload | undefined, user?: any } | false> => {
+  // Try to verify existing access token first
   if (userTokenCookie) {
     try {
-      // Verify and decode JWT from userToken cookie; return decoded token
-      // Decoded token only for use in backend
-      const decodedFromJwt = await verifyJwtAsync(userTokenCookie, await getKey);
+      const decodedFromJwt = await verifyJwtAsync(userTokenCookie, getKey);
       return { decoded: decodedFromJwt };
     } catch (err) {
       console.log('Invalid or missing access token: initializing refresh token grant');
       // Fall through to refresh logic
     }
   }
+  
+  // If access token invalid/missing, try refresh token
   if (refreshTokenCookie && res) {
-    // Fetch new tokens with FusionAuth SDK's exchangeRefreshTokenForAccessToken (see refreshTokens helper above)
-    const newTokens = await refreshTokens(refreshTokenCookie);
-
-    if (newTokens && newTokens.access_token) {
-      // Set userToken cookie with new access_token (httpOnly)
-      res.cookie(userToken, newTokens.access_token, { httpOnly: true, sameSite: 'lax', path: '/' });
-      
-      if (newTokens.refresh_token) {
-        // Set refreshToken cookie with new refresh_token (httpOnly)
-        res.cookie(refreshToken, newTokens.refresh_token, { httpOnly: true, sameSite: 'lax', path: '/' });
-      }
-
-      try {
-        // Get user info by sending access token to FusionAuth's /api/user endpoint
-        const userResponse = (await client.retrieveUserUsingJWT(newTokens.access_token)).response;
-
-        if (userResponse?.user) {
-          // Set userInfo cookie
-          res.cookie(userInfo, 'j:' + JSON.stringify(userResponse.user), { sameSite: 'lax', path: '/' });
-          
-          // Decode new access token to return it
-          const decodedFromJwt = await verifyJwtAsync(newTokens.access_token, await getKey);
-          console.log('Tokens and user info refreshed successfully');
-          return { decoded: decodedFromJwt, user: userResponse.user };
-        }
-      } catch (err) {
-        console.error('Failed to retrieve user info after refresh:', err);
-      }
-    } else {
-      console.log('Could not get new tokens from FusionAuth using refresh token; user is not authenticated');
-    }
+    return await handleRefreshToken(refreshTokenCookie, res);
   }
-  // If we reach here, the user is not logged in
+  
+  // No valid tokens found
   return false;
 };
 
@@ -185,45 +206,33 @@ app.get('/auth/checksession', async (req, res) => {
   // Check if user is authenticated by verifying JWT and refreshing tokens if necessary
   const verifyResult = await verifyJWT(userTokenCookie, refreshTokenCookie, res);
 
-  // Token verified and decoded
   if (verifyResult && verifyResult.decoded) {
+    // User is authenticated - get user info
     let user = verifyResult.user;
-    // If no user from token verification, try userInfo cookie
+    
     if (!user) {
+      // Try userInfo cookie first
       const userInfoCookie = req.cookies[userInfo];
-      if (userInfoCookie) {
-        try {
-          // If userInfo in cookie, parse it
-          // (Cookie is prefixed with 'j:' to indicate it's a JSON object)
-          user = JSON.parse(decodeURIComponent(userInfoCookie).replace(/^j:/, ''));
-        } catch (e) {
-          user = null;
-        }
-      }
-      // If no user in token or cookie, but there IS an access token, fetch user info from FusionAuth
+      user = userInfoCookie ? parseUserInfoCookie(userInfoCookie) : null;
+      
+      // If still no user and we have a token, fetch from FusionAuth
       if (!user && userTokenCookie) {
-        try {
-          const userResponse = (await client.retrieveUserUsingJWT(userTokenCookie)).response;
-          if (userResponse?.user) {
-            user = userResponse.user;
-            res.cookie(userInfo, 'j:' + JSON.stringify(user), { sameSite: 'lax', path: '/' });
-          }
-        } catch (e) {
-          user = null;
-        }
+        user = await fetchAndSetUserInfo(userTokenCookie, res);
       }
     }
-    // Session checked, user is logged in; return loggedIn status and user info
+
     res.status(200).json({ loggedIn: true, user });
   } else {
-    // JWT verification failed or user is not authenticated
-    // Generate a random state value and PKCE challenge pair in preparation for login
-    const stateValue = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-    // Generate code_verifier and code_challenge for PKCE and store in cookie
-    const pkcePair = await pkceChallenge();
-    res.cookie(userSession, { stateValue, verifier: pkcePair.code_verifier, challenge: pkcePair.code_challenge }, { httpOnly: true });
+    // User is not authenticated - prepare for login
+    const stateValue = generateStateValue();
+    const pkcePair = pkceChallenge();
+    
+    res.cookie(userSession, { 
+      stateValue, 
+      verifier: pkcePair.code_verifier, 
+      challenge: pkcePair.code_challenge 
+    }, { httpOnly: true });
 
-    // Return user unauthenticated status
     res.status(200).json({ loggedIn: false });
   }
 });
