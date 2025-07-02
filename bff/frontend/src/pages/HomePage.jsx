@@ -26,17 +26,20 @@ function HomePage() {
     <h2>Features</h2>
     <ul>
       <li>
-        User authentication with FusionAuth
+        User authentication with FusionAuth using OAuth 2.0 Authorization Code flow with PKCE
+      </li>
+      <li>
+        API authorization with FusionAuth through access token verification
+      </li>
+      <li>
+        Authentication API on the backend
+      </li>
+      <li>
+        Session persistence with refresh token grant
       </li>
       <li>
         No tokens exposed to the frontend
-      </li>
-      <li>
-        Authentication handled in the backend
-      </li>
-      <li>
-        Session persistence with refresh token
-      </li>
+      </li> 
     </ul>
 
     <h2>How BFF Authentication Works</h2>
@@ -49,7 +52,7 @@ function HomePage() {
         Frontend calls the backend <code>/auth/checksession</code> endpoint with <code>credentials: include</code> to attach cookies, if they exist
       </li>
       <li>
-        Backend checks the user's provided credentials (access token cookie and refresh token cookie), and if present, <a href="https://www.youtube.com/shorts/zRY-ElxVa_U" target="_blank">verifies the JSON Web Token access token</a> (because cookies are <code>httpOnly</code>, only the backend can use the contents of the cookie)
+        Backend checks the user's provided credentials (access token cookie and refresh token cookie), and if present, <a href="https://www.youtube.com/shorts/zRY-ElxVa_U" target="_blank">verifies the JSON Web Token access token</a> (these cookies are <code>httpOnly</code>, only the backend can use the contents of the cookie)
       </li>
       <li>
         If verification shows that the access token is expired, the backend checks for a refresh token and initiates a <a href="https://datatracker.ietf.org/doc/html/rfc6749#section-1.5" target="_blank">refresh grant</a> to get new tokens, if possible
@@ -58,7 +61,7 @@ function HomePage() {
         If the user session and access token are valid and not expired, the user's authenticated state is maintained and they are logged into the frontend app
       </li>
       <li>
-        If there are no cookies, the user's session is invalid, and and/or there is no refresh token, the backend prepares for an authorization request using <a href="https://datatracker.ietf.org/doc/html/rfc6749#section-4.1" target="_blank">OAuth 2.0 Authorization Code flow</a> with <a href="https://datatracker.ietf.org/doc/html/rfc7636" target="_blank">PKCE</a> by generating a <code>state</code> and...
+        If there are no cookies, the user's session is invalid, and/or there is no refresh token, the backend prepares for an authorization request using <a href="https://datatracker.ietf.org/doc/html/rfc6749#section-4.1" target="_blank">OAuth 2.0 Authorization Code flow</a> with <a href="https://datatracker.ietf.org/doc/html/rfc7636" target="_blank">PKCE</a> by generating a <code>state</code> and...
       </li>
       <li>
         ...a <code>code_verifier</code> and a hash of the code verifier called a <code>code_challenge</code>, which is created by hashing the verifier with a function called a <code>code_challenge_method</code>
@@ -76,13 +79,13 @@ function HomePage() {
         Frontend sends a request to the backend <code>/auth/login</code> endpoint with appropriate configuration
       </li>
       <li>
-        Backend composes an authorization request with the necessary configuration (e.g., <code>client_id</code>, <code>client_secret</code>, <code>state</code>, etc.) and the <code>code_challenge</code>, and sends the request to the authorization server's (FusionAuth's) <code>/oauth2/authorize</code> endpoint
+        Backend composes an authorization request with the necessary configuration (e.g., <code>client_id</code>, <code>client_secret</code>, <code>state</code>, etc.) and the <code>code_challenge</code>, and sends the request to the authorization server's (<a href="https://fusionauth.io" target="_blank">FusionAuth</a>'s) <code>/oauth2/authorize</code> endpoint
       </li>
       <li>
         Authorization server validates the authorization request, authenticates the user, and redirects to the backend <code>/auth/callback</code> endpoint with a <code>code</code> and the same <code>state</code> it received with the authorization request
       </li>
       <li>
-        Backend verifies the <code>state</code> authorization server returned is the same <code>state</code> the backend sent with the authorization request (steps 6 and 12)
+        Backend verifies the <code>state</code> the authorization server returned is the same <code>state</code> the backend sent with the authorization request (steps 6 and 12)
       </li>
       <li>
         Backend sends a token request to the authorization server with the <code>code</code> and <code>code_verifier</code>
@@ -94,13 +97,13 @@ function HomePage() {
         Authorization server compares its new <code>code_challenge</code> to the backend's <code>code_challenge</code> (steps 7 and 12) and verifies they are identical
       </li>
       <li>
-        Authorization server sends an access token to the backend
+        Authorization server sends an access token and refresh token to the backend
       </li>
       <li>
-        Backend sets <code>httpOnly</code> cookies for the user's session and access token 
+        Backend sets <code>httpOnly</code> cookies for the user's tokens 
       </li>
       <li>
-        Backend uses the access token to authorize a request for <code>userInfo</code> from the authorization server
+        Backend uses the new access token to authorize a request for <code>userInfo</code> from the authorization server
       </li>
       <li>
         Backend sets the received <code>userInfo</code> in a cookie that is transparent to the frontend (not <code>httpOnly</code>)
@@ -109,7 +112,7 @@ function HomePage() {
         Backend then redirects the user to the frontend where they are now authenticated
       </li>
       <li>
-        Frontend reads the data from the transparent <code>userInfo</code> cookie and uses the information to set user-specific variables, etc.
+        Frontend reads the data from the <code>userInfo</code> cookie and uses the information to set user-specific variables, etc.
       </li>
       <li>
         When the user clicks the <code>Log Out</code> button, the frontend sends a request to the backend <code>/auth/logout</code> endpoint
@@ -135,7 +138,7 @@ function HomePage() {
         Frontend makes a request to the backend API for protected resources with <code>credentials: include</code> to attach cookies (for example, to the <code>/api/protected-data</code> endpoint)
       </li>
       <li>
-        Backend uses middleware to verify the JWT access token in the access token cookie
+        Backend uses middleware to verify the JWT access token in the user's token cookie
       </li>
       <li>
         If the user isn't logged in or there's a problem with the access token, the backend checks for a refresh token and executes a refresh grant if possible; otherise, it returns a <code>401: Unauthorized</code> status
@@ -146,7 +149,7 @@ function HomePage() {
     </ol>
 
     <h2>Other Auth Architectures</h2>
-    <p>Backend-for-Frontend is one of three authentication and authorization architecture choices for browser-based apps. The other two architectures are <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#name-token-mediating-backend" target="_blank">Token-Mediating Backend</a> and <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#name-browser-based-oauth-20-clie" target="_blank">Browser-based OAuth 2.0 client</a>. Each architecture has different trade-offs and benefits. Demos of both of these architectures are in progress and will be linked once they are available.</p>
+    <p>Backend-for-Frontend is one of three recommended authentication and authorization architecture choices for browser-based apps. The other two architectures are <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#name-token-mediating-backend" target="_blank">Token-Mediating Backend</a> and <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#name-browser-based-oauth-20-clie" target="_blank">Browser-based OAuth 2.0 client</a>. Each architecture has different trade-offs and benefits. Demos of both of these architectures are in progress and will be linked once they are available.</p>
     </>
   );
 }

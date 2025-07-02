@@ -358,5 +358,5 @@ app.all('*', async (req, res) => {
 
 // Start the Express server
 app.listen(port, () => {
-  console.log(`server started at ${backendURL}`);
+  console.log(`Server started at ${backendURL}`);
 });
