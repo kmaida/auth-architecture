@@ -18,9 +18,12 @@ declare global {
 // Import environment variables
 import * as dotenv from "dotenv";
 dotenv.config();
-
+// Set up app
 const app = express();
 const port = process.env.PORT || 4001;
+
+// Decode form URL encoded data
+app.use(express.urlencoded({ extended: true }));
 
 /*---------------------------------
         Authentication API
@@ -34,20 +37,16 @@ if (missingVars.length > 0) {
   console.error(`Missing required environment variables: ${missingVars.join(', ')}`);
   process.exit(1);
 }
-
 const clientId = process.env.CLIENT_ID!;
 const clientSecret = process.env.CLIENT_SECRET!;
 const fusionAuthURL = process.env.FUSION_AUTH_URL!;
 const frontendURL = process.env.FRONTEND_URL!;
 const backendURL = process.env.BACKEND_URL!;
 
-/*----------- Helpers, middleware, setup ------------*/
-
-// Decode form URL encoded data
-app.use(express.urlencoded({ extended: true }));
-
 // Initialize FusionAuth client
 const client = new FusionAuthClient('noapikeyneeded', fusionAuthURL);
+
+/*----------- Helpers, middleware, setup ------------*/
 
 // Cookie setup
 app.use(cookieParser());
@@ -354,7 +353,7 @@ app.get('/auth/logout/callback', (req, res, next) => {
   res.clearCookie(userInfo);
   res.clearCookie(refreshToken);
   // Redirect user to frontend homepage
-  res.redirect(302, `${process.env.FRONTEND_URL}`);
+  res.redirect(302, frontendURL);
 });
 
 /*----------- GET /auth/userinfo ------------*/
