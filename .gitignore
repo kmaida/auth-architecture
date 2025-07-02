@@ -1,10 +1,5 @@
 node_modules
 build
 npm-debug.log
-.nyc
 .DS_Store
-/test-results/
-/playwright-report/
-/blob-report/
-/playwright/.cache/
 .env

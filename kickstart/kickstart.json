@@ -1,0 +1,178 @@
+{
+  "variables": {
+    "applicationId": "e72dca1d-626c-4f4b-8f36-b7c8c2c0af33",
+    "apiKey": "Fu4JjBzduKpokhm6cvUbCc8gtEsVNaYViSdCyFCbN_zT-0-81dZAcXS3",
+    "asymmetricKeyId": "#{UUID()}",
+    "authArchThemeId": "#{UUID()}",
+    "defaultTenantId": "d7d09513-a3f5-401c-9685-34ab6c552453",
+    "adminUserId": "000000000001",
+    "adminEmail": "admin@example.com",
+    "adminPassword": "password",
+    "userEmail": "user@example.com",
+    "userPassword": "password",
+    "userUserId": "000000000002"
+  },
+  "apiKeys": [
+    {
+      "key": "#{apiKey}",
+      "description": "Unrestricted API key"
+    }
+  ],
+  "requests": [
+    {
+      "method": "POST",
+      "url": "/api/key/generate/#{asymmetricKeyId}",
+      "tenantId": "#{defaultTenantId}",
+      "body": {
+        "key": {
+          "algorithm": "RS256",
+          "name": "RS256 Key",
+          "length": 2048
+        }
+      }
+    },
+    {
+      "method": "PATCH",
+      "url": "api/system-configuration",
+      "body": {
+        "systemConfiguration": {
+          "corsConfiguration": {
+            "allowCredentials": true,
+            "allowedMethods": [
+              "GET",
+              "POST",
+              "OPTIONS"
+            ],
+            "allowedOrigins": [
+              "http://localhost:4001",
+              "http://localhost:5173",
+              "http://localhost:3000",
+              "http://localhost:3001"
+            ],
+            "debug": false,
+            "enabled": true,
+            "preflightMaxAgeInSeconds": 0
+          }
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "url": "/api/user/registration/#{adminUserId}",
+      "body": {
+        "user": {
+          "email": "#{adminEmail}",
+          "password": "#{adminPassword}"
+        },
+        "registration": {
+          "applicationId": "#{FUSIONAUTH_APPLICATION_ID}",
+          "roles": [
+            "admin"
+          ]
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "url": "/api/user/registration/#{adminUserId}",
+      "body": {
+        "registration": {
+          "applicationId": "#{applicationId}"
+        }
+      }
+    },
+    {
+      "method": "PATCH",
+      "url": "/api/tenant/#{defaultTenantId}",
+      "body": {
+        "tenant": {
+          "issuer": "http://localhost:9011"
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "url": "/api/application/#{applicationId}",
+      "tenantId": "#{defaultTenantId}",
+      "body": {
+        "application": {
+          "name": "Auth Architecture",
+          "oauthConfiguration": {
+            "authorizedRedirectURLs": [
+              "http://localhost:4001", 
+              "http://localhost:4001/auth/callback"
+            ],
+            "authorizedOriginURLs": [
+              "http://localhost:4001",
+              "http://localhost:5173"
+            ],
+            "clientSecret": "TC3Kmq9yNgudIHl8BKLJXJFAhd8AmzfTwjJSqAFJJ-k",
+            "logoutURL": "http://localhost:4001/auth/logout/callback",
+            "enabledGrants": [
+              "authorization_code",
+              "refresh_token"
+            ],
+            "oauthConfiguration": {
+              "proofKeyForCodeExchangePolicy": "Required"
+            },
+            "debug": true,
+            "generateRefreshTokens": true,
+            "requireRegistration": true
+          },
+          "jwtConfiguration": {
+            "enabled": true,
+            "accessTokenKeyId": "#{asymmetricKeyId}",
+            "idTokenKeyId": "#{asymmetricKeyId}"
+          },
+          "registrationConfiguration": {
+            "enabled": true
+          }
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "url": "/api/user/registration/#{userUserId}",
+      "body": {
+        "user": {
+          "birthDate": "1984-01-07",
+          "email": "#{userEmail}",
+          "firstName": "Alice",
+          "lastName": "Roberts",
+          "password": "#{userPassword}"
+        },
+        "registration": {
+          "applicationId": "#{applicationId}"
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "url": "/api/theme/#{authArchThemeId}",
+      "body": {
+        "sourceThemeId": "75a068fd-e94b-451a-9aeb-3ddb9a3b5987",
+        "theme": {
+          "name": "Auth Architecture Theme"
+        }
+      }
+    },
+    {
+      "method": "PATCH",
+      "url": "/api/theme/#{authArchThemeId}",
+      "body": {
+        "theme": {
+          "stylesheet": "@{css/styles.css}"
+        }
+      }
+    },
+    {
+      "method": "PATCH",
+      "url": "/api/tenant/#{defaultTenantId}",
+      "body": {
+        "tenant": {
+          "themeId": "#{authArchThemeId}"
+        }
+      }
+    }
+  ]
+}
