@@ -6,6 +6,15 @@ import { GetPublicKeyOrSecret, JwtPayload, verify } from 'jsonwebtoken';
 import jwksClient, { RsaSigningKey } from 'jwks-rsa';
 import cors from 'cors';
 
+// Extend Express Request interface to include 'user'
+declare global {
+  namespace Express {
+    interface Request {
+      user?: any;
+    }
+  }
+}
+
 // Import environment variables
 import * as dotenv from "dotenv";
 dotenv.config();
@@ -323,10 +332,11 @@ app.get('/auth/logout/callback', (req, res, next) => {
         Protected API
 ---------------------------------*/
 
-// Sample API endpoint that returns protected data (replace this with your actual API logic)
-// This endpoint is protected and requires the user to be authenticated
-
-app.get('/api/protected-data', async (req, res) => {
+// Middleware to secure API endpoints
+// This middleware checks if the user is authenticated by verifying the JWT in the userToken cookie
+// If the JWT is invalid or expired, it attempts to refresh the token using the refreshToken
+// If the user is authenticated, it allows the request to proceed to the next middleware or route
+const secure = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
   const userTokenCookie = req.cookies[userToken];
   const refreshTokenCookie = req.cookies[refreshToken];
 
@@ -337,14 +347,22 @@ app.get('/api/protected-data', async (req, res) => {
       message: 'Unauthorized'
     });
   } else {
-    // Data that should be returned to authenticated users
-    // Replace with your actual protected data
-    const protectedData = {
-      message: 'This is protected data that only authenticated users can access.'
-    };
-    // If the user is authenticated, return protected data
-    res.status(200).json(protectedData);
+    // If the user is authenticated, proceed to the next middleware or route handler
+    next();
   }
+}
+
+/*----------- GET /api/protected-data ------------*/
+
+// Sample API endpoint that returns protected data (replace this with your actual API logic)
+// This endpoint is protected and requires the user to be authenticated
+app.get('/api/protected-data', secure, async (req, res) => {
+  // Data that should be returned to authenticated users
+  // Replace with your actual protected data
+  const protectedData = {
+    message: 'This is protected data that only authenticated users can access.'
+  };
+  res.status(200).json(protectedData);
 });
 
 /*---------------------------------
