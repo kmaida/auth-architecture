@@ -57,31 +57,6 @@
       }
     },
     {
-      "method": "POST",
-      "url": "/api/user/registration/#{adminUserId}",
-      "body": {
-        "user": {
-          "email": "#{adminEmail}",
-          "password": "#{adminPassword}"
-        },
-        "registration": {
-          "applicationId": "#{FUSIONAUTH_APPLICATION_ID}",
-          "roles": [
-            "admin"
-          ]
-        }
-      }
-    },
-    {
-      "method": "POST",
-      "url": "/api/user/registration/#{adminUserId}",
-      "body": {
-        "registration": {
-          "applicationId": "#{applicationId}"
-        }
-      }
-    },
-    {
       "method": "PATCH",
       "url": "/api/tenant/#{defaultTenantId}",
       "body": {
@@ -132,22 +107,6 @@
     },
     {
       "method": "POST",
-      "url": "/api/user/registration/#{userUserId}",
-      "body": {
-        "user": {
-          "birthDate": "1984-01-07",
-          "email": "#{userEmail}",
-          "firstName": "Alice",
-          "lastName": "Roberts",
-          "password": "#{userPassword}"
-        },
-        "registration": {
-          "applicationId": "#{applicationId}"
-        }
-      }
-    },
-    {
-      "method": "POST",
       "url": "/api/theme/#{authArchThemeId}",
       "body": {
         "sourceThemeId": "75a068fd-e94b-451a-9aeb-3ddb9a3b5987",
@@ -171,6 +130,47 @@
       "body": {
         "tenant": {
           "themeId": "#{authArchThemeId}"
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "url": "/api/user/registration/#{adminUserId}",
+      "body": {
+        "user": {
+          "email": "#{adminEmail}",
+          "password": "#{adminPassword}"
+        },
+        "registration": {
+          "applicationId": "#{FUSIONAUTH_APPLICATION_ID}",
+          "roles": [
+            "admin"
+          ]
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "url": "/api/user/registration/#{adminUserId}",
+      "body": {
+        "registration": {
+          "applicationId": "#{applicationId}"
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "url": "/api/user/registration/#{userUserId}",
+      "body": {
+        "user": {
+          "birthDate": "1984-01-07",
+          "email": "#{userEmail}",
+          "firstName": "Alice",
+          "lastName": "Roberts",
+          "password": "#{userPassword}"
+        },
+        "registration": {
+          "applicationId": "#{applicationId}"
         }
       }
     }

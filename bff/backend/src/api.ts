@@ -54,10 +54,10 @@ const client = new FusionAuthClient('noapikeyneeded', fusionAuthURL);
 
 // Cookie setup
 app.use(cookieParser());
-const userSession = 'userSession';
-const userToken = 'userToken';
-const refreshToken = 'refreshToken';
-const userInfo = 'userInfo'; // User info is not httpOnly (should be accessible to frontend)
+const userSession = 'us';
+const userToken = 'at';
+const refreshToken = 'rt'; 
+const userInfo = 'ui'; // User info is not httpOnly (should be accessible to frontend)
 
 // Add CORS middleware to allow connections from frontend
 app.use(cors({
