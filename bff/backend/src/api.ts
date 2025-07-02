@@ -196,6 +196,26 @@ const verifyJWT = async (
   return false;
 };
 
+// Middleware to secure API endpoints
+// This middleware checks if the user is authenticated by verifying the JWT in the userToken cookie
+// If the JWT is invalid or expired, it attempts to refresh the token using the refreshToken
+// If the user is authenticated, it allows the request to proceed to the next middleware or route
+const secure = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  const userTokenCookie = req.cookies[userToken];
+  const refreshTokenCookie = req.cookies[refreshToken];
+
+  if (!await verifyJWT(userTokenCookie, refreshTokenCookie, res)) {
+    // If the user is not authenticated, return a 401 Unauthorized response
+    res.status(401).json({ 
+      status: 401,
+      message: 'Unauthorized'
+    });
+  } else {
+    // If the user is authenticated, proceed to the next middleware or route handler
+    next();
+  }
+}
+
 /*----------- GET /auth/checksession ------------*/
 
 // Endpoint to check the user's session, refresh tokens if possible, and set up PKCE if needed
@@ -337,29 +357,30 @@ app.get('/auth/logout/callback', (req, res, next) => {
   res.redirect(302, `${process.env.FRONTEND_URL}`);
 });
 
+/*----------- GET /auth/userinfo ------------*/
+
+// Endpoint the frontend calls to fetch user info
+// Use of this is optional, as the user info is also set in the userInfo cookie
+// This endpoint is protected and requires the user to be authenticated
+
+app.get('/auth/userinfo', secure, (req, res, next) => {
+  const userInfoCookie = req.cookies[userInfo];
+  let nUserInfo;
+  
+  if (userInfoCookie) {
+    // If there's a userInfo cookie, parse it
+    nUserInfo = parseUserInfoCookie(userInfoCookie);
+  } else {
+    // If the user is logged in but there is no userInfo cookie for some
+    // reason (like the user deleted it), fetch user info from FusionAuth
+    nUserInfo = fetchAndSetUserInfo(userInfoCookie, res);
+  }
+  res.json({ userInfo: nUserInfo || null });
+});
+
 /*---------------------------------
         Protected API
 ---------------------------------*/
-
-// Middleware to secure API endpoints
-// This middleware checks if the user is authenticated by verifying the JWT in the userToken cookie
-// If the JWT is invalid or expired, it attempts to refresh the token using the refreshToken
-// If the user is authenticated, it allows the request to proceed to the next middleware or route
-const secure = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-  const userTokenCookie = req.cookies[userToken];
-  const refreshTokenCookie = req.cookies[refreshToken];
-
-  if (!await verifyJWT(userTokenCookie, refreshTokenCookie, res)) {
-    // If the user is not authenticated, return a 401 Unauthorized response
-    res.status(401).json({ 
-      status: 401,
-      message: 'Unauthorized'
-    });
-  } else {
-    // If the user is authenticated, proceed to the next middleware or route handler
-    next();
-  }
-}
 
 /*----------- GET /api/protected-data ------------*/
 
