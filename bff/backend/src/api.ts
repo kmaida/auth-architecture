@@ -280,7 +280,7 @@ app.get('/auth/login', (req, res, next) => {
 
 // Callback route that FusionAuth redirects to after user authentication
 // Must be registered in FusionAuth as a valid redirect URL
-// /auth/callback will never be called by the frontend, it's only for FusionAuth
+// Will never be called by the frontend: only for FusionAuth
 
 app.get('/auth/callback', async (req, res, next) => {
   // Capture query params
@@ -291,44 +291,44 @@ app.get('/auth/callback', async (req, res, next) => {
   // This prevents CSRF attacks
   const userSessionCookie = req.cookies[userSession];
   if (stateFromFusionAuth !== userSessionCookie?.stateValue) {
-    console.log("Error: state mismatch");
-    console.log("Received: " + stateFromFusionAuth + ", but expected: " + userSessionCookie?.stateValue);
-    // Redirect user to frontend homepage
-    res.redirect(302, `${process.env.FRONTEND_URL}`);
+    console.error("State mismatch error - potential CSRF attack");
+    console.error(`Received: ${stateFromFusionAuth}, but expected: ${userSessionCookie?.stateValue}`);
+    res.redirect(302, frontendURL);
     return;
   }
+
   try {
-    // Exchange authorization code and code verifier for tokens (access_token, refresh_token, expires_in)
-    const tokenResponse = (await client.exchangeOAuthCodeForAccessTokenUsingPKCE(authCode,
+    // Exchange authorization code and code verifier for tokens
+    const tokenResponse = (await client.exchangeOAuthCodeForAccessTokenUsingPKCE(
+      authCode,
       clientId,
       clientSecret,
       `${backendURL}/auth/callback`,
-      userSessionCookie.verifier)).response;
+      userSessionCookie.verifier
+    )).response;
 
     if (!tokenResponse.access_token) {
-      console.error('Failed to get access token');
+      console.error('Failed to get access token from FusionAuth');
+      res.redirect(302, frontendURL);
       return;
     }
-    // Set userToken cookie with value of the access token string
-    res.cookie(userToken, tokenResponse.access_token, { httpOnly: true, sameSite: 'lax', path: '/' });
-    // Set refreshToken cookie for refresh token
-    res.cookie(refreshToken, tokenResponse.refresh_token, { httpOnly: true, sameSite: 'lax', path: '/' });
 
     // Retrieve user info from FusionAuth (authorized by the access token)
     const userResponse = (await client.retrieveUserUsingJWT(tokenResponse.access_token)).response;
     if (!userResponse?.user) {
-      console.error('Failed to get user');
-      // Redirect user to frontend homepage
-      res.redirect(302, `${process.env.FRONTEND_URL}`);
+      console.error('Failed to retrieve user information from FusionAuth');
+      res.redirect(302, frontendURL);
+      return;
     }
-    // Set user details cookie (not Http-Only, so it can be accessed by the frontend)
-    res.cookie(userInfo, 'j:' + JSON.stringify(userResponse.user), { sameSite: 'lax', path: '/' });
+
+    // Use helper function to set all cookies at once
+    setCookiesAfterRefresh(res, tokenResponse, userResponse.user);
 
     // Redirect user to frontend homepage
-    res.redirect(302, `${process.env.FRONTEND_URL}`);
+    res.redirect(302, frontendURL);
   } catch (err: any) {
-    console.error(err);
-    res.status(err?.statusCode || 500).json(JSON.stringify({ error: err }));
+    console.error('Error during OAuth callback:', err);
+    res.redirect(302, frontendURL);
   }
 });
 
