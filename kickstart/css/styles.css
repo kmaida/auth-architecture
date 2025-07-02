@@ -70,6 +70,7 @@ main.page-body .row:last-of-type a {
   display: inline-block;
   line-height: normal;
 }
+.panel .form-row.push-top > a,
 .button + a,
 .mt-2 > a {
   color: #9e9eff;
