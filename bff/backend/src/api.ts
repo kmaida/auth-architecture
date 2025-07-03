@@ -8,9 +8,9 @@ import cors from 'cors';
 import { validateEnvironmentVariables } from './utils/config';
 import { 
   COOKIE_NAMES, 
-  parseUserInfoCookie, 
+  parseJsonCookie, 
   fetchAndSetUserInfo, 
-  setCookiesAfterRefresh 
+  setNewCookies 
 } from './utils/cookie-utils';
 import { 
   generateStateValue, 
@@ -66,7 +66,7 @@ app.use(cors({
 // Get public key from FusionAuth's JSON Web Key Set to verify JWT signatures
 const jwks = createJwksClient(fusionAuthURL);
 const getKey = createGetKey(jwks);
-const secure = createSecureMiddleware(client, clientId, clientSecret, getKey, setCookiesAfterRefresh);
+const secure = createSecureMiddleware(client, clientId, clientSecret, getKey, setNewCookies);
 
 /*----------- GET /auth/checksession ------------*/
 
@@ -84,7 +84,7 @@ app.get('/auth/checksession', async (req, res) => {
     clientId,
     clientSecret,
     getKey,
-    setCookiesAfterRefresh
+    setNewCookies
   );
 
   if (verifyResult && verifyResult.decoded) {
@@ -94,7 +94,7 @@ app.get('/auth/checksession', async (req, res) => {
     if (!user) {
       // Try userInfo cookie first
       const userInfoCookie = req.cookies[COOKIE_NAMES.USER_INFO];
-      user = userInfoCookie ? parseUserInfoCookie(userInfoCookie) : null;
+      user = userInfoCookie ? parseJsonCookie(userInfoCookie) : null;
       
       // If still no user and we have a token, fetch from FusionAuth
       if (!user && userTokenCookie) {
@@ -181,7 +181,7 @@ app.get('/auth/callback', async (req, res, next) => {
     }
 
     // Use helper function to set all cookies at once
-    setCookiesAfterRefresh(res, tokenResponse, userResponse.user);
+    setNewCookies(res, tokenResponse, userResponse.user);
 
     // Redirect user to frontend homepage
     res.redirect(302, frontendURL);
@@ -225,7 +225,7 @@ app.get('/auth/userinfo', secure, async (req, res, next) => {
   
   if (userInfoCookie) {
     // If there's a userInfo cookie, parse it
-    nUserInfo = parseUserInfoCookie(userInfoCookie);
+    nUserInfo = parseJsonCookie(userInfoCookie);
   } else {
     // If the user is logged in but there is no userInfo cookie for some
     // reason (like the user deleted it), fetch user info from FusionAuth

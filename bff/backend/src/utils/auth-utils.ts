@@ -42,14 +42,14 @@ export const generateStateValue = () => {
 };
 
 // Handle refresh token flow
-export const handleRefreshToken = async (
+export const handleRefreshGrant = async (
   refreshTokenCookie: string,
   res: express.Response,
   client: FusionAuthClient,
   clientId: string,
   clientSecret: string,
   getKey: GetPublicKeyOrSecret,
-  setCookiesAfterRefresh: (res: express.Response, tokens: any, user: any) => void
+  setNewCookies: (res: express.Response, tokens: any, user: any) => void
 ) => {
   const newTokens = await refreshTokens(refreshTokenCookie, client, clientId, clientSecret);
   
@@ -62,7 +62,7 @@ export const handleRefreshToken = async (
     const userResponse = (await client.retrieveUserUsingJWT(newTokens.access_token)).response;
     
     if (userResponse?.user) {
-      setCookiesAfterRefresh(res, newTokens, userResponse.user);
+      setNewCookies(res, newTokens, userResponse.user);
       const decodedFromJwt = await verifyJwtAsync(newTokens.access_token, getKey);
       console.log('Tokens and user info refreshed successfully');
       return { decoded: decodedFromJwt, user: userResponse.user };
@@ -105,7 +105,7 @@ export const verifyJWT = async (
   clientId: string,
   clientSecret: string,
   getKey: GetPublicKeyOrSecret,
-  setCookiesAfterRefresh: (res: express.Response, tokens: any, user: any) => void
+  setNewCookies: (res: express.Response, tokens: any, user: any) => void
 ): Promise<{ decoded: string | JwtPayload | undefined, user?: any } | false> => {
   // Try to verify existing access token first
   if (userTokenCookie) {
@@ -120,14 +120,14 @@ export const verifyJWT = async (
   
   // If access token invalid/missing, try refresh token
   if (refreshTokenCookie && res) {
-    return await handleRefreshToken(
+    return await handleRefreshGrant(
       refreshTokenCookie, 
       res, 
       client, 
       clientId, 
       clientSecret, 
       getKey, 
-      setCookiesAfterRefresh
+      setNewCookies
     );
   }
 
@@ -139,16 +139,16 @@ export const verifyJWT = async (
         Middleware factory
 ---------------------------------*/
 
-// Factory to create middleware ('secure') to secure API endpoints
+// Factory to create auth middleware ('secure') to secure API endpoints
 // Checks if the user is authenticated by verifying JWT in userToken cookie
-// If JWT is invalid or expired, it attempts to refresh the access token using refresh token
-// If user is authenticated: request proceeds to the next middleware or route
+// If JWT is invalid or expired, attempt to refresh access token using refresh token
+// If user is authenticated: proceed
 export const createSecureMiddleware = (
   client: FusionAuthClient,
   clientId: string,
   clientSecret: string,
   getKey: GetPublicKeyOrSecret,
-  setCookiesAfterRefresh: (res: express.Response, tokens: any, user: any) => void
+  setNewCookies: (res: express.Response, tokens: any, user: any) => void
 ) => {
   return async (req: express.Request, res: express.Response, next: express.NextFunction) => {
     const userTokenCookie = req.cookies[COOKIE_NAMES.USER_TOKEN];
@@ -162,7 +162,7 @@ export const createSecureMiddleware = (
       clientId,
       clientSecret,
       getKey,
-      setCookiesAfterRefresh
+      setNewCookies
     );
     
     if (!verifyResult) {

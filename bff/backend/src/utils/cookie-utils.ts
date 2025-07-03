@@ -3,13 +3,13 @@ import FusionAuthClient from "@fusionauth/typescript-client";
 
 // Cookie name constants
 export const COOKIE_NAMES = {
-  USER_SESSION: 'us',
+  USER_SESSION: 's',
   USER_TOKEN: 'at',
   REFRESH_TOKEN: 'rt',
-  USER_INFO: 'ui'
+  USER_INFO: 'u'
 } as const;
 
-// Cookie options based on environment
+// Cookie-setting options based on environment
 export const COOKIE_OPTIONS = {
   httpOnly: { 
     httpOnly: true, 
@@ -24,11 +24,11 @@ export const COOKIE_OPTIONS = {
   }
 };
 
-// Parse user info from cookie
-export const parseUserInfoCookie = (userInfoCookie: string): any => {
+// Parse cookie and return JSON object
+export const parseJsonCookie = (cookie: string): any => {
   try {
     // Cookie is prefixed with 'j:' to indicate it's a JSON object
-    return JSON.parse(decodeURIComponent(userInfoCookie).replace(/^j:/, ''));
+    return JSON.parse(decodeURIComponent(cookie).replace(/^j:/, ''));
   } catch (e) {
     return null;
   }
@@ -47,13 +47,14 @@ export const fetchAndSetUserInfo = async (
       return userResponse.user;
     }
   } catch (e) {
-    // Silent fail - user will be null
+    // Logic falls through - user will be null
+    console.error('Error fetching user info:', e);
   }
   return null;
 };
 
 // Set cookies after token acquisition/refresh
-export const setCookiesAfterRefresh = (res: express.Response, tokens: any, user: any) => {
+export const setNewCookies = (res: express.Response, tokens: any, user: any) => {
   res.cookie(COOKIE_NAMES.USER_TOKEN, tokens.access_token, COOKIE_OPTIONS.httpOnly);
   if (tokens.refresh_token) {
     res.cookie(COOKIE_NAMES.REFRESH_TOKEN, tokens.refresh_token, COOKIE_OPTIONS.httpOnly);
