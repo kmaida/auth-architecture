@@ -2,6 +2,8 @@ import express from 'express';
 import FusionAuthClient from "@fusionauth/typescript-client";
 
 // Cookie name constants
+// https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#pattern-bff-cookie-security
+// TODO: Update cookie names in production to use __host- prefix for security (doesn't work in dev mode due to localhost)
 export const COOKIE_NAMES = {
   USER_SESSION: 's',
   USER_TOKEN: 'at',
