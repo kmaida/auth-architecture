@@ -1,7 +1,8 @@
 function HomePage() {
   return (
     <>
-    <h1>Backend-for-Frontend Auth</h1>
+    <h1 className="hero-title">Backend-for-Frontend</h1>
+    <p className="hero-subtitle">Secure Backend-for-Frontend Auth Architecture Demo</p>
     <p>This is a demo of the <strong>Backend-for-Frontend (BFF)</strong> architecture pattern, specifically as described in the <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#name-backend-for-frontend-bff" target="_blank">OAuth 2.0 for Browser-Based Applications</a> specification draft. The backend is a confidential client that handles (proxies) all of the authentication and authorization interactions with the authorization server (<a href="https://fusionauth.io" target="_blank">FusionAuth</a>) and resource server. No tokens are exposed to the frontend, preventing JavaScript token theft attacks by using <code>httpOnly</code> session cookies. The frontend never interacts directly with the authorization server. <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#name-mitigated-attack-scenarios" target="_blank">Backend-for-Frontend is the most secure</a> of the three architecture patterns for browser-based apps.</p>
 
     <h2>Architecture Overview</h2>

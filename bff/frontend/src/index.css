@@ -11,6 +11,16 @@
   --border: #334155;
   --shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
 }
+
+/*-- Body background with subtle pattern --*/
+
+body {
+  background-image: 
+    radial-gradient(circle at 1px 1px, rgba(56, 189, 248, 0.03) 1px, transparent 0);
+  background-size: 24px 24px;
+  background-attachment: fixed;
+}
+
 html,
 body,
 #root {
@@ -22,7 +32,7 @@ body,
 /*-- Header styles --*/
 
 header {
-  background: var(--surface);
+  background: linear-gradient(135deg, var(--accent) 0%, var(--surface) 100%);
   box-shadow: var(--shadow);
   font-size: .85rem;
   padding: 1.5rem 2rem;
@@ -31,14 +41,52 @@ header {
   justify-content: space-between;
   border-bottom: 1px solid var(--border);
 }
-.header-auth {
+
+/*-- Site Title/Brand styles --*/
+
+.site-brand {
   display: flex;
   align-items: center;
-  gap: 1rem;
-}
-.header-email {
-  font-weight: 400;
+  gap: 0.75rem;
+  font-size: 1.25rem;
+  font-weight: 700;
   color: var(--primary);
+  text-decoration: none;
+  letter-spacing: -0.02em;
+}
+
+.site-brand-icon {
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  border-radius: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  font-size: 1.1rem;
+  color: #181f2a;
+  box-shadow: 0 2px 8px rgba(56, 189, 248, 0.25);
+}
+
+.site-brand-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+
+.site-brand-main {
+  font-size: 1em;
+  color: #fff;
+}
+
+.site-brand-sub {
+  font-size: 0.6em;
+  font-weight: 500;
+  color: var(--primary);
+  opacity: 0.9;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 /*-- Nav styles --*/
@@ -109,6 +157,31 @@ h1, h2, h3 {
   margin: 0 0 .8em 0;
   text-align: center;
 }
+
+/*-- Hero title with gradient effect --*/
+
+.hero-title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, var(--primary) 0%, #fff 50%, var(--primary-dark) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-align: center;
+  margin: 0 0 1rem 0;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.hero-subtitle {
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: #94a3b8;
+  text-align: center;
+  margin: 0 0 2rem 0;
+  letter-spacing: 0.01em;
+}
+
 h2, h3 {
   margin: 1em 0;
 }
@@ -195,5 +268,19 @@ code {
   }
   .header-nav {
     gap: 1rem;
+  }
+  .site-brand {
+    font-size: 1.1rem;
+  }
+  .site-brand-icon {
+    width: 28px;
+    height: 28px;
+    font-size: 1rem;
+  }
+  .hero-title {
+    font-size: 2rem;
+  }
+  .hero-subtitle {
+    font-size: 1rem;
   }
 }

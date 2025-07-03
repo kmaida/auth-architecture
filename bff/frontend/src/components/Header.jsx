@@ -16,9 +16,18 @@ export default function Header() {
 
   return (
     <header>
+      <NavLink to="/" className="site-brand">
+        <div className="site-brand-icon">
+          <img src="https://fusionauth.io/img/favicon.png" alt="BFF Auth" />
+        </div>
+        <div className="site-brand-text">
+          <span className="site-brand-main">BFF Auth</span>
+          <span className="site-brand-sub">Architecture</span>
+        </div>
+      </NavLink>
       <nav className="header-nav">
         <NavLink to="/" className="nav-link">Home</NavLink>
-        { loggedIn ? <NavLink to="/protected" className="nav-link">Protected Page</NavLink> : ''}
+        { loggedIn ? <NavLink to="/protected" className="nav-link">Protected</NavLink> : ''}
         { loggedIn ? <NavLink to="/profile" className="nav-link">Profile</NavLink> : ''}
       </nav>
       {loggedIn ? (
