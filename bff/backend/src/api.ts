@@ -240,7 +240,7 @@ app.get('/auth/userinfo', secure, async (req, res, next) => {
   } else {
     // If the user is logged in but there is no userInfo cookie for some
     // reason (like the user deleted it), or force refresh is requested,
-    // fetch user info from FusionAuth
+    // fetch user info from FusionAuth and update cookie
     const userTokenCookie = req.cookies[COOKIE_NAMES.USER_TOKEN];
     nUserInfo = await fetchAndSetUserInfo(userTokenCookie, res, client);
   }

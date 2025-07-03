@@ -168,6 +168,7 @@ pre {
   border: 1px solid var(--border);
   color: yellowgreen;
   text-align: center;
+  white-space: pre-wrap;
 }
 code {
   background: #1e293b;
