@@ -41,7 +41,7 @@ export const generateStateValue = () => {
   return Array(6).fill(0).map(() => Math.random().toString(36).substring(2, 15)).join('');
 };
 
-// Handle refresh token flow
+// Handle refresh token grant
 export const handleRefreshGrant = async (
   refreshTokenCookie: string,
   res: express.Response,
@@ -96,7 +96,7 @@ export const createGetKey = (jwks: jwksClient.JwksClient): GetPublicKeyOrSecret 
 // Verify tokens
 // For checksession & middleware for protected API requests
 // If JWT invalid or expired, check for refresh token 
-// Refresh to get new tokens from FusionAuth if necessary
+// Initiate refresh grant to get new tokens from FusionAuth if necessary
 export const verifyJWT = async (
   userTokenCookie: string,
   refreshTokenCookie: string | undefined,

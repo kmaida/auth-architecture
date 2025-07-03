@@ -104,7 +104,7 @@ app.get('/auth/checksession', async (req, res) => {
 
     res.status(200).json({ loggedIn: true, user });
   } else {
-    // User is not authenticated - prepare for login
+    // Create and store state, code verifier, and code challenge for authorization request with PKCE
     const stateValue = generateStateValue();
     const pkcePair = pkceChallenge();
     
@@ -131,6 +131,14 @@ app.get('/auth/login', (req, res, next) => {
     return;
   }
 
+  // Authorization request to FusionAuth: /oauth2/authorize
+  //   client_id: FusionAuth application ID
+  //   response_type: 'code' authorization code flow
+  //   redirect_uri: redirect to the /auth/callback endpoint after authentication
+  //   state: CSRF protection value, must match the one stored in the cookie
+  //   code_challenge: PKCE challenge value
+  //   code_challenge_method: 'S256' for SHA-256 hashing
+  //   scope: 'offline_access' to get a refresh token
   const oauth2Url = `${fusionAuthURL}/oauth2/authorize?client_id=${clientId}&response_type=code&redirect_uri=${backendURL}/auth/callback&state=${userSessionCookie?.stateValue}&code_challenge=${userSessionCookie?.challenge}&code_challenge_method=S256&scope=offline_access`;
 
   res.redirect(302, oauth2Url);
@@ -140,7 +148,7 @@ app.get('/auth/login', (req, res, next) => {
 
 // Callback route that FusionAuth redirects to after user authentication
 // Must be registered in FusionAuth as a valid redirect URL
-// Will never be called by the frontend: only for FusionAuth
+// Will never be used by the frontend: should only be called by FusionAuth
 app.get('/auth/callback', async (req, res, next) => {
   // Capture query params
   const stateFromFusionAuth = `${req.query?.state}`;
@@ -194,7 +202,7 @@ app.get('/auth/callback', async (req, res, next) => {
 /*----------- GET /auth/logout ------------*/
 
 // Initiate user logout
-// Redirects the user to FusionAuth's OAuth2 logout endpoint
+// Redirects the user to FusionAuth's /oauth2/logout endpoint
 app.get('/auth/logout', (req, res, next) => {
   res.redirect(302, `${fusionAuthURL}/oauth2/logout?client_id=${clientId}`);
 });
@@ -205,6 +213,7 @@ app.get('/auth/logout', (req, res, next) => {
 // Clean up cookies and redirect to frontend homepage
 // FusionAuth will redirect to this endpoint after logging out
 // This (full) URL must be registered in FusionAuth as a valid logout redirect URL
+// Will never be used by the frontend: should only be called by FusionAuth
 app.get('/auth/logout/callback', (req, res, next) => {
   res.clearCookie(COOKIE_NAMES.USER_SESSION);
   res.clearCookie(COOKIE_NAMES.USER_TOKEN);
@@ -217,18 +226,21 @@ app.get('/auth/logout/callback', (req, res, next) => {
 /*----------- GET /auth/userinfo ------------*/
 
 // Endpoint the frontend calls to fetch user info
-// Use of this is optional, as the user info is also set in the userInfo cookie
-// This endpoint is protected and requires the user to be authenticated
+// User info is also set in the userInfo cookie on successful login
+// Can be called with '?refresh=true' to get the most up-to-date user info from FusionAuth
+// Protected and requires the user to be authenticated
 app.get('/auth/userinfo', secure, async (req, res, next) => {
   const userInfoCookie = req.cookies[COOKIE_NAMES.USER_INFO];
+  const forceRefresh = req.query.refresh === 'true';
   let nUserInfo;
   
-  if (userInfoCookie) {
-    // If there's a userInfo cookie, parse it
+  if (userInfoCookie && !forceRefresh) {
+    // If there's a userInfo cookie and no force refresh, parse it
     nUserInfo = parseJsonCookie(userInfoCookie);
   } else {
     // If the user is logged in but there is no userInfo cookie for some
-    // reason (like the user deleted it), fetch user info from FusionAuth
+    // reason (like the user deleted it), or force refresh is requested,
+    // fetch user info from FusionAuth
     const userTokenCookie = req.cookies[COOKIE_NAMES.USER_TOKEN];
     nUserInfo = await fetchAndSetUserInfo(userTokenCookie, res, client);
   }
