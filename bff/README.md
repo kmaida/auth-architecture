@@ -1,4 +1,4 @@
-# FusionAuth Backend-for-Frontend Auth Architecture
+# Backend-for-Frontend Auth Architecture
 
 ## Prerequisites
 
@@ -6,9 +6,7 @@
 - [NodeJS](https://nodejs.org) with npm
 - FusionAuth instance set up via instructions in the [root README](https://github.com/kmaida/auth-architecture/blob/main/README.md#fusionauth)
 
-### Backend-for-Frontend (BFF)
-
-#### Backend
+## Backend
 
 1. In your filesystem, open a console in the `bff/backend` folder
 2. Remove the `.sample` suffix from `.env.sample` and make the changes specified in the file
@@ -17,7 +15,7 @@
 
 This is an API; it does not have a browser component.
 
-#### Frontend
+## Frontend
 
 1. In your filesystem, open a console in the `bff/frontend` folder
 2. Remove the `.sample` suffix from `.env.sample` (no changes are needed to this sample file)
