@@ -87,9 +87,8 @@
               "authorization_code",
               "refresh_token"
             ],
-            "oauthConfiguration": {
-              "proofKeyForCodeExchangePolicy": "Required"
-            },
+            "proofKeyForCodeExchangePolicy": "Required",
+            "scopeHandlingPolicy": "Compatibility",
             "debug": true,
             "generateRefreshTokens": true,
             "requireRegistration": true
