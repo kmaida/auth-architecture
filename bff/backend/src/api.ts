@@ -138,8 +138,9 @@ app.get('/auth/login', (req, res, next) => {
   //   state: CSRF protection value, must match the one stored in the cookie
   //   code_challenge: PKCE challenge value
   //   code_challenge_method: 'S256' for SHA-256 hashing
-  //   scope: 'offline_access' to get a refresh token
-  const oauth2Url = `${fusionAuthURL}/oauth2/authorize?client_id=${clientId}&response_type=code&redirect_uri=${backendURL}/auth/callback&state=${userSessionCookie?.stateValue}&code_challenge=${userSessionCookie?.challenge}&code_challenge_method=S256&scope=offline_access`;
+  //   scope: 'offline_access' to get refresh token
+  //   scope: 'openid profile email' to get user info
+  const oauth2Url = `${fusionAuthURL}/oauth2/authorize?client_id=${clientId}&response_type=code&redirect_uri=${backendURL}/auth/callback&state=${userSessionCookie?.stateValue}&code_challenge=${userSessionCookie?.challenge}&code_challenge_method=S256&scope=offline_access%20openid%20profile%20email`;
 
   res.redirect(302, oauth2Url);
 });
@@ -228,6 +229,7 @@ app.get('/auth/logout/callback', (req, res, next) => {
 // Endpoint the frontend calls to fetch user info
 // User info is also set in the userInfo cookie on successful login
 // Can be called with '?refresh=true' to get the most up-to-date user info from FusionAuth
+//   (This is useful if the user's information has changed in FusionAuth but not in the frontend)
 // Protected and requires the user to be authenticated
 app.get('/auth/userinfo', secure, async (req, res, next) => {
   const userInfoCookie = req.cookies[COOKIE_NAMES.USER_INFO];

@@ -26,7 +26,7 @@ export const refreshTokens = async (
       refreshTokenValue,
       clientId,
       clientSecret,
-      'offline_access', // Scope to request a new refresh token
+      'offline_access openid profile email', // Scopes for refresh token and user info
       ''
     );
     return response.response;
