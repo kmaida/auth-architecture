@@ -65,8 +65,6 @@ export function setupAuthRoutes(
       getKey
     );
 
-    console.log('verifyResult:', verifyResult);
-
     if (verifyResult && verifyResult.decoded) {
       // User is authenticated - get user info
       let user = verifyResult.user;
