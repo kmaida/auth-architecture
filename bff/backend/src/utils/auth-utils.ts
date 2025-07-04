@@ -114,9 +114,9 @@ export const createGetKey = (jwks: jwksClient.JwksClient): GetPublicKeyOrSecret 
 // If JWT invalid or expired, check for refresh token 
 // Initiate refresh grant to get new tokens from FusionAuth if necessary
 export const verifyJWT = async (
-  sid: string | undefined,
-  accessToken: string | undefined,
-  refreshToken: string | undefined,
+  sid: string | undefined | null,
+  accessToken: string | undefined | null,
+  refreshToken: string | undefined | null,
   res: express.Response | undefined,
   client: FusionAuthClient,
   clientId: string,

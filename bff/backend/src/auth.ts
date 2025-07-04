@@ -42,11 +42,21 @@ export function setupAuthRoutes(
 
   // Endpoint to check the user's session, refresh tokens if possible, and set up PKCE if needed
   app.get('/auth/checksession', async (req, res) => {
-    const sidCookie = req.cookies[COOKIE_NAMES.USER_SESSION];
+    const sid = getUserSessionIdFromCookie(req);
+    let userSession;
+    let accessToken;
+    let refreshToken;
+
+    if (sid) userSession = await fetchUserSession(sid);
+
+    if (userSession) {
+      accessToken = userSession.at || undefined;
+      refreshToken = userSession.rt || undefined;
+    }
 
     // Check if user is authenticated by verifying JWT and refreshing tokens if necessary
     const verifyResult = await verifyJWT(
-      sidCookie, 
+      sid, 
       accessToken,
       refreshToken, 
       res,
@@ -66,9 +76,9 @@ export function setupAuthRoutes(
         user = userInfoCookie ? parseJsonCookie(userInfoCookie) : null;
         
         // If still no user and we have a session cookie, fetch user info from FusionAuth
-        if (!user && sidCookie) {
+        if (!user && sid) {
           // Get session data from cache (if it exists)
-          const sessionData = await fetchUserSession(sidCookie);
+          const sessionData = await fetchUserSession(sid);
           if (sessionData && sessionData.sid && sessionData.at) {
             user = await fetchAndSetUserInfo(sessionData.sid, sessionData.at, res, client);
           }
