@@ -216,7 +216,12 @@ export const createSecureMiddleware = (
     }
     // Set session cookie with user session ID
     setSessionCookie(res, sid);
-    // Update user session access token and last access time
+    // Update user session access token and last access time in cache
+    await sessionCache.set(sid, {
+      ...userSession,
+      at: accessToken,
+      lastAccess: Date.now()
+    });
 
     // If user is authenticated, proceed 
     next();

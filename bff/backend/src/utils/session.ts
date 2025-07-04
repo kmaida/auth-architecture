@@ -78,7 +78,6 @@ export const fetchUserSession = async (sessionId: string): Promise<UserSession |
     const cachedUser: UserSession | undefined = await sessionCache.get(sessionId);
     if (!!cachedUser) {
       // User session exists in cache
-      console.log('User session found in cache:', cachedUser);
       // Update last accessed time
       cachedUser.last = new Date();
       // Save updated session data back to cache
@@ -148,6 +147,7 @@ export const updateOrCreateUserSession = async (
 // This is used after user session is created or updated with access/refresh tokens
 // It sets the session ID cookie in the response
 export const setSessionCookie = (res: express.Response, sessionId: string) => {
+  console.log('Setting session cookie with ID:', sessionId);
   res.cookie(COOKIE_NAMES.USER_SESSION, sessionId, COOKIE_OPTIONS.httpOnly);
 };
 

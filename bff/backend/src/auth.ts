@@ -66,6 +66,8 @@ export function setupAuthRoutes(
       getKey
     );
 
+    console.log('verifyResult:', verifyResult);
+
     if (verifyResult && verifyResult.decoded) {
       // User is authenticated - get user info
       let user = verifyResult.user;
@@ -177,8 +179,8 @@ export function setupAuthRoutes(
       }
 
       // Create session, set tokens, and set user info in session cache
-      createUserSession(accessToken, refreshToken, userInfo);
-      setSessionCookie(res, accessToken);
+      const newSessionData = await createUserSession(accessToken, refreshToken, userInfo);
+      setSessionCookie(res, newSessionData.sid as string);
 
       // Redirect user to frontend homepage
       res.redirect(302, frontendURL);
