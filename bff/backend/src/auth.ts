@@ -38,12 +38,11 @@ export function setupAuthRoutes(
 
   // Endpoint to check the user's session, refresh tokens if possible, and set up PKCE if needed
   app.get('/auth/checksession', async (req, res) => {
-    const userTokenCookie = req.cookies[COOKIE_NAMES.USER_TOKEN];
-    const refreshTokenCookie = req.cookies[COOKIE_NAMES.REFRESH_TOKEN];
+    const sidCookie = req.cookies[COOKIE_NAMES.USER_SESSION];
 
     // Check if user is authenticated by verifying JWT and refreshing tokens if necessary
     const verifyResult = await verifyJWT(
-      userTokenCookie, 
+      sidCookie, 
       refreshTokenCookie, 
       res,
       client,
@@ -88,10 +87,10 @@ export function setupAuthRoutes(
 
   // Endpoint the frontend calls to initiate the login flow
   app.get('/auth/login', (req, res, next) => {
-    const userSessionCookie = req.cookies[COOKIE_NAMES.USER_SESSION];
+    const pkceCookie = req.cookies[COOKIE_NAMES.PKCE_SESSION];
 
     // Something went wrong
-    if (!userSessionCookie?.stateValue || !userSessionCookie?.challenge) {
+    if (!pkceCookie?.stateValue || !pkceCookie?.challenge) {
       // Redirect user to frontend homepage
       res.redirect(302, frontendURL);
       return;
@@ -106,7 +105,7 @@ export function setupAuthRoutes(
     //   code_challenge_method: 'S256' for SHA-256 hashing
     //   scope: 'offline_access' to get refresh token
     //   scope: 'openid profile email' to get user info
-    const oauth2Url = `${fusionAuthURL}/oauth2/authorize?client_id=${clientId}&response_type=code&redirect_uri=${backendURL}/auth/callback&state=${userSessionCookie?.stateValue}&code_challenge=${userSessionCookie?.challenge}&code_challenge_method=S256&scope=offline_access%20openid%20profile%20email`;
+    const oauth2Url = `${fusionAuthURL}/oauth2/authorize?client_id=${clientId}&response_type=code&redirect_uri=${backendURL}/auth/callback&state=${pkceCookie?.stateValue}&code_challenge=${pkceCookie?.challenge}&code_challenge_method=S256&scope=offline_access%20openid%20profile%20email`;
 
     res.redirect(302, oauth2Url);
   });
@@ -123,10 +122,10 @@ export function setupAuthRoutes(
 
     // Validate state in cookie matches FusionAuth's returned state
     // This prevents CSRF attacks
-    const userSessionCookie = req.cookies[COOKIE_NAMES.USER_SESSION];
-    if (stateFromFusionAuth !== userSessionCookie?.stateValue) {
+    const pkceCookie = req.cookies[COOKIE_NAMES.PKCE_SESSION];
+    if (stateFromFusionAuth !== pkceCookie?.stateValue) {
       console.error("State mismatch error - potential CSRF attack");
-      console.error(`Received: ${stateFromFusionAuth}, but expected: ${userSessionCookie?.stateValue}`);
+      console.error(`Received: ${stateFromFusionAuth}, but expected: ${pkceCookie?.stateValue}`);
       res.redirect(302, frontendURL);
       return;
     }
@@ -138,7 +137,7 @@ export function setupAuthRoutes(
         clientId,
         clientSecret,
         `${backendURL}/auth/callback`,
-        userSessionCookie.verifier
+        pkceCookie.verifier
       )).response;
 
       if (!tokenResponse.access_token) {

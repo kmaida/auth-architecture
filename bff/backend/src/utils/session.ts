@@ -26,6 +26,7 @@ export const sessionCache = createCache({
 // https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#pattern-bff-cookie-security
 // TODO: Update cookie names in production to use __host- prefix for security (doesn't work in dev mode due to localhost)
 export const COOKIE_NAMES = {
+  PKCE_SESSION: 'p',
   USER_SESSION: 's',  // Session ID cookie, used to identify the user session
   USER_INFO: 'u'  // User info cookie, contains user data in JSON format
 } as const;
