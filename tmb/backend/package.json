@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "description": "Express API backend for Frontend (BFF) using FusionAuth",
   "scripts": {
-    "dev": "ts-node-dev --exit-child src/api.ts",
+    "dev": "ts-node-dev --exit-child src/server.ts",
     "build": "tsc",
-    "start": "node dist/api.js"
+    "start": "node dist/server.js"
   },
   "author": "Kim Maida",
   "license": "Apache-2.0",
