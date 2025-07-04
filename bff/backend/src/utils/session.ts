@@ -5,11 +5,11 @@ import { createCache } from 'cache-manager';
 
 // TYPE: user session data
 export type UserSession = {
-  sid: string | null; // Session ID, also used as cache key
-  at: string | null;
-  rt: string | null;
+  sid: string | undefined | null; // Session ID, also used as cache key
+  at: string | undefined | null;
+  rt: string | undefined | null;
   u: any;
-  last: Date | null;
+  last: Date | undefined | null;
 };
 
 // Create user session ID
@@ -93,21 +93,30 @@ export const fetchUserSession = async (sessionId: string): Promise<UserSession |
   return null;
 };
 
-export const createUserSession = async (): Promise<UserSession> => {
+export const createUserSession = async ( 
+  at: string, 
+  rt: string | undefined, 
+  u?: any
+): Promise<UserSession> => {
   // Create a new user session with a unique ID
   // This won't have access or refresh tokens yet
-  const newSessionId = createUserSessionId();
   const userSession = {
-    sid: newSessionId,  // This is also the key in the cache; this is not a FusionAuth user ID
-    at: null,
-    rt: null,
-    u: null,
+    sid: createUserSessionId(),  // This is also the key in the cache; this is not a FusionAuth user ID
+    at: at,
+    rt: rt,
+    u: u || null,
     last: new Date()
   };
   // Store in session cache
-  await sessionCache.set(newSessionId, userSession);
-  // Return session data (new session needs access token and refresh token to be set later)
+  await sessionCache.set(userSession.sid, userSession);
   return userSession;
+};
+
+// Set session cookie after updating user session
+// This is used after user session is created or updated with access/refresh tokens
+// It sets the session ID cookie in the response
+export const setSessionCookie = (res: express.Response, sessionId: string) => {
+  res.cookie(COOKIE_NAMES.USER_SESSION, sessionId, COOKIE_OPTIONS.httpOnly);
 };
 
 // Get (or create) user session data from session cache
@@ -148,8 +157,8 @@ export const createUserSession = async (): Promise<UserSession> => {
 //   // res.cookie(COOKIE_NAMES.USER_SESSION, newUserId, COOKIE_OPTIONS.httpOnly);
 // };
 
-// Set tokens in user session
-export const setUserSessionTokens = async (
+// Update tokens in an existing user session (after refresh; login will always create a new session)
+export const refreshSessionTokens = async (
   sessionId: string, 
   accessToken: string | null, 
   refreshToken: string | null
@@ -193,11 +202,4 @@ export const fetchAndSetUserInfo = async (
     console.error('Error fetching user info:', e);
   }
   return null;
-};
-
-// Set session cookie after updating user session
-// This is used after user session is created or updated with access/refresh tokens
-// It sets the session ID cookie in the response
-export const setSessionCookie = (res: express.Response, sessionId: string) => {
-  res.cookie(COOKIE_NAMES.USER_SESSION, sessionId, COOKIE_OPTIONS.httpOnly);
 };

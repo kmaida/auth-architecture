@@ -5,12 +5,14 @@ import pkceChallenge from 'pkce-challenge';
 // Import utility functions
 import { 
   COOKIE_NAMES, 
+  COOKIE_OPTIONS,
   parseJsonCookie, 
   sessionCache,
   getUserSessionIdFromCookie,
   fetchUserSession,
   createUserSession,
-  setUserSessionTokens,
+  setSessionCookie,
+  refreshSessionTokens,
   fetchAndSetUserInfo
 } from './utils/session';
 import { 
@@ -20,6 +22,7 @@ import {
   verifyJWT,
   createSecureMiddleware
 } from './utils/auth-utils';
+import { get } from "http";
 
 export function setupAuthRoutes(
   app: express.Application,
@@ -64,14 +67,13 @@ export function setupAuthRoutes(
         
         // If still no user and we have a session cookie, fetch user info from FusionAuth
         if (!user && sidCookie) {
-          // 
-          const sessionData = await fetchOrCreateUserSession(sidCookie);
+          // Get session data from cache (if it exists)
+          const sessionData = await fetchUserSession(sidCookie);
           if (sessionData && sessionData.sid && sessionData.at) {
             user = await fetchAndSetUserInfo(sessionData.sid, sessionData.at, res, client);
           }
         }
       }
-
       res.status(200).json({ loggedIn: true, user });
     } else {
       // Create and store state, code verifier, and code challenge for authorization request with PKCE
@@ -82,7 +84,7 @@ export function setupAuthRoutes(
         stateValue, 
         verifier: pkcePair.code_verifier, 
         challenge: pkcePair.code_challenge 
-      }, { httpOnly: true });
+      }, COOKIE_OPTIONS.httpOnly);
 
       res.status(200).json({ loggedIn: false });
     }
@@ -145,22 +147,28 @@ export function setupAuthRoutes(
         pkceCookie.verifier
       )).response;
 
-      if (!tokenResponse.access_token) {
+      const accessToken = tokenResponse.access_token;
+      const refreshToken = tokenResponse.refresh_token;
+      let userInfo;
+
+      if (!accessToken) {
         console.error('Failed to get access token from FusionAuth');
         res.redirect(302, frontendURL);
         return;
       }
 
       // Retrieve user info from FusionAuth (authorized by the access token)
-      const userResponse = (await client.retrieveUserUsingJWT(tokenResponse.access_token)).response;
+      const userResponse = (await client.retrieveUserUsingJWT(accessToken)).response;
       if (!userResponse?.user) {
+        userInfo = null;
         console.error('Failed to retrieve user information from FusionAuth');
-        res.redirect(302, frontendURL);
-        return;
+      } else {
+        userInfo = userResponse.user;
       }
 
-      // Use helper function to set all cookies at once
-      setNewCookies(res, tokenResponse, userResponse.user);
+      // Create session, set tokens, and set user info in session cache
+      createUserSession(accessToken, refreshToken, userInfo);
+      setSessionCookie(res, accessToken);
 
       // Redirect user to frontend homepage
       res.redirect(302, frontendURL);
@@ -186,37 +194,41 @@ export function setupAuthRoutes(
   // This (full) URL must be registered in FusionAuth as a valid logout redirect URL
   // Will never be used by the frontend: should only be called by FusionAuth
   app.get('/auth/logout/callback', (req, res, next) => {
+    // Clear user session from cache
+    const userSessionId = getUserSessionIdFromCookie(req);
+    if (userSessionId) {
+      sessionCache.del(userSessionId).catch(err => {
+        console.error('Error clearing user session from cache:', err);
+      });
+    }
+    // Clear cookies
+    res.clearCookie(COOKIE_NAMES.PKCE_SESSION);
     res.clearCookie(COOKIE_NAMES.USER_SESSION);
-    res.clearCookie(COOKIE_NAMES.USER_TOKEN);
     res.clearCookie(COOKIE_NAMES.USER_INFO);
-    res.clearCookie(COOKIE_NAMES.REFRESH_TOKEN);
+    
     // Redirect user to frontend homepage
     res.redirect(302, frontendURL);
   });
 
   /*----------- GET /auth/userinfo ------------*/
 
-  // Endpoint the frontend calls to fetch user info
-  // User info is also set in the userInfo cookie on successful login
-  // Can be called with '?refresh=true' to get the most up-to-date user info from FusionAuth
-  //   (This is useful if the user's information has changed in FusionAuth but not in the frontend)
+  // Endpoint the frontend calls to fetch the latest user info from FusionAuth
   // Protected and requires the user to be authenticated
   app.get('/auth/userinfo', secure, async (req, res, next) => {
-    const userInfoCookie = req.cookies[COOKIE_NAMES.USER_INFO];
-    const forceRefresh = req.query.refresh === 'true';
-    let nUserInfo;
-    
-    if (userInfoCookie && !forceRefresh) {
-      // If there's a userInfo cookie and no force refresh, parse it
-      nUserInfo = parseJsonCookie(userInfoCookie);
-    } else {
-      // If the user is logged in but there is no userInfo cookie for some
-      // reason (like the user deleted it), or force refresh is requested,
-      // fetch user info from FusionAuth and update cookie
-      const userTokenCookie = req.cookies[COOKIE_NAMES.USER_TOKEN];
-      nUserInfo = await fetchAndSetUserInfo(userTokenCookie, res, client);
+    let freshUserInfo;
+
+    try {
+      const sid = getUserSessionIdFromCookie(req);
+      const userSession = sid ? await fetchUserSession(sid) : null;
+
+      if (sid && userSession && userSession.at) {
+        // Fetch and set user info from FusionAuth
+        freshUserInfo = await fetchAndSetUserInfo(sid, userSession.at, res, client);
+      }
+    } catch (err: any) {
+      console.error('Error fetching user info:', err);
     }
-    res.json({ userInfo: nUserInfo || null });
+    res.json({ userInfo: freshUserInfo || null });
   });
 
   return secure; // Return the secure middleware to be used by protected routes
