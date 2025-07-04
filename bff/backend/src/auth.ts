@@ -6,9 +6,12 @@ import pkceChallenge from 'pkce-challenge';
 import { 
   COOKIE_NAMES, 
   parseJsonCookie, 
-  fetchAndSetUserInfo, 
-  setNewCookies 
-} from './utils/cookie-utils';
+  sessionCache,
+  getUserSessionIdFromCookie,
+  fetchOrCreateUserSession,
+  setUserSessionTokens,
+  fetchAndSetUserInfo
+} from './utils/session';
 import { 
   generateStateValue, 
   createJwksClient,
