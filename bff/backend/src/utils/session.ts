@@ -89,7 +89,7 @@ export const fetchUserSession = async (sessionId: string): Promise<UserSession |
   } catch (error) {
     console.error('Error fetching user session from cache:', error);
   }
-  // If no session found, return null (this shouldn't happen if session management is working correctly)
+  // Return null if no session is found or an error occurs
   return null;
 };
 
@@ -111,8 +111,8 @@ export const createUserSession = async (): Promise<UserSession> => {
 };
 
 // Get (or create) user session data from session cache
-// @TODO: this is probably managing too many responsibilities
-// Fetching the session should probably be separated from creating a new session
+// @deprecated: this is managing too many responsibilities
+// Fetching the session is now separated from creating a new session
 // export const fetchOrCreateUserSession = async (sessionId?: string): Promise<UserSession> => {
 //   let userSession: UserSession;
 
@@ -155,7 +155,10 @@ export const setUserSessionTokens = async (
   refreshToken: string | null
 ): Promise<UserSession> => {
   // Fetch existing user session from cache
-  const userSession = await fetchOrCreateUserSession(sessionId);
+  const userSession = await fetchUserSession(sessionId);
+  if (!userSession) {
+    throw new Error(`User session not found for sessionId: ${sessionId}`);
+  }
   // Update access and refresh tokens
   userSession.at = accessToken;
   userSession.rt = refreshToken;
