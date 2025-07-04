@@ -12,7 +12,6 @@ import {
   fetchUserSession,
   createUserSession,
   setSessionCookie,
-  refreshSessionTokens,
   fetchAndSetUserInfo
 } from './utils/session';
 import { 
@@ -180,7 +179,7 @@ export function setupAuthRoutes(
 
       // Create session, set tokens, and set user info in session cache
       const newSessionData = await createUserSession(accessToken, refreshToken, userInfo);
-      setSessionCookie(res, newSessionData.sid as string);
+      setSessionCookie(req, res, newSessionData.sid as string);
 
       // Redirect user to frontend homepage
       res.redirect(302, frontendURL);

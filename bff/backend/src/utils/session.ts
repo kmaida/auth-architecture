@@ -146,8 +146,13 @@ export const updateOrCreateUserSession = async (
 // Set session cookie after updating user session
 // This is used after user session is created or updated with access/refresh tokens
 // It sets the session ID cookie in the response
-export const setSessionCookie = (res: express.Response, sessionId: string) => {
+export const setSessionCookie = (req: express.Request, res: express.Response, sessionId: string) => {
   console.log('Setting session cookie with ID:', sessionId);
+  if (req.cookies[COOKIE_NAMES.USER_SESSION] === sessionId) {
+    // If the session ID is already set in the cookie, no need to update
+    return;
+  }
+  // Set the session cookie with the user session ID
   res.cookie(COOKIE_NAMES.USER_SESSION, sessionId, COOKIE_OPTIONS.httpOnly);
 };
 
