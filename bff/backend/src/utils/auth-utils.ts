@@ -69,7 +69,7 @@ export const handleRefreshGrant = async (
       if (userSession) {
         // Update user session with new tokens
         userSession.at = newTokens.access_token;
-        userSession.rt = newTokens.refresh_token;
+        userSession.rt = newTokens.refresh_token ?? null;
         userSession.u = userResponse.user; // Update user info in session
         userSession.last = new Date();
         // Update session cache with new user session
@@ -123,8 +123,14 @@ export const verifyJWT = async (
   clientSecret: string,
   getKey: GetPublicKeyOrSecret
 ): Promise<{ decoded: string | JwtPayload | undefined, user?: any } | false> => {
+  // Validate inputs
+  if (!isValidSessionId(sid)) {
+    console.log('Invalid session ID provided to verifyJWT');
+    return false;
+  }
+
   // Try to verify existing access token first
-  if (accessToken) {
+  if (isValidJWT(accessToken)) {
     try {
       const decodedFromJwt = await verifyJwtAsync(accessToken, getKey);
       return { decoded: decodedFromJwt };
@@ -135,9 +141,9 @@ export const verifyJWT = async (
   }
   
   // If access token invalid/missing, try refresh token
-  if (refreshToken && res) {
+  if (refreshToken && res && sid) {
     return await handleRefreshGrant(
-      sid as string,
+      sid,
       refreshToken, 
       res, 
       client, 
@@ -226,4 +232,13 @@ export const createSecureMiddleware = (
     // If user is authenticated, proceed 
     next();
   };
+};
+
+// Input validation helpers
+export const isValidSessionId = (sessionId: string | undefined | null): sessionId is string => {
+  return typeof sessionId === 'string' && sessionId.length > 0 && /^[a-f0-9]{64}$/.test(sessionId);
+};
+
+export const isValidJWT = (token: string | undefined | null): token is string => {
+  return typeof token === 'string' && token.length > 0 && token.split('.').length === 3;
 };

@@ -3,23 +3,27 @@ import FusionAuthClient from "@fusionauth/typescript-client";
 import crypto from 'crypto';
 import { createCache } from 'cache-manager';
 
+// Configuration constants
+const SESSION_TTL_SECONDS = 43200; // 12 hours
+const SESSION_ID_BYTES = 32;
+
 // TYPE: user session data
-export type UserSession = {
-  sid: string | undefined | null; // Session ID, also used as cache key
-  at: string | undefined | null;
-  rt: string | undefined | null;
-  u: any;
-  last: Date | undefined | null;
-};
+export interface UserSession {
+  sid: string; // Session ID, also used as cache key
+  at: string | null;
+  rt: string | null;
+  u: any; // Consider creating a proper User interface
+  last: Date;
+}
 
 // Create user session ID
 const createUserSessionId = () => {
-  return crypto.randomBytes(32).toString('hex');
+  return crypto.randomBytes(SESSION_ID_BYTES).toString('hex');
 };
 
 // Create cache for user sessions
 export const sessionCache = createCache({
-  ttl: 43200 * 1000 // @TODO: this should be configured in .env vars and match FusionAuth's settings
+  ttl: SESSION_TTL_SECONDS * 1000 // Convert to milliseconds
 });
 
 // Cookie name constants
@@ -73,10 +77,16 @@ export const getUserSessionIdFromCookie = (req: express.Request): string | null 
 };
 
 export const fetchUserSession = async (sessionId: string): Promise<UserSession | null> => {
+  // Validate session ID format
+  if (!sessionId || typeof sessionId !== 'string' || sessionId.length === 0) {
+    console.warn('Invalid session ID provided to fetchUserSession');
+    return null;
+  }
+
   // Look for the cached session
   try {
     const cachedUser: UserSession | undefined = await sessionCache.get(sessionId);
-    if (!!cachedUser) {
+    if (cachedUser) {
       // User session exists in cache
       // Update last accessed time
       cachedUser.last = new Date();
@@ -99,10 +109,10 @@ export const createUserSession = async (
 ): Promise<UserSession> => {
   // Create a new user session with a unique ID
   // This won't have access or refresh tokens yet
-  const userSession = {
+  const userSession: UserSession = {
     sid: createUserSessionId(),  // This is also the key in the cache; this is not a FusionAuth user ID
     at: at,
-    rt: rt,
+    rt: rt || null,
     u: u || null,
     last: new Date()
   };
@@ -118,7 +128,6 @@ export const updateOrCreateUserSession = async (
   u?: any,
   last?: Date
 ): Promise<UserSession|undefined> => {
-  let returnSession;
   try {
     // If session ID is provided, try to fetch existing session
     if (sid) {
@@ -131,16 +140,20 @@ export const updateOrCreateUserSession = async (
         existingSession.last = last || new Date();
         // Save updated session back to cache
         await sessionCache.set(sid, existingSession);
-        returnSession = existingSession;
+        return existingSession;
       } else {
         // If no session found, create a new one
-        returnSession = await createUserSession(at, rt, u);
+        return await createUserSession(at, rt, u);
       }
+    } else {
+      // If no session ID provided, create a new one
+      return await createUserSession(at, rt, u);
     }
   } catch (error) {
     console.error('Error updating or creating user session:', error);
+    // Return undefined to indicate failure
+    return undefined;
   }
-  return returnSession;
 }
 
 // Set session cookie after updating user session
