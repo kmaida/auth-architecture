@@ -8,7 +8,8 @@ import {
   parseJsonCookie, 
   sessionCache,
   getUserSessionIdFromCookie,
-  fetchOrCreateUserSession,
+  fetchUserSession,
+  createUserSession,
   setUserSessionTokens,
   fetchAndSetUserInfo
 } from './utils/session';
@@ -61,9 +62,13 @@ export function setupAuthRoutes(
         const userInfoCookie = req.cookies[COOKIE_NAMES.USER_INFO];
         user = userInfoCookie ? parseJsonCookie(userInfoCookie) : null;
         
-        // If still no user and we have a token, fetch from FusionAuth
-        if (!user && userTokenCookie) {
-          user = await fetchAndSetUserInfo(userTokenCookie, res, client);
+        // If still no user and we have a session cookie, fetch user info from FusionAuth
+        if (!user && sidCookie) {
+          // 
+          const sessionData = await fetchOrCreateUserSession(sidCookie);
+          if (sessionData && sessionData.sid && sessionData.at) {
+            user = await fetchAndSetUserInfo(sessionData.sid, sessionData.at, res, client);
+          }
         }
       }
 
@@ -73,7 +78,7 @@ export function setupAuthRoutes(
       const stateValue = generateStateValue();
       const pkcePair = pkceChallenge();
       
-      res.cookie(COOKIE_NAMES.USER_SESSION, { 
+      res.cookie(COOKIE_NAMES.PKCE_SESSION, { 
         stateValue, 
         verifier: pkcePair.code_verifier, 
         challenge: pkcePair.code_challenge 

@@ -72,14 +72,9 @@ export const getUserSessionIdFromCookie = (req: express.Request): string | null 
   return null;
 };
 
-// Get (or create) user session data from session cache
-// @TODO: this is probably managing too many responsibilities
-// Fetching the session should probably be separated from creating a new session
-export const fetchOrCreateUserSession = async (sessionId?: string): Promise<UserSession> => {
-  let userSession: UserSession;
-
-  // If a sessionId was provided, look for the cached session
-  if (sessionId) {
+export const fetchUserSession = async (sessionId: string): Promise<UserSession | null> => {
+  // Look for the cached session
+  try {
     const cachedUser: UserSession | undefined = await sessionCache.get(sessionId);
     if (!!cachedUser) {
       // User session exists in cache
@@ -89,13 +84,20 @@ export const fetchOrCreateUserSession = async (sessionId?: string): Promise<User
       // Save updated session data back to cache
       await sessionCache.set(sessionId, cachedUser);
       // Return cached user session data
-      userSession = cachedUser;
-      return userSession;
+      return cachedUser;
     }
+  } catch (error) {
+    console.error('Error fetching user session from cache:', error);
   }
-  // If no sessionId provided or no user session exists, create a new user session
+  // If no session found, return null (this shouldn't happen if session management is working correctly)
+  return null;
+};
+
+export const createUserSession = async (): Promise<UserSession> => {
+  // Create a new user session with a unique ID
+  // This won't have access or refresh tokens yet
   const newSessionId = createUserSessionId();
-  userSession = {
+  const userSession = {
     sid: newSessionId,  // This is also the key in the cache; this is not a FusionAuth user ID
     at: null,
     rt: null,
@@ -106,9 +108,45 @@ export const fetchOrCreateUserSession = async (sessionId?: string): Promise<User
   await sessionCache.set(newSessionId, userSession);
   // Return session data (new session needs access token and refresh token to be set later)
   return userSession;
-  // @TODO: set session cookie in response: need the response object to be passed in
-  // res.cookie(COOKIE_NAMES.USER_SESSION, newUserId, COOKIE_OPTIONS.httpOnly);
 };
+
+// Get (or create) user session data from session cache
+// @TODO: this is probably managing too many responsibilities
+// Fetching the session should probably be separated from creating a new session
+// export const fetchOrCreateUserSession = async (sessionId?: string): Promise<UserSession> => {
+//   let userSession: UserSession;
+
+//   // If a sessionId was provided, look for the cached session
+//   if (sessionId) {
+//     const cachedUser: UserSession | undefined = await sessionCache.get(sessionId);
+//     if (!!cachedUser) {
+//       // User session exists in cache
+//       console.log('User session found in cache:', cachedUser);
+//       // Update last accessed time
+//       cachedUser.last = new Date();
+//       // Save updated session data back to cache
+//       await sessionCache.set(sessionId, cachedUser);
+//       // Return cached user session data
+//       userSession = cachedUser;
+//       return userSession;
+//     }
+//   }
+//   // If no sessionId provided or no user session exists, create a new user session
+//   const newSessionId = createUserSessionId();
+//   userSession = {
+//     sid: newSessionId,  // This is also the key in the cache; this is not a FusionAuth user ID
+//     at: null,
+//     rt: null,
+//     u: null,
+//     last: new Date()
+//   };
+//   // Store in session cache
+//   await sessionCache.set(newSessionId, userSession);
+//   // Return session data (new session needs access token and refresh token to be set later)
+//   return userSession;
+//   // @TODO: set session cookie in response: need the response object to be passed in
+//   // res.cookie(COOKIE_NAMES.USER_SESSION, newUserId, COOKIE_OPTIONS.httpOnly);
+// };
 
 // Set tokens in user session
 export const setUserSessionTokens = async (
