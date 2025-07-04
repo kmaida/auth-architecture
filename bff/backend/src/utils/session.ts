@@ -112,50 +112,44 @@ export const createUserSession = async (
   return userSession;
 };
 
+export const updateOrCreateUserSession = async (
+  at: string, 
+  rt: string,
+  sid?: string | '',
+  u?: any,
+  last?: Date
+): Promise<UserSession|undefined> => {
+  let returnSession;
+  try {
+    // If session ID is provided, try to fetch existing session
+    if (sid) {
+      const existingSession = await fetchUserSession(sid);
+      if (existingSession) {
+        // Update existing session with new access/refresh tokens and user info
+        existingSession.at = at;
+        existingSession.rt = rt;
+        existingSession.u = u || existingSession.u; // Keep existing user info if not provided
+        existingSession.last = last || new Date();
+        // Save updated session back to cache
+        await sessionCache.set(sid, existingSession);
+        returnSession = existingSession;
+      } else {
+        // If no session found, create a new one
+        returnSession = await createUserSession(at, rt, u);
+      }
+    }
+  } catch (error) {
+    console.error('Error updating or creating user session:', error);
+  }
+  return returnSession;
+}
+
 // Set session cookie after updating user session
 // This is used after user session is created or updated with access/refresh tokens
 // It sets the session ID cookie in the response
 export const setSessionCookie = (res: express.Response, sessionId: string) => {
   res.cookie(COOKIE_NAMES.USER_SESSION, sessionId, COOKIE_OPTIONS.httpOnly);
 };
-
-// Get (or create) user session data from session cache
-// @deprecated: this is managing too many responsibilities
-// Fetching the session is now separated from creating a new session
-// export const fetchOrCreateUserSession = async (sessionId?: string): Promise<UserSession> => {
-//   let userSession: UserSession;
-
-//   // If a sessionId was provided, look for the cached session
-//   if (sessionId) {
-//     const cachedUser: UserSession | undefined = await sessionCache.get(sessionId);
-//     if (!!cachedUser) {
-//       // User session exists in cache
-//       console.log('User session found in cache:', cachedUser);
-//       // Update last accessed time
-//       cachedUser.last = new Date();
-//       // Save updated session data back to cache
-//       await sessionCache.set(sessionId, cachedUser);
-//       // Return cached user session data
-//       userSession = cachedUser;
-//       return userSession;
-//     }
-//   }
-//   // If no sessionId provided or no user session exists, create a new user session
-//   const newSessionId = createUserSessionId();
-//   userSession = {
-//     sid: newSessionId,  // This is also the key in the cache; this is not a FusionAuth user ID
-//     at: null,
-//     rt: null,
-//     u: null,
-//     last: new Date()
-//   };
-//   // Store in session cache
-//   await sessionCache.set(newSessionId, userSession);
-//   // Return session data (new session needs access token and refresh token to be set later)
-//   return userSession;
-//   // @TODO: set session cookie in response: need the response object to be passed in
-//   // res.cookie(COOKIE_NAMES.USER_SESSION, newUserId, COOKIE_OPTIONS.httpOnly);
-// };
 
 // Update tokens in an existing user session (after refresh; login will always create a new session)
 export const refreshSessionTokens = async (

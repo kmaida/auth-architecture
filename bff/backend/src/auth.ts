@@ -36,7 +36,7 @@ export function setupAuthRoutes(
   // Get public key from FusionAuth's JSON Web Key Set to verify JWT signatures
   const jwks = createJwksClient(fusionAuthURL);
   const getKey = createGetKey(jwks);
-  const secure = createSecureMiddleware(client, clientId, clientSecret, getKey, setNewCookies);
+  const secure = createSecureMiddleware(client, clientId, clientSecret, getKey);
 
   /*----------- GET /auth/checksession ------------*/
 
@@ -47,13 +47,13 @@ export function setupAuthRoutes(
     // Check if user is authenticated by verifying JWT and refreshing tokens if necessary
     const verifyResult = await verifyJWT(
       sidCookie, 
-      refreshTokenCookie, 
+      accessToken,
+      refreshToken, 
       res,
       client,
       clientId,
       clientSecret,
-      getKey,
-      setNewCookies
+      getKey
     );
 
     if (verifyResult && verifyResult.decoded) {
