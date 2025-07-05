@@ -1,4 +1,4 @@
-# Token-Mediating Backend - Backend
+# Token-Mediating Backend: Backend
 
 1. In your filesystem, open a console in the `auth-architecture/tmb/backend` folder
 2. Remove the `.sample` suffix from `.env.sample` and make the changes specified in the file
