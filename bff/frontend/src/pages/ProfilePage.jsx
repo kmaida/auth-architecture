@@ -6,7 +6,7 @@ function ProfilePage() {
   const apiUrl = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
-    fetch(`${apiUrl}/auth/userinfo?refresh=true`, {
+    fetch(`${apiUrl}/auth/userinfo`, {
       credentials: 'include', // send cookies
     })
       .then((res) => {

@@ -28,9 +28,22 @@ const port = process.env.PORT || 4001;
 // Decode form URL encoded data
 app.use(express.urlencoded({ extended: true }));
 
-// Simple request logging middleware
+// Parse JSON bodies
+app.use(express.json());
+
+// Enhanced request logging middleware
 app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+  // Skip logging for favicon and other browser automatic requests
+  if (req.path === '/favicon.ico' || req.path.includes('.map')) {
+    return next();
+  }
+  
+  // Show different info for preflight vs actual requests
+  if (req.method === 'OPTIONS') {
+    console.log(`${new Date().toISOString()} - PREFLIGHT ${req.path}`);
+  } else {
+    console.log(`${new Date().toISOString()} - ${req.method} ${req.path}${req.query && Object.keys(req.query).length ? ` (query: ${JSON.stringify(req.query)})` : ''}`);
+  }
   next();
 });
 
@@ -59,7 +72,26 @@ const authApi = setupAuthRoutes(app, client, clientId, clientSecret, fusionAuthU
 // Set up protected API routes
 api(app, authApi);
 
+/*----------- Health check endpoint ------------*/
+
+app.get('/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'ok', 
+    timestamp: new Date().toISOString(),
+    service: 'tmb-backend' 
+  });
+});
+
 /*----------- Non-specified routes ------------*/
+
+// Handle API routes that don't exist
+app.all('/api/*', (req, res) => {
+  res.status(404).json({ error: 'API endpoint not found' });
+});
+
+app.all('/auth/*', (req, res) => {
+  res.status(404).json({ error: 'Auth endpoint not found' });
+});
 
 // Redirect all other un-named routes to the frontend homepage
 app.all('*', async (req, res) => {

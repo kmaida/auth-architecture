@@ -31,9 +31,19 @@ app.use(express.urlencoded({ extended: true }));
 // Parse JSON bodies
 app.use(express.json());
 
-// Simple request logging middleware
+// Enhanced request logging middleware
 app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+  // Skip logging for favicon and other browser automatic requests
+  if (req.path === '/favicon.ico' || req.path.includes('.map')) {
+    return next();
+  }
+  
+  // Show different info for preflight vs actual requests
+  if (req.method === 'OPTIONS') {
+    console.log(`${new Date().toISOString()} - PREFLIGHT ${req.path}`);
+  } else {
+    console.log(`${new Date().toISOString()} - ${req.method} ${req.path}${req.query && Object.keys(req.query).length ? ` (query: ${JSON.stringify(req.query)})` : ''}`);
+  }
   next();
 });
 
