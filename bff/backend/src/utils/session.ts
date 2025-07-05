@@ -30,27 +30,31 @@ export const sessionCache = createCache({
   ttl: REFRESH_TTL * 1000 // Convert to milliseconds
 });
 
-// Cookie name constants
 // https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#pattern-bff-cookie-security
-// TODO: Update cookie names in production to use __host- prefix for security (doesn't work in dev mode due to localhost)
+
+// Use __host- prefix in production for security
+const COOKIE_PREFIX = process.env.ENVIRONMENT === 'prod' ? '__host-' : ''; 
+// Cookie name constants
 export const COOKIE_NAMES = {
-  PKCE_SESSION: 'p',
-  USER_SESSION: 's',  // Session ID cookie, used to identify the user session
-  USER_INFO: 'u'  // User info cookie, contains user data in JSON format
+  PKCE_SESSION: `${COOKIE_PREFIX}p`,
+  USER_SESSION: `${COOKIE_PREFIX}s`,  // Session ID cookie, used to look up user session in cache
+  USER_INFO: `${COOKIE_PREFIX}u`  // User info cookie, contains user data in JSON format (public)
 } as const;
 
 // Cookie-setting options based on environment
+// Production cookies must be only set over HTTPS (secure), with httpOnly & SameSite
+// Production cookies may also need a domain
 export const COOKIE_OPTIONS = {
   httpOnly: { 
     httpOnly: true, 
     sameSite: 'lax' as const, 
     path: '/', 
-    secure: process.env.NODE_ENV === 'production' 
+    secure: process.env.ENVIRONMENT === 'prod' 
   },
   public: { 
     sameSite: 'lax' as const, 
     path: '/', 
-    secure: process.env.NODE_ENV === 'production' 
+    secure: process.env.ENVIRONMENT === 'prod' 
   }
 };
 

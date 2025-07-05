@@ -1,4 +1,4 @@
-import FusionAuthClient, { User } from "@fusionauth/typescript-client";
+import FusionAuthClient from "@fusionauth/typescript-client";
 import express from 'express';
 import pkceChallenge from 'pkce-challenge';
 
