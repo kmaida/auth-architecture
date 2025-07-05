@@ -200,6 +200,15 @@
     },
     {
       "method": "POST",
+      "url": "/api/user/registration/#{adminUserId}",
+      "body": {
+        "registration": {
+          "applicationId": "#{bbocApplicationId}"
+        }
+      }
+    },
+    {
+      "method": "POST",
       "url": "/api/user/registration/#{userUserId}",
       "body": {
         "user": {
@@ -213,6 +222,15 @@
           "applicationId": "#{bffTmbApplicationId}"
         }
       }
-    }
+    },
+    {
+      "method": "POST",
+      "url": "/api/user/registration/#{userUserId}",
+      "body": {
+        "registration": {
+          "applicationId": "#{bbocApplicationId}"
+        }
+      }
+    },
   ]
 }
