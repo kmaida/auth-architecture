@@ -124,7 +124,7 @@ export const createUserSession = async (
 export const updateOrCreateUserSession = async (
   at: string, 
   rt: string,
-  sid?: string | '',
+  sid?: string,
   u?: any,
   last?: Date
 ): Promise<UserSession|undefined> => {
