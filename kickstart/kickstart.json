@@ -136,6 +136,7 @@
             "enabled": true,
             "accessTokenKeyId": "#{asymmetricKeyId}",
             "idTokenKeyId": "#{asymmetricKeyId}",
+            "timeToLiveInSeconds": 600,
             "refreshTokenUsagePolicy": "OneTimeUse"
           },
           "registrationConfiguration": {
