@@ -3,6 +3,7 @@
 ## Prerequisites
 
 - [Docker](https://docker.com) (we'll be using `docker compose`) or a Docker Desktop alternative (like [Podman](https://podman.io/) for PC or [Orbstack](https://orbstack.dev/) for Mac)
+- [Node.js](https://nodejs.org) 
 
 ## Installation
 
