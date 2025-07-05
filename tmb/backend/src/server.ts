@@ -31,13 +31,22 @@ app.use(express.urlencoded({ extended: true }));
 // Parse JSON bodies
 app.use(express.json());
 
-// Enhanced request logging middleware
+// Validate and extract required environment variables
+const requiredEnvVars = ['CLIENT_ID', 'CLIENT_SECRET', 'FUSION_AUTH_URL', 'FRONTEND_URL', 'BACKEND_URL'];
+const config = validateEnvironmentVariables(requiredEnvVars);
+const { CLIENT_ID: clientId, CLIENT_SECRET: clientSecret, FUSION_AUTH_URL: fusionAuthURL, FRONTEND_URL: frontendURL, BACKEND_URL: backendURL } = config;
+
+// Initialize FusionAuth client
+const client = new FusionAuthClient('noapikeyneeded', fusionAuthURL);
+
+/*----------- DEV: Request logging middleware (remove in prod) ------------*/
+
 app.use((req, res, next) => {
   // Skip logging for favicon and other browser automatic requests
   if (req.path === '/favicon.ico' || req.path.includes('.map')) {
     return next();
   }
-  
+
   // Show different info for preflight vs actual requests
   if (req.method === 'OPTIONS') {
     console.log(`${new Date().toISOString()} - PREFLIGHT ${req.path}`);
@@ -46,14 +55,6 @@ app.use((req, res, next) => {
   }
   next();
 });
-
-// Validate and extract required environment variables
-const requiredEnvVars = ['CLIENT_ID', 'CLIENT_SECRET', 'FUSION_AUTH_URL', 'FRONTEND_URL', 'BACKEND_URL'];
-const config = validateEnvironmentVariables(requiredEnvVars);
-const { CLIENT_ID: clientId, CLIENT_SECRET: clientSecret, FUSION_AUTH_URL: fusionAuthURL, FRONTEND_URL: frontendURL, BACKEND_URL: backendURL } = config;
-
-// Initialize FusionAuth client
-const client = new FusionAuthClient('noapikeyneeded', fusionAuthURL);
 
 /*----------- Helpers, middleware, setup ------------*/
 

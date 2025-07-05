@@ -55,6 +55,23 @@ const { CLIENT_ID: clientId, CLIENT_SECRET: clientSecret, FUSION_AUTH_URL: fusio
 // Initialize FusionAuth client
 const client = new FusionAuthClient('noapikeyneeded', fusionAuthURL);
 
+/*----------- DEV: Request logging middleware (remove in prod) ------------*/
+
+app.use((req, res, next) => {
+  // Skip logging for favicon and other browser automatic requests
+  if (req.path === '/favicon.ico' || req.path.includes('.map')) {
+    return next();
+  }
+
+  // Show different info for preflight vs actual requests
+  if (req.method === 'OPTIONS') {
+    console.log(`${new Date().toISOString()} - PREFLIGHT ${req.path}`);
+  } else {
+    console.log(`${new Date().toISOString()} - ${req.method} ${req.path}${req.query && Object.keys(req.query).length ? ` (query: ${JSON.stringify(req.query)})` : ''}`);
+  }
+  next();
+});
+
 /*----------- Helpers, middleware, setup ------------*/
 
 // Cookie setup
