@@ -16,7 +16,7 @@ export interface UserSession {
   at: string | null;
   rt: string | null;
   u: User | null;
-  last: Date;
+  last: number; // Timestamp
 }
 
 // Create user session ID
@@ -97,7 +97,7 @@ export const fetchUserSession = async (sessionId: string): Promise<UserSession |
     if (cachedUser) {
       // User session exists in cache
       // Update last accessed time
-      cachedUser.last = new Date();
+      cachedUser.last = Date.now();
       // Save updated session data back to cache
       await sessionCache.set(sessionId, cachedUser);
       // Return cached user session data
@@ -122,7 +122,7 @@ export const createUserSession = async (
     at: at,
     rt: rt || null,
     u: u || null,
-    last: new Date()
+    last: Date.now()
   };
   // Store in session cache
   await sessionCache.set(userSession.sid, userSession);
@@ -134,7 +134,7 @@ export const updateOrCreateUserSession = async (
   rt: string,
   sid?: string,
   u?: User | null,
-  last?: Date
+  last?: number
 ): Promise<UserSession|undefined> => {
   try {
     // If session ID is provided, try to fetch existing session
@@ -145,7 +145,7 @@ export const updateOrCreateUserSession = async (
         existingSession.at = at;
         existingSession.rt = rt;
         existingSession.u = u || existingSession.u; // Keep existing user info if not provided
-        existingSession.last = last || new Date();
+        existingSession.last = last || Date.now();
         // Save updated session back to cache
         await sessionCache.set(sid, existingSession);
         return existingSession;

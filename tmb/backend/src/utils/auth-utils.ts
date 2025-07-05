@@ -71,7 +71,7 @@ export const handleRefreshGrant = async (
         userSession.at = newTokens.access_token;
         userSession.rt = newTokens.refresh_token ?? null;
         userSession.u = userResponse.user; // Update user info in session
-        userSession.last = new Date();
+        userSession.last = Date.now();
         // Update session cache with new user session
         if (typeof userSession.sid === 'string') {
           await sessionCache.set(userSession.sid, userSession);
