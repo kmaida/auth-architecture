@@ -38,7 +38,7 @@ const COOKIE_PREFIX = process.env.ENVIRONMENT === 'prod' ? '__host-' : '';
 export const COOKIE_NAMES = {
   PKCE_SESSION: `${COOKIE_PREFIX}p`,
   USER_SESSION: `${COOKIE_PREFIX}s`,  // Session ID cookie, used to look up user session in cache
-  USER_INFO: `${COOKIE_PREFIX}u`  // User info cookie, contains user data in JSON format (public)
+  USER_INFO: 'u'  // User info cookie, contains user data in JSON format (public)
 } as const;
 
 // Cookie-setting options based on environment
@@ -47,12 +47,12 @@ export const COOKIE_NAMES = {
 export const COOKIE_OPTIONS = {
   httpOnly: { 
     httpOnly: true, 
-    sameSite: 'lax' as const, 
+    sameSite: 'strict' as const, 
     path: '/', 
     secure: process.env.ENVIRONMENT === 'prod' 
   },
   public: { 
-    sameSite: 'lax' as const, 
+    sameSite: 'strict' as const, 
     path: '/', 
     secure: process.env.ENVIRONMENT === 'prod' 
   }
