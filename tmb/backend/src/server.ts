@@ -28,6 +28,15 @@ const port = process.env.PORT || 4001;
 // Decode form URL encoded data
 app.use(express.urlencoded({ extended: true }));
 
+// Parse JSON bodies
+app.use(express.json());
+
+// Simple request logging middleware
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+  next();
+});
+
 // Validate and extract required environment variables
 const requiredEnvVars = ['CLIENT_ID', 'CLIENT_SECRET', 'FUSION_AUTH_URL', 'FRONTEND_URL', 'BACKEND_URL'];
 const config = validateEnvironmentVariables(requiredEnvVars);
@@ -53,7 +62,26 @@ const authApi = setupAuthRoutes(app, client, clientId, clientSecret, fusionAuthU
 // Set up protected API routes
 api(app, authApi);
 
+/*----------- Health check endpoint ------------*/
+
+app.get('/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'ok', 
+    timestamp: new Date().toISOString(),
+    service: 'tmb-backend' 
+  });
+});
+
 /*----------- Non-specified routes ------------*/
+
+// Handle API routes that don't exist
+app.all('/api/*', (req, res) => {
+  res.status(404).json({ error: 'API endpoint not found' });
+});
+
+app.all('/auth/*', (req, res) => {
+  res.status(404).json({ error: 'Auth endpoint not found' });
+});
 
 // Redirect all other un-named routes to the frontend homepage
 app.all('*', async (req, res) => {

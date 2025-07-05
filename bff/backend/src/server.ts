@@ -28,6 +28,12 @@ const port = process.env.PORT || 4001;
 // Decode form URL encoded data
 app.use(express.urlencoded({ extended: true }));
 
+// Simple request logging middleware
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+  next();
+});
+
 // Validate and extract required environment variables
 const requiredEnvVars = ['CLIENT_ID', 'CLIENT_SECRET', 'FUSION_AUTH_URL', 'FRONTEND_URL', 'BACKEND_URL'];
 const config = validateEnvironmentVariables(requiredEnvVars);
