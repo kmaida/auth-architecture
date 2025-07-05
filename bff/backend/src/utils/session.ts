@@ -1,5 +1,5 @@
 import express from 'express';
-import FusionAuthClient from "@fusionauth/typescript-client";
+import FusionAuthClient, { User } from "@fusionauth/typescript-client";
 import crypto from 'crypto';
 import { createCache } from 'cache-manager';
 
@@ -12,7 +12,7 @@ export interface UserSession {
   sid: string; // Session ID, also used as cache key
   at: string | null;
   rt: string | null;
-  u: any; // Consider creating a proper User interface
+  u: User | null;
   last: Date;
 }
 
@@ -51,7 +51,7 @@ export const COOKIE_OPTIONS = {
 };
 
 // Parse cookie and return JSON object
-export const parseJsonCookie = (cookie: string): any => {
+export const parseJsonCookie = (cookie: string): User | null => {
   try {
     // Cookie is prefixed with 'j:' to indicate it's a JSON object
     return JSON.parse(decodeURIComponent(cookie).replace(/^j:/, ''));
@@ -105,7 +105,7 @@ export const fetchUserSession = async (sessionId: string): Promise<UserSession |
 export const createUserSession = async ( 
   at: string, 
   rt: string | undefined, 
-  u?: any
+  u?: User | null
 ): Promise<UserSession> => {
   // Create a new user session with a unique ID
   // This won't have access or refresh tokens yet
@@ -125,7 +125,7 @@ export const updateOrCreateUserSession = async (
   at: string, 
   rt: string,
   sid?: string,
-  u?: any,
+  u?: User | null,
   last?: Date
 ): Promise<UserSession|undefined> => {
   try {
@@ -194,7 +194,7 @@ export const fetchAndSetUserInfo = async (
   accessToken: string, 
   res: express.Response,
   client: FusionAuthClient
-): Promise<any> => {
+): Promise<User | null> => {
   try {
     const userResponse = (await client.retrieveUserUsingJWT(accessToken)).response;
 
