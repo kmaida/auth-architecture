@@ -197,6 +197,8 @@ export const fetchAndSetUserInfo = async (
 ): Promise<any> => {
   try {
     const userResponse = (await client.retrieveUserUsingJWT(accessToken)).response;
+    console.log('User response:', userResponse);
+    
     if (userResponse?.user) {
       // Set public cookie with user info
       res.cookie(COOKIE_NAMES.USER_INFO, 'j:' + JSON.stringify(userResponse.user), COOKIE_OPTIONS.public);

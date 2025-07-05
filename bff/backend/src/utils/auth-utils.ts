@@ -222,12 +222,14 @@ export const createSecureMiddleware = (
     }
     // Set session cookie with user session ID
     setSessionCookie(req, res, sid);
-    // Update user session access token and last access time in cache
-    await sessionCache.set(sid, {
-      ...userSession,
-      at: accessToken,
-      lastAccess: Date.now()
-    });
+    // Update user session last access time in cache (tokens are already updated by verifyJWT if refreshed)
+    const currentSession = await fetchUserSession(sid);
+    if (currentSession) {
+      await sessionCache.set(sid, {
+        ...currentSession,
+        lastAccess: Date.now()
+      });
+    }
 
     // If user is authenticated, proceed 
     next();

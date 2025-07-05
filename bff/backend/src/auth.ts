@@ -75,10 +75,10 @@ export function setupAuthRoutes(
         
         // If still no user and we have a session cookie, fetch user info from FusionAuth
         if (!user && sid) {
-          // Get session data from cache (if it exists)
-          const sessionData = await fetchUserSession(sid);
-          if (sessionData && sessionData.sid && sessionData.at) {
-            user = await fetchAndSetUserInfo(sessionData.sid, sessionData.at, res, client);
+          // Get UPDATED session data from cache (important: fetch again after potential token refresh)
+          const updatedSessionData = await fetchUserSession(sid);
+          if (updatedSessionData && updatedSessionData.sid && updatedSessionData.at) {
+            user = await fetchAndSetUserInfo(updatedSessionData.sid, updatedSessionData.at, res, client);
           }
         }
       }
