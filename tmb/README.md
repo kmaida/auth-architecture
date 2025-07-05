@@ -23,3 +23,9 @@ This is a set of APIs; it does not have a browser component.
 4. Run `npm run dev` to run the development environment using [Vite](https://vite.dev), accessible in the browser at `http://localhost:5173`
 
 If you have the backend and FusionAuth both running, you should be able to log into the frontend app with the admin credentials provided in the FusionAuth installation section.
+
+## Concurrent architectures
+
+You will not be able to run multiple architecture demos at the same time because they share ports. If you'd like to run multiple apps at the same time, you must change the ports.
+
+All apps share the same FusionAuth instance, so there is no need to run multiple FusionAuth containers.

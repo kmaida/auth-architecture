@@ -21,3 +21,9 @@ Clone this repo.
 ### Architecture
 
 Use the READMEs in each architecture folder for instructions on setting up each architecture.
+
+#### Concurrent architectures
+
+You will not be able to run multiple architecture demos at the same time because they share ports. If you'd like to run multiple apps at the same time, you must change the ports.
+
+All apps share the same FusionAuth instance, so there is no need to run multiple FusionAuth containers.
