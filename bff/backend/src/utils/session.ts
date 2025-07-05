@@ -2,9 +2,12 @@ import express from 'express';
 import FusionAuthClient, { User } from "@fusionauth/typescript-client";
 import crypto from 'crypto';
 import { createCache } from 'cache-manager';
+import * as dotenv from "dotenv";
+
+dotenv.config();
 
 // Configuration constants
-const SESSION_TTL_SECONDS = 43200; // 12 hours
+const REFRESH_TTL = parseInt(process.env.REFRESH_TTL || '43200', 10); // Default to 12 hours if not set
 const SESSION_ID_BYTES = 32;
 
 // TYPE: user session data
@@ -22,8 +25,9 @@ const createUserSessionId = () => {
 };
 
 // Create cache for user sessions
+// Time To Live (TTL) should match FusionAuth's refresh token TTL
 export const sessionCache = createCache({
-  ttl: SESSION_TTL_SECONDS * 1000 // Convert to milliseconds
+  ttl: REFRESH_TTL * 1000 // Convert to milliseconds
 });
 
 // Cookie name constants
