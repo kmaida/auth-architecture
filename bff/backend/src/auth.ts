@@ -21,7 +21,6 @@ import {
   verifyJWT,
   createSecureMiddleware
 } from './utils/auth-utils';
-import { get } from "http";
 
 export function setupAuthRoutes(
   app: express.Application,
@@ -178,7 +177,8 @@ export function setupAuthRoutes(
       // Create session, set tokens, and set user info in session cache
       const newSessionData = await createUserSession(accessToken, refreshToken, userInfo);
       setSessionCookie(req, res, newSessionData.sid as string);
-
+      // Delete PKCE session cookie
+      res.clearCookie(COOKIE_NAMES.PKCE_SESSION);
       // Redirect user to frontend homepage
       res.redirect(302, frontendURL);
     } catch (err: any) {
@@ -198,7 +198,7 @@ export function setupAuthRoutes(
   /*----------- GET /auth/logout/callback ------------*/
 
   // Callback after FusionAuth logout
-  // Clean up cookies and redirect to frontend homepage
+  // Clean up session, cookies, and redirect to frontend homepage
   // FusionAuth will redirect to this endpoint after logging out
   // This (full) URL must be registered in FusionAuth as a valid logout redirect URL
   // Will never be used by the frontend: should only be called by FusionAuth
@@ -206,12 +206,12 @@ export function setupAuthRoutes(
     // Clear user session from cache
     const userSessionId = getUserSessionIdFromCookie(req);
     if (userSessionId) {
-      sessionCache.del(userSessionId).catch(err => {
+      sessionCache.del(userSessionId).catch((err: Error) => {
         console.error('Error clearing user session from cache:', err);
       });
     }
     // Clear cookies
-    res.clearCookie(COOKIE_NAMES.PKCE_SESSION);
+    res.clearCookie(COOKIE_NAMES.PKCE_SESSION); // This should already be cleared in the login callback, but just in case
     res.clearCookie(COOKIE_NAMES.USER_SESSION);
     res.clearCookie(COOKIE_NAMES.USER_INFO);
     
