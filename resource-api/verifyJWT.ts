@@ -14,7 +14,7 @@ if (!bbocClientId) {
   throw new Error('CLIENT_ID_BBOC environment variable is required');
 }
 
-// Create a JWK Set client to fetch the JWKS from FusionAuth
+// Fetch JWKS from FusionAuth
 const jwksClient = createRemoteJWKSet(
   new URL(`${fusionAuthURL}/.well-known/jwks.json`)
 );
@@ -23,6 +23,10 @@ const jwksClient = createRemoteJWKSet(
 interface VerifiedTokenRequest extends Request {
   verifiedToken?: string;
 }
+
+/*---------------------------------
+     Middleware to verify JWT
+---------------------------------*/
 
 const verifyJWT = async (
   req: VerifiedTokenRequest,

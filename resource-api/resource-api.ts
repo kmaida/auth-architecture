@@ -1,9 +1,5 @@
 import express from 'express';
 
-/*---------------------------------
-          Resource API
----------------------------------*/
-
 interface RecipeIngredients {
   protein: string;
   vegetables: string[];
@@ -135,7 +131,16 @@ export function resourceApi(app: express.Application, verifyJWT: express.Request
     return `${cuisine} ${cookingMethod} ${protein} with ${primaryVegetable} and ${grain}`;
   }
 
-  // API endpoint
+  /*---------------------------------
+            Resource API
+  ---------------------------------*/
+
+  /*----------- GET /api/recipe ------------*/
+
+  // Sample API endpoint that generates a random recipe
+  // This endpoint is protected and requires the user to be authenticated
+  // with an authorized audience (BFF/TMB or BBOC)
+
   app.get('/api/recipe', verifyJWT, (req, res) => {
     const cookingMethod = getRandomElement(cookingMethods);
     const selectedVegetables = getRandomElements(vegetables, 2 + Math.floor(Math.random() * 2)); // 2-3 veggies

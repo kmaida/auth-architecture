@@ -28,6 +28,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
 /*----------- DEV: Request logging middleware (remove in prod) ------------*/
+
 app.use((req, res, next) => {
   // Skip logging for favicon and other browser automatic requests
   if (req.path === '/favicon.ico' || req.path.includes('.map')) {
@@ -49,6 +50,11 @@ app.use((req, res, next) => {
 /*----------- Helpers, middleware, setup ------------*/
 
 // Add CORS middleware to allow connections from anywhere
+// You'd typically restrict this in production to specific origins
+// In this case, allowed origins should be the BFF backend,
+// TMB frontend, and BBOC frontend
+// For the sake of simplicity, we allow all origins so you don't
+// have to manage .env synchronization across multiple architecture demos 
 app.use(cors({
   origin: '*'
 }));
