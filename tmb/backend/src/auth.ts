@@ -68,6 +68,7 @@ export function setupAuthRoutes(
     if (verifyResult && verifyResult.decoded) {
       // User is authenticated - get user info
       let user = verifyResult.user;
+      let at = verifyResult.decoded;
       
       if (!user) {
         // Try userInfo cookie first
@@ -80,10 +81,11 @@ export function setupAuthRoutes(
           const updatedSessionData = await fetchUserSession(sid);
           if (updatedSessionData && updatedSessionData.sid && updatedSessionData.at) {
             user = await fetchAndSetUserInfo(updatedSessionData.sid, updatedSessionData.at, res, client);
+            at = updatedSessionData.at; // Update access token if it was refreshed
           }
         }
       }
-      res.status(200).json({ loggedIn: true, user });
+      res.status(200).json({ loggedIn: true, at: at, user });
     } else {
       // Create and store state, code verifier, and code challenge for authorization request with PKCE
       const stateValue = generateStateValue();
