@@ -20,7 +20,10 @@ function HomePage() {
           <strong>Authentication:</strong> <code>/auth</code> API on backend using <a href="https://fusionauth.io/docs/lifecycle/authenticate-users/oauth/endpoints" target="_blank">FusionAuth OAuth 2.0 endpoints</a>, <a href="https://github.com/FusionAuth/fusionauth-typescript-client" target="_blank">TypeScript SDK</a>, and in-memory cache management for session storage (recommend Redis for production)
       </li>
       <li>
-        <strong>Authorization:</strong> <code>/api</code> API on the backend verifies the access token in the user's stored session before allowing access to protected resources
+        <strong>Authorization:</strong> <code>/api</code> local API on the backend verifies the access token in the user's stored session before allowing access to protected resources
+      </li>
+      <li>
+        <strong>Resource server:</strong> a cross-origin API that requires authorization, directly called by the frontend app (all three architectures use this same resource server)
       </li>
     </ul>
 
@@ -30,7 +33,7 @@ function HomePage() {
         User authentication with FusionAuth using OAuth 2.0 Authorization Code flow with PKCE
       </li>
       <li>
-        API authorization with FusionAuth through access token verification
+        Local API on the backend with FusionAuth authorization through access token verification
       </li>
       <li>
         Authentication API on the backend
@@ -39,7 +42,7 @@ function HomePage() {
         Session management with <code>httpOnly</code> session ID cookies and lookup using server-side session storage cache
       </li>
       <li>
-        Session persistence with refresh token grant
+        Session persistence with refresh token grant on the backend
       </li>
       <li>
         No tokens are ever exposed to the frontend
@@ -80,7 +83,7 @@ function HomePage() {
         User clicks the <code>Log In</code> button
       </li>
       <li>
-        Frontend sends a login request to the backend <code>/auth/login</code> endpoint
+        Frontend redirects to the backend <code>/auth/login</code> endpoint
       </li>
       <li>
         Backend generates an authorization request with the necessary configuration (e.g., <code>client_id</code>, <code>client_secret</code>, <code>state</code>, etc.) and the <code>code_challenge</code>, and sends the request to the authorization server's (<a href="https://fusionauth.io" target="_blank">FusionAuth</a>'s) <code>/oauth2/authorize</code> endpoint
@@ -104,7 +107,7 @@ function HomePage() {
         Authorization server sends an access token and refresh token to the backend
       </li>
       <li>
-        Backend deletes the PKCE cookie, generates a session ID, stores the user's tokens and <code>userInfo</code> in a backend session (in-memory in this example, but I recommend Redis for production), and sets an <code>httpOnly</code> cookie for the user's session ID
+        Backend deletes the PKCE cookie, generates a session ID, and stores the user's tokens and <code>userInfo</code> in a backend session (in-memory in this example, but I recommend Redis for production).
       </li>
       <li>
         Backend sets an <code>httpOnly</code> cookie for the user's session ID (this only contains the session ID, never tokens)
@@ -119,24 +122,24 @@ function HomePage() {
         Frontend runs <code>checkSession</code>, confirms authentication state, fetches <code>userInfo</code>, and uses the information to set user-specific variables, etc.
       </li>
       <li>
-        When the user clicks the <code>Log Out</code> button, the frontend sends a request to the backend <code>/auth/logout</code> endpoint
+        When the user clicks the <code>Log Out</code> button, the frontend redirects to the backend <code>/auth/logout</code> endpoint
       </li>
       <li>
-        Backend sends a request to the authorization server's <code>/oauth2/logout</code> endpoint with appropriate configuration
+        Backend redirects to the authorization server's <code>/oauth2/logout</code> endpoint with appropriate configuration
       </li>
       <li>
-        Authorization server logs the user out and redirects to the backend <code>/auth/logout/callaback</code> endpoint
+        Authorization server logs the user out and redirects to the backend <code>/auth/logout/callback</code> endpoint
       </li>
       <li>
         Backend deletes the server-side user session, clears all cookies, and redirects the unauthenticated user to the frontend homepage
       </li>
     </ol>
 
-    <h2>How BFF Authorization Works</h2>
+    <h2>How BFF Local API Authorization Works</h2>
     <p>When a user requests access to secure data, the backend authorizes access to an API (resource server). The frontend should protect routes that require authentication by checking the session before permitting navigation to the page that will call the secure API. Frontend checks like this improve the user experience.</p>
     <ol>
       <li>
-        Authenticated user navigates to a protected frontend route that calls a secure API
+        Authenticated user navigates to a protected frontend route that calls a secure, local API
       </li>
       <li>
         Frontend makes a request to the backend API for protected resources with <code>credentials: include</code> to attach the session cookie (for example, to the <code>/api/protected-data</code> endpoint)
@@ -149,6 +152,26 @@ function HomePage() {
       </li>
       <li>
         If the access token is successfully verified (or the user is successfully reauthenticated through the refresh grant), protected data is returned to the frontend
+      </li>
+    </ol>
+
+    <h2>How BFF External Resource Server Authorization Works</h2>
+    <p>When a user requests data from an external resource server, the backend proxies the request, adding an <code>Authorization: Bearer</code> header before sending the request to an API (resource server). The frontend should protect routes that require authentication by checking the session before permitting navigation to the page that will call the secure API. Frontend checks like this improve the user experience.</p>
+    <ol>
+      <li>
+        Authenticated user navigates to a protected frontend route that calls a secure API
+      </li>
+      <li>
+        Frontend makes a request to the backend API for protected resources with <code>credentials: include</code> to attach the session cookie
+      </li>
+      <li>
+        Backend uses middleware to attach the access token to a request to the resource server, which is a cross-origin API that requires authorization
+      </li>
+      <li>
+        Resource server verifies the access token in the <code>Authorization</code> header and returns data to the frontend if the token is valid
+      </li>
+      <li>
+        If the user isn't logged in or there's a problem with the access token, the resource server returns a <code>401: Unauthorized</code> error, which is displayed in the frontend
       </li>
     </ol>
 

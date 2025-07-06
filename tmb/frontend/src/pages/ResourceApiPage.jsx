@@ -13,7 +13,6 @@ function ResourceApiPage() {
       setError(new Error('No access token available'));
       return;
     }
-
     setLoading(true);
     setError(null);
     try {
@@ -42,7 +41,7 @@ function ResourceApiPage() {
   return (
     <div>
       <h1>Call an External API</h1>
-      <p>This page makes a <code>GET</code> request with to a cross-origin external API at <code>{resourceApiUrl}/api/recipe</code>. The resource server requires authorization, which the request delivers with <code>Authorization: Bearer 'accessToken'</code>. The returned data is a randomized, made-up recipe (though you're welcome to try to cook it).</p>
+      <p>This page makes a <code>GET</code> request to a cross-origin external API on page load and each time the <code>Get New Recipe</code> button is clicked. The resource server requires authorization, which the request delivers with <code>Authorization: Bearer 'accessToken'</code>. The returned data is a randomized, made-up recipe (though you're welcome to try to cook it).</p>
 
       <button
         onClick={fetchRecipe}
@@ -65,7 +64,7 @@ function ResourceApiPage() {
               </ul>
               <ul className="ingredients">
                 <li>{recipe.ingredients.protein}</li>
-                <li>{recipe.ingredients.vegetables.join(', ')}</li>
+                {recipe.ingredients.vegetables.map(veg => <li key={veg}>{veg}</li>)}
                 <li>{recipe.ingredients.grain}</li>
                 <li>{recipe.ingredients.sauce}</li>
                 <li>{recipe.ingredients.garnish}</li>
@@ -79,7 +78,7 @@ function ResourceApiPage() {
             <p className="tips"><em>{recipe.tips}</em></p>
           </div>
         ) : (
-          !loading
+          !loading && <p>Unable to fetch recipe (see output below)</p>
         )
       )}
 

@@ -53,7 +53,7 @@ function ResourceApiPage() {
               </ul>
               <ul className="ingredients">
                 <li>{recipe.ingredients.protein}</li>
-                <li>{recipe.ingredients.vegetables.join(', ')}</li>
+                {recipe.ingredients.vegetables.map(veg => <li key={veg}>{veg}</li>)}
                 <li>{recipe.ingredients.grain}</li>
                 <li>{recipe.ingredients.sauce}</li>
                 <li>{recipe.ingredients.garnish}</li>
@@ -67,7 +67,7 @@ function ResourceApiPage() {
             <p className="tips"><em>{recipe.tips}</em></p>
           </div>
         ) : (
-          !loading
+          !loading && <p>Unable to fetch recipe (see output below)</p>
         )
       )}
 

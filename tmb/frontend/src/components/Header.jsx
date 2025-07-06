@@ -3,7 +3,7 @@ import { useAuth } from '../services/AuthContext';
 import { useCallback } from 'react';
 
 export default function Header() {
-  const { loggedIn, userInfo, setPreLoginPath } = useAuth();
+  const { loggedIn, userInfo, setPreLoginPath, setAToken } = useAuth();
   const location = useLocation();
   const apiUrl = import.meta.env.VITE_API_URL;
 
@@ -14,8 +14,9 @@ export default function Header() {
   }, [apiUrl, location, setPreLoginPath]);
 
   const initLogout = useCallback(() => {
+    setAToken(undefined);
     window.location.href = `${apiUrl}/auth/logout`;
-  }, [apiUrl]);
+  }, [apiUrl, setAToken]);
 
   return (
     <header>
