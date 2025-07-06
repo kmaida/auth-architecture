@@ -112,7 +112,7 @@ export const fetchUserSession = async (sessionId: string): Promise<UserSession |
 
 export const createUserSession = async ( 
   at: string, 
-  rt: string | undefined, 
+  rt: string | undefined,
   u?: User | null
 ): Promise<UserSession> => {
   // Create a new user session with a unique ID

@@ -40,66 +40,61 @@ export function setupAuthRoutes(
 
   // Endpoint to check the user's session, refresh tokens if possible, and set up PKCE if needed
   app.get('/auth/checksession', async (req, res) => {
-    try {
-      const sid = getUserSessionIdFromCookie(req);
-      let userSession;
-      let accessToken;
-      let refreshToken;
+    const sid = getUserSessionIdFromCookie(req);
+    let userSession;
+    let accessToken;
+    let refreshToken;
 
-      if (sid) userSession = await fetchUserSession(sid);
+    if (sid) userSession = await fetchUserSession(sid);
 
-      if (userSession) {
-        accessToken = userSession.at || undefined;
-        refreshToken = userSession.rt || undefined;
-      }
+    if (userSession) {
+      accessToken = userSession.at || undefined;
+      refreshToken = userSession.rt || undefined;
+    }
 
-      // Check if user is authenticated by verifying JWT and refreshing tokens if necessary
-      const verifyResult = await verifyJWT(
-        sid, 
-        accessToken,
-        refreshToken, 
-        res,
-        client,
-        clientId,
-        clientSecret,
-        getKey
-      );
+    // Check if user is authenticated by verifying JWT and refreshing tokens if necessary
+    const verifyResult = await verifyJWT(
+      sid, 
+      accessToken,
+      refreshToken, 
+      res,
+      client,
+      clientId,
+      clientSecret,
+      getKey
+    );
 
-      if (verifyResult && verifyResult.decoded) {
-        // User is authenticated - get user info
-        let user = verifyResult.user;
+    if (verifyResult && verifyResult.decoded) {
+      // User is authenticated - get user info
+      let user = verifyResult.user;
+      
+      if (!user) {
+        // Try userInfo cookie first
+        const userInfoCookie = req.cookies[COOKIE_NAMES.USER_INFO];
+        user = userInfoCookie ? parseJsonCookie(userInfoCookie) : null;
         
-        if (!user) {
-          // Try userInfo cookie first
-          const userInfoCookie = req.cookies[COOKIE_NAMES.USER_INFO];
-          user = userInfoCookie ? parseJsonCookie(userInfoCookie) : null;
-          
-          // If still no user and we have a session cookie, fetch user info from FusionAuth
-          if (!user && sid) {
-            // Get UPDATED session data from cache (important: fetch again after potential token refresh)
-            const updatedSessionData = await fetchUserSession(sid);
-            if (updatedSessionData && updatedSessionData.sid && updatedSessionData.at) {
-              user = await fetchAndSetUserInfo(updatedSessionData.sid, updatedSessionData.at, res, client);
-            }
+        // If still no user and we have a session cookie, fetch user info from FusionAuth
+        if (!user && sid) {
+          // Get UPDATED session data from cache (important: fetch again after potential token refresh)
+          const updatedSessionData = await fetchUserSession(sid);
+          if (updatedSessionData && updatedSessionData.sid && updatedSessionData.at) {
+            user = await fetchAndSetUserInfo(updatedSessionData.sid, updatedSessionData.at, res, client);
           }
         }
-        res.status(200).json({ loggedIn: true, user });
-      } else {
-        // Create and store state, code verifier, and code challenge for authorization request with PKCE
-        const stateValue = generateStateValue();
-        const pkcePair = pkceChallenge();
-        
-        res.cookie(COOKIE_NAMES.PKCE_SESSION, { 
-          stateValue, 
-          verifier: pkcePair.code_verifier, 
-          challenge: pkcePair.code_challenge 
-        }, COOKIE_OPTIONS.httpOnly);
-
-        res.status(200).json({ loggedIn: false });
       }
-    } catch (error) {
-      console.error('Error in /auth/checksession:', error);
-      res.status(500).json({ error: 'Internal server error', loggedIn: false });
+      res.status(200).json({ loggedIn: true, user });
+    } else {
+      // Create and store state, code verifier, and code challenge for authorization request with PKCE
+      const stateValue = generateStateValue();
+      const pkcePair = pkceChallenge();
+      
+      res.cookie(COOKIE_NAMES.PKCE_SESSION, { 
+        stateValue, 
+        verifier: pkcePair.code_verifier, 
+        challenge: pkcePair.code_challenge 
+      }, COOKIE_OPTIONS.httpOnly);
+
+      res.status(200).json({ loggedIn: false });
     }
   });
 
