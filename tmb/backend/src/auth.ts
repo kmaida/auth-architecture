@@ -20,7 +20,8 @@ import {
   createJwksClient,
   createGetKey,
   verifyJWT,
-  createSecureMiddleware
+  createSecureMiddleware,
+  verifyJwtAsync
 } from './utils/auth-utils';
 
 export function setupAuthRoutes(
@@ -53,37 +54,38 @@ export function setupAuthRoutes(
       refreshToken = userSession.rt || undefined;
     }
 
-    // Check if user is authenticated by verifying JWT and refreshing tokens if necessary
-    const verifyResult = await verifyJWT(
-      sid, 
-      accessToken,
-      refreshToken, 
-      res,
-      client,
-      clientId,
-      clientSecret,
-      getKey
-    );
-
-    if (verifyResult && verifyResult.decoded) {
-      // User is authenticated - get user info
-      let user = verifyResult.user;
-      
-      if (!user) {
+    // Check if user is authenticated by verifying JWT (but don't refresh tokens here)
+    // Token refresh should be handled by the /login/callback endpoint
+    if (sid && accessToken) {
+      try {
+        // Simply verify the current access token without refreshing
+        const decodedFromJwt = await verifyJwtAsync(accessToken, getKey);
+        // Token is valid, user is authenticated
+        let user = null;
+        
         // Try userInfo cookie first
         const userInfoCookie = req.cookies[COOKIE_NAMES.USER_INFO];
         user = userInfoCookie ? parseJsonCookie(userInfoCookie) : null;
         
         // If still no user and we have a session cookie, fetch user info from FusionAuth
-        if (!user && sid) {
-          // Get UPDATED session data from cache (important: fetch again after potential token refresh)
-          const updatedSessionData = await fetchUserSession(sid);
-          if (updatedSessionData && updatedSessionData.sid && updatedSessionData.at) {
-            user = await fetchAndSetUserInfo(updatedSessionData.sid, updatedSessionData.at, res, client);
-          }
+        if (!user && userSession && userSession.at) {
+          user = await fetchAndSetUserInfo(userSession.sid, userSession.at, res, client);
         }
+        
+        res.status(200).json({ loggedIn: true, user });
+        return;
+      } catch (err) {
+        // Token is invalid/expired, but don't refresh here
+        // The frontend will call /login/callback to get a fresh token
+        console.log('Access token is invalid/expired, frontend should refresh');
       }
-      res.status(200).json({ loggedIn: true, user });
+    }
+    
+    // Check if we have a valid session that could potentially be refreshed
+    if (sid && refreshToken) {
+      // User has a session but token is expired/invalid
+      // Return logged in but let frontend handle token refresh
+      res.status(200).json({ loggedIn: true, user: null, tokenRefreshNeeded: true });
     } else {
       // Create and store state, code verifier, and code challenge for authorization request with PKCE
       const stateValue = generateStateValue();
@@ -195,17 +197,38 @@ export function setupAuthRoutes(
   /*----------- GET /login/callback ------------*/
 
   // Callback API endpoint the frontend calls after user login
-  // This is not used by the backend, sends the access token to the frontend
+  // This endpoint returns the access token to the frontend
+  // It also verifies and refreshes the token if necessary to ensure we return a valid token
   app.get('/login/callback', async (req, res, next) => {
     const sid = getUserSessionIdFromCookie(req);
-    if (sid) {
-      fetchUserSession(sid).then((userSession) => {
-        const accessToken = userSession && userSession.at ? { at: userSession.at } : null;
-        res.json(accessToken);
-      });
+    if (!sid) {
+      return res.status(401).json({ error: 'User session not found' });
     }
-    else {
-      res.status(401).json({ error: 'User session not found' });
+
+    const userSession = await fetchUserSession(sid);
+    if (!userSession) {
+      return res.status(401).json({ error: 'User session not found' });
+    }
+
+    // Verify the current access token and refresh if necessary
+    const verifyResult = await verifyJWT(
+      sid,
+      userSession.at,
+      userSession.rt,
+      res,
+      client,
+      clientId,
+      clientSecret,
+      getKey
+    );
+
+    if (verifyResult && verifyResult.decoded) {
+      // Get the updated session data (tokens may have been refreshed)
+      const updatedSession = await fetchUserSession(sid);
+      const accessToken = updatedSession && updatedSession.at ? { at: updatedSession.at } : null;
+      res.json(accessToken);
+    } else {
+      res.status(401).json({ error: 'Invalid or expired session' });
     }
   });
 

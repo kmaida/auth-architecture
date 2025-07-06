@@ -199,46 +199,29 @@ export const createSecureMiddleware = (
       // If verification successful, proceed to next middleware
       next();
     } catch (err) {
-      console.log('Invalid or expired access token, attempting refresh:', err);
+      console.log('Invalid or expired access token:', err);
       
-      // Token is invalid/expired, try to refresh using session
+      // For TMB pattern, don't try to refresh here - let the frontend handle it
+      // Check if there's a valid session that could potentially be refreshed
       const sid = getUserSessionIdFromCookie(req);
-      if (!sid) {
-        return res.status(401).json({
-          status: 401,
-          message: 'Unauthorized - Invalid access token and no session found'
-        });
+      if (sid) {
+        const userSession = await fetchUserSession(sid);
+        if (userSession && userSession.rt) {
+          // Valid session exists with refresh token - return specific status 
+          // to indicate frontend should refresh and retry
+          return res.status(403).json({
+            status: 403,
+            message: 'Token expired - refresh required',
+            code: 'TOKEN_REFRESH_REQUIRED'
+          });
+        }
       }
-
-      const userSession = await fetchUserSession(sid);
-      if (!userSession || !userSession.rt) {
-        return res.status(401).json({
-          status: 401,
-          message: 'Unauthorized - Invalid access token and no refresh token available'
-        });
-      }
-
-      // Attempt to refresh the token
-      const refreshResult = await handleRefreshGrant(
-        sid,
-        userSession.rt,
-        res,
-        client,
-        clientId,
-        clientSecret,
-        getKey
-      );
-
-      if (refreshResult && refreshResult.decoded) {
-        // Token refresh successful, proceed to next middleware
-        console.log('Token refresh successful, proceeding with API request');
-        next();
-      } else {
-        return res.status(401).json({
-          status: 401,
-          message: 'Unauthorized - Unable to refresh expired access token'
-        });
-      }
+      
+      // No valid session or refresh token available
+      return res.status(401).json({
+        status: 401,
+        message: 'Unauthorized - Invalid or expired access token'
+      });
     }
   };
 };

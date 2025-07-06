@@ -16,7 +16,7 @@ function App() {
   // Check authentication session on initial load only
   useEffect(() => {
     checkSession();
-  }, [checkSession]); // Include checkSession in dependencies
+  }, []); // Empty dependency array - only run on mount
 
   // Add body class for authentication state
   useEffect(() => {
