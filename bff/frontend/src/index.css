@@ -240,11 +240,11 @@ code {
   background: #1e293b;
   border: 1px solid var(--border);
   color: cyan;
-  display: inline-block;
   font-size: .94em;
   line-height: .94em;
   padding: 4px 5px;
   border-radius: 4px;
+  white-space: pre-wrap;
 }
 pre.json {
   text-align: left;
