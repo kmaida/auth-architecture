@@ -229,6 +229,10 @@ export const createSecureMiddleware = (
         ...currentSession,
         lastAccess: Date.now()
       });
+      
+      // Attach user session data to request for use in protected endpoints
+      (req as any).userSession = currentSession;
+      (req as any).accessToken = currentSession.at;
     }
 
     // If user is authenticated, proceed 
