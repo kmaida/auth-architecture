@@ -4,6 +4,32 @@ import express from 'express';
           Resource API
 ---------------------------------*/
 
+interface RecipeIngredients {
+  protein: string;
+  vegetables: string[];
+  grain: string;
+  sauce: string;
+  garnish: string;
+}
+
+interface Recipe {
+  id: string;
+  timestamp: string;
+  name: string;
+  cuisine: string;
+  difficulty: string;
+  cookingTime: string;
+  servings: number;
+  ingredients: RecipeIngredients;
+  instructions: string[];
+  tips: string;
+}
+
+interface WeightedDifficulty {
+  name: string;
+  weight: number;
+}
+
 export function resourceApi(app: express.Application, verifyJWT: express.RequestHandler) {
   // Recipe component arrays
   const proteins = [
@@ -72,49 +98,29 @@ export function resourceApi(app: express.Application, verifyJWT: express.Request
     return getRandomElement(times);
   }
 
-  // Generate difficulty level
-  function getRandomDifficulty() {
-    const difficulties = ['Easy', 'Medium', 'Medium-Hard'];
-    const weights = [0.5, 0.3, 0.2]; // Favor easier recipes
+  // Generate difficulty level with proper typing
+  function getRandomDifficulty(): string {
+    const difficulties: WeightedDifficulty[] = [
+      { name: 'Easy', weight: 0.5 },
+      { name: 'Medium', weight: 0.3 },
+      { name: 'Medium-Hard', weight: 0.2 }
+    ];
+    
     const random = Math.random();
     let weightSum = 0;
     
-    for (let i = 0; i < difficulties.length; i++) {
-      weightSum += weights[i];
+    for (const difficulty of difficulties) {
+      weightSum += difficulty.weight;
       if (random <= weightSum) {
-        return difficulties[i];
+        return difficulty.name;
       }
     }
     return 'Easy';
   }
 
-  // API endpoint
-  app.get('/api/recipe', verifyJWT, (req, res) => {
-    const recipe = {
-      id: Math.random().toString(36).substring(2, 11),
-      timestamp: new Date().toISOString(),
-      name: '',
-      cuisine: getRandomElement(cuisineStyles),
-      difficulty: getRandomDifficulty(),
-      cookingTime: getRandomCookingTime() + ' minutes',
-      servings: Math.floor(Math.random() * 4) + 2, // 2-5 servings
-      ingredients: {
-        protein: getRandomElement(proteins),
-        vegetables: getRandomElements(vegetables, 2 + Math.floor(Math.random() * 2)), // 2-3 veggies
-        grain: getRandomElement(grains),
-        sauce: getRandomElement(sauces),
-        garnish: getRandomElement(garnishes)
-      },
-      instructions: [] as string[],
-      tips: getRandomElement(cookingTips)
-    };
-
-    // Generate recipe name
-    const cookingMethod = getRandomElement(cookingMethods);
-    recipe.name = `${recipe.cuisine} ${cookingMethod} ${recipe.ingredients.protein} with ${recipe.ingredients.vegetables[0]} and ${recipe.ingredients.grain}`;
-
-    // Generate instructions
-    recipe.instructions = [
+  // Generate recipe instructions
+  function generateInstructions(recipe: Recipe, cookingMethod: string): string[] {
+    return [
       `Prepare the ${recipe.ingredients.protein} by cutting into appropriate pieces.`,
       `Heat oil in a large pan and cook the ${recipe.ingredients.protein} until ${cookingMethod}.`,
       `Add ${recipe.ingredients.vegetables.join(' and ')} to the pan and cook until tender.`,
@@ -122,6 +128,43 @@ export function resourceApi(app: express.Application, verifyJWT: express.Request
       `Toss everything with ${recipe.ingredients.sauce}.`,
       `Serve over ${recipe.ingredients.grain} and top with ${recipe.ingredients.garnish}.`
     ];
+  }
+
+  // Generate recipe name
+  function generateRecipeName(cuisine: string, cookingMethod: string, protein: string, primaryVegetable: string, grain: string): string {
+    return `${cuisine} ${cookingMethod} ${protein} with ${primaryVegetable} and ${grain}`;
+  }
+
+  // API endpoint
+  app.get('/api/recipe', verifyJWT, (req, res) => {
+    const cookingMethod = getRandomElement(cookingMethods);
+    const selectedVegetables = getRandomElements(vegetables, 2 + Math.floor(Math.random() * 2)); // 2-3 veggies
+    const protein = getRandomElement(proteins);
+    const grain = getRandomElement(grains);
+    const cuisine = getRandomElement(cuisineStyles);
+
+    const recipe: Recipe = {
+      id: Math.random().toString(36).substring(2, 11),
+      timestamp: new Date().toISOString(),
+      name: '',
+      cuisine,
+      difficulty: getRandomDifficulty(),
+      cookingTime: getRandomCookingTime() + ' minutes',
+      servings: Math.floor(Math.random() * 4) + 2, // 2-5 servings
+      ingredients: {
+        protein,
+        vegetables: selectedVegetables,
+        grain,
+        sauce: getRandomElement(sauces),
+        garnish: getRandomElement(garnishes)
+      },
+      instructions: [],
+      tips: getRandomElement(cookingTips)
+    };
+
+    // Generate recipe name and instructions
+    recipe.name = generateRecipeName(cuisine, cookingMethod, protein, selectedVegetables[0], grain);
+    recipe.instructions = generateInstructions(recipe, cookingMethod);
 
     res.json({
       success: true,

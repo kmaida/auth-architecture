@@ -1,4 +1,4 @@
-require('dotenv/config');
+import 'dotenv/config';
 import { createRemoteJWKSet, jwtVerify, errors } from 'jose';
 import { Request, Response, NextFunction } from 'express';
 
@@ -33,25 +33,23 @@ const verifyJWT = async (
   const accessToken: string | null = authHeader ? authHeader.split(' ')[1] : null;
   
   if (!accessToken) {
-    res.status(401);
-    res.send({ error: 'Missing Authorization header' });
-  } else {
-    try {
-      await jwtVerify(accessToken, jwksClient, {
-        issuer: fusionAuthURL,
-        audience: [bffTmbClientId, bbocClientId],
-      });
-      req.verifiedToken = accessToken;
-      next();
-    } catch (e: unknown) {
-      if (e instanceof errors.JOSEError) {
-        res.status(401);
-        res.send({ error: e.message, code: e.code });
-      } else {
-        console.dir(`Internal server error: ${e}`);
-        res.status(500);
-        res.send({ error: JSON.stringify(e) });
-      }
+    res.status(401).send({ error: 'Missing Authorization header' });
+    return;
+  }
+
+  try {
+    await jwtVerify(accessToken, jwksClient, {
+      issuer: fusionAuthURL,
+      audience: [bffTmbClientId, bbocClientId],
+    });
+    req.verifiedToken = accessToken;
+    next();
+  } catch (e: unknown) {
+    if (e instanceof errors.JOSEError) {
+      res.status(401).send({ error: e.message, code: e.code });
+    } else {
+      console.error(`Internal server error: ${e}`);
+      res.status(500).send({ error: 'Internal server error' });
     }
   }
 };
