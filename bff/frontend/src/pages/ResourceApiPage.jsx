@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 
 function ResourceApiPage() {
-  const [data, setData] = useState(null);
+  const [recipe, setRecipe] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const apiUrl = import.meta.env.VITE_API_URL;
@@ -15,7 +15,7 @@ function ResourceApiPage() {
       });
       if (!res.ok) throw new Error('Failed to fetch resource API data');
       const result = await res.json();
-      setData(result);
+      setRecipe(result);
     } catch (err) {
       setError(err);
     } finally {
@@ -30,7 +30,7 @@ function ResourceApiPage() {
   return (
     <div>
       <h1>Call an External API</h1>
-      <p>This page makes a secured <code>GET</code> request to the backend to proxy a call to a cross-domain external API. The user must be logged in and have a valid session in an <code>httpOnly</code> cookie to proxy the frontend request through the backend, which uses the session to look up the access token and forward the request to the external resource API. The returned data is a randomized, made-up recipe (though you're welcome to try to cook it).</p>
+      <p>This page makes a secured <code>GET</code> request to the backend to proxy a call to a cross-domain external API. The user must be logged in and have a valid session in an <code>httpOnly</code> cookie to call the appropriate backend endpoint. The backend uses the session to look up the access token, add <code>Authorization: Bearer 'accessToken'</code>, and send the request to the external resource API. The returned data is a randomized, made-up recipe (though you're welcome to try to cook it).</p>
 
       <button
         onClick={fetchRecipe}
@@ -40,10 +40,43 @@ function ResourceApiPage() {
         {loading ? 'Fetching Recipe...' : 'Get New Recipe'}
       </button>
 
+      {!error && (
+        recipe ? (
+          <div className="recipe">
+            <h2>{recipe.name}</h2>
+            <div className="recipe-lists">
+              <ul className="details">
+                <li><strong>Cuisine:</strong> {recipe.cuisine}</li>
+                <li><strong>Difficulty:</strong> {recipe.difficulty}</li>
+                <li><strong>Cooking Time:</strong> {recipe.cookingTime}</li>
+                <li><strong>Servings:</strong> {recipe.servings}</li>
+              </ul>
+              <ul className="ingredients">
+                <li>{recipe.ingredients.protein}</li>
+                <li>{recipe.ingredients.vegetables.join(', ')}</li>
+                <li>{recipe.ingredients.grain}</li>
+                <li>{recipe.ingredients.sauce}</li>
+                <li>{recipe.ingredients.garnish}</li>
+              </ul>
+            </div>
+            <ol className="instructions">
+              {recipe.instructions.map((step, index) => (
+                <li key={index}>{step}</li>
+              ))}
+            </ol>
+            <p className="tips"><em>{recipe.tips}</em></p>
+          </div>
+        ) : (
+          !loading
+        )
+      )}
+
+      <h2>Raw Recipe Response</h2>
+
       {error && <pre className="error">Error: {error.message}</pre>}
       {!error && (
-        data ? (
-          <pre className="json">{JSON.stringify(data, null, 2)}</pre>
+        recipe ? (
+          <pre className="json">{JSON.stringify(recipe, null, 2)}</pre>
         ) : (
           !loading && <pre>Click the button to fetch a recipe...</pre>
         )

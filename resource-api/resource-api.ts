@@ -9,8 +9,6 @@ interface RecipeIngredients {
 }
 
 interface Recipe {
-  id: string;
-  timestamp: string;
   name: string;
   cuisine: string;
   difficulty: string;
@@ -149,8 +147,6 @@ export function resourceApi(app: express.Application, verifyJWT: express.Request
     const cuisine = getRandomElement(cuisineStyles);
 
     const recipe: Recipe = {
-      id: Math.random().toString(36).substring(2, 11),
-      timestamp: new Date().toISOString(),
       name: '',
       cuisine,
       difficulty: getRandomDifficulty(),
@@ -171,9 +167,6 @@ export function resourceApi(app: express.Application, verifyJWT: express.Request
     recipe.name = generateRecipeName(cuisine, cookingMethod, protein, selectedVegetables[0], grain);
     recipe.instructions = generateInstructions(recipe, cookingMethod);
 
-    res.json({
-      success: true,
-      recipe: recipe
-    });
+    res.json(recipe);
   });
 }
