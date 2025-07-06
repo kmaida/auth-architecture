@@ -20,7 +20,6 @@ body {
   background-size: 24px 24px;
   background-attachment: fixed;
 }
-
 html,
 body,
 #root {
@@ -54,7 +53,6 @@ header {
   text-decoration: none;
   letter-spacing: -0.02em;
 }
-
 .site-brand-icon {
   width: 36px;
   height: 36px;
@@ -68,18 +66,15 @@ header {
   color: #7c3aed;
   box-shadow: 0 2px 8px rgba(255, 255, 255, 0.35);
 }
-
 .site-brand-text {
   display: flex;
   flex-direction: column;
   line-height: 1.1;
 }
-
 .site-brand-main {
   font-size: 1em;
   color: #fff;
 }
-
 .site-brand-sub {
   font-size: 0.6em;
   font-weight: 500;
@@ -254,6 +249,52 @@ code {
   padding: 4px 5px;
   border-radius: 4px;
 }
+pre.json {
+  text-align: left;
+}
+pre.error {
+  color: #ff0000;
+  border: 1px solid #920707;
+}
+
+/*-- Recipe styles --*/
+
+.recipe {
+  background: #29374d;
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  padding: .5rem 2rem 1rem 2rem;
+  margin: 2rem 0;
+}
+.recipe h2 {
+  margin-bottom: 1.5rem;
+}
+.recipe-lists {
+  display: flex;
+  gap: 2rem;
+  margin: 1.5rem 0;
+}
+.recipe-lists ol,
+.recipe-lists ul {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+  flex: 0 1 50%;
+  min-width: 0;
+}
+.container-content .recipe ol {
+  padding-inline-start: 1em;
+  margin: 0;
+}
+.container-content .recipe ul li,
+.container-content .recipe ol li {
+  flex: 1;
+  margin: 0;
+  min-width: 0; /* Prevent flex item from overflowing */
+  line-height: 1.3;
+  margin: 0.5rem 0;
+}
+
 
 /*-- Responsive adjustments --*/
 

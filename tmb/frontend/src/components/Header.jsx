@@ -32,6 +32,7 @@ export default function Header() {
         <NavLink to="/" className="nav-link">Home</NavLink>
         { loggedIn ? <NavLink to="/protected" className="nav-link">Protected</NavLink> : ''}
         { loggedIn ? <NavLink to="/profile" className="nav-link">Profile</NavLink> : ''}
+        { loggedIn ? <NavLink to="/call-api" className="nav-link">Call API</NavLink> : ''}
       </nav>
       {loggedIn ? (
         <div className="header-auth">
