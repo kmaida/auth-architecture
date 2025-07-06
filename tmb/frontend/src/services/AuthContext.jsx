@@ -10,6 +10,22 @@ export function AuthProvider({ children }) {
   const [preLoginPath, setPreLoginPath] = useState('/');
   const [aToken, setAToken] = useState(null);
 
+  // Get access token from backend
+  const getAccessToken = useCallback(async () => {
+    try {
+      const response = await fetch(`${apiUrl}/login/callback`, {
+        credentials: 'include',
+      });
+      const at = await response.json(); // { at: 'accessToken' }
+      setAToken(at);
+      return at;
+    } catch (error) {
+      console.error('Error getting access token:', error);
+      setAToken(null);
+      return null;
+    }
+  }, []);
+
   // Check if user is logged in by sending cookie to auth API
   const checkSession = useCallback(async () => {
     try {
@@ -24,32 +40,23 @@ export function AuthProvider({ children }) {
         if (data.user) {
           setUserInfo(data.user); // Always trust the backend response
         }
+        // Get fresh access token after session check
+        await getAccessToken();
         // NOTE: Could add fallback logic to check cookies if needed, but backend should always provide user info
       } else {
         // User is not logged in, no user info
         setUserInfo(null);
+        setAToken(null);
       }
     } catch (error) {
       console.error('Error checking session:', error);
       setLoggedIn(false);
       setUserInfo(null);
-    }
-    // Get access token from backend
-    try {
-      setIsLoading(true);
-      const response = await fetch(`${apiUrl}/login/callback`, {
-        credentials: 'include',
-      });
-      const at = await response.json(); // { at: 'accessToken' }
-      setAToken(at);
-      return at;
-    } catch (error) {
-      console.error('Error getting access token:', error);
       setAToken(null);
     } finally {
       setIsLoading(false);
     }
-  }, [apiUrl]);
+  }, [getAccessToken]);
 
 
   return (
@@ -60,6 +67,7 @@ export function AuthProvider({ children }) {
       userInfo, 
       isLoading, 
       aToken, 
+      getAccessToken,
       preLoginPath, 
       setPreLoginPath 
     }}>

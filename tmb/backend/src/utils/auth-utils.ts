@@ -2,7 +2,7 @@ import express from 'express';
 import { verify, GetPublicKeyOrSecret, JwtPayload } from 'jsonwebtoken';
 import FusionAuthClient from "@fusionauth/typescript-client";
 import jwksClient, { RsaSigningKey } from 'jwks-rsa';
-import { COOKIE_NAMES, createUserSession, fetchUserSession, setSessionCookie, sessionCache } from './session';
+import { COOKIE_NAMES, createUserSession, fetchUserSession, setSessionCookie, sessionCache, getUserSessionIdFromCookie } from './session';
 
 // Promisify JWT verification
 export function verifyJwtAsync(token: string, getKey: GetPublicKeyOrSecret): Promise<string | JwtPayload | undefined> {
@@ -62,8 +62,6 @@ export const handleRefreshGrant = async (
     const userResponse = (await client.retrieveUserUsingJWT(newTokens.access_token)).response;
     
     if (userResponse?.user) {
-      // setNewCookies(res, newTokens, userResponse.user);
-      
       // Get existing user session
       const userSession = await fetchUserSession(sid);
       if (userSession) {
@@ -165,6 +163,11 @@ export const verifyJWT = async (
 // Checks if the user is authenticated by verifying JWT in authorization header
 // If JWT is invalid or expired, attempt to refresh access token using refresh token
 // If user is authenticated: proceed
+// 
+// RACE CONDITION FIX: This middleware now handles the case where the frontend
+// sends an expired token to the API before the refresh grant completes.
+// Instead of immediately returning 401, it attempts to refresh the token
+// using the session data if available.
 export const createSecureMiddleware = (
   client: FusionAuthClient,
   clientId: string,
@@ -196,11 +199,46 @@ export const createSecureMiddleware = (
       // If verification successful, proceed to next middleware
       next();
     } catch (err) {
-      console.log('Invalid or expired access token:', err);
-      return res.status(401).json({
-        status: 401,
-        message: 'Unauthorized - Invalid or expired access token'
-      });
+      console.log('Invalid or expired access token, attempting refresh:', err);
+      
+      // Token is invalid/expired, try to refresh using session
+      const sid = getUserSessionIdFromCookie(req);
+      if (!sid) {
+        return res.status(401).json({
+          status: 401,
+          message: 'Unauthorized - Invalid access token and no session found'
+        });
+      }
+
+      const userSession = await fetchUserSession(sid);
+      if (!userSession || !userSession.rt) {
+        return res.status(401).json({
+          status: 401,
+          message: 'Unauthorized - Invalid access token and no refresh token available'
+        });
+      }
+
+      // Attempt to refresh the token
+      const refreshResult = await handleRefreshGrant(
+        sid,
+        userSession.rt,
+        res,
+        client,
+        clientId,
+        clientSecret,
+        getKey
+      );
+
+      if (refreshResult && refreshResult.decoded) {
+        // Token refresh successful, proceed to next middleware
+        console.log('Token refresh successful, proceeding with API request');
+        next();
+      } else {
+        return res.status(401).json({
+          status: 401,
+          message: 'Unauthorized - Unable to refresh expired access token'
+        });
+      }
     }
   };
 };
