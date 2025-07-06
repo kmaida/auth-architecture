@@ -2,7 +2,7 @@ import 'dotenv/config';
 import { createRemoteJWKSet, jwtVerify, errors } from 'jose';
 import { Request, Response, NextFunction } from 'express';
 
-const fusionAuthURL = process.env.FUSION_AUTH_URL || 'http://localhost:9011';
+const fusionAuthURL = process.env.AUTHZ_SERVER_URL || 'http://localhost:9011';
 const bffTmbClientId = process.env.CLIENT_ID_BFF_TMB;
 const bbocClientId = process.env.CLIENT_ID_BBOC;
 
