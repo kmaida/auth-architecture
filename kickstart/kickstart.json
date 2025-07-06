@@ -11,7 +11,7 @@
     "adminPassword": "password",
     "userEmail": "user@example.com",
     "userPassword": "password",
-    "userUserId": "542a4b0d-246f-4r91-9b50-3bh7f3a76484"
+    "userUserId": "25a872da-bb44-4af8-a43d-e7bcb5351ebc"
   },
   "apiKeys": [
     {
@@ -231,6 +231,6 @@
           "applicationId": "#{bbocApplicationId}"
         }
       }
-    },
+    }
   ]
 }
