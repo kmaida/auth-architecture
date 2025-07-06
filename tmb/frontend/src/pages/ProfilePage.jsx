@@ -1,13 +1,19 @@
 import { useEffect, useState } from 'react';
+import { useAuth } from '../services/AuthContext';
 
 function ProfilePage() {
   const [userinfo, setUserinfo] = useState(null);
   const [error, setError] = useState(null);
   const apiUrl = import.meta.env.VITE_API_URL;
+  const { checkSession, aToken } = useAuth();
 
   useEffect(() => {
     fetch(`${apiUrl}/auth/userinfo`, {
-      credentials: 'include', // send cookies
+      headers: {
+        'Authorization': `Bearer ${aToken.at}`, // Headers authorize API access
+        'Content-Type': 'application/json'
+      },
+      credentials: 'include' // Session cookie needed to look up user info
     })
       .then((res) => {
         if (!res.ok) throw new Error('Failed to fetch user info');

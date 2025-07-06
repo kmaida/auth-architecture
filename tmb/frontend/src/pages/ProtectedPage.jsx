@@ -1,13 +1,19 @@
 import { useEffect, useState } from 'react';
+import { useAuth } from '../services/AuthContext';
 
 function ProtectedPage() {
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
   const apiUrl = import.meta.env.VITE_API_URL;
+  const { aToken } = useAuth();
+
 
   useEffect(() => {
     fetch(`${apiUrl}/api/protected-data`, {
-      credentials: 'include', // send cookies
+      headers: {
+        'Authorization': `Bearer ${aToken.at}`,
+        'Content-Type': 'application/json'
+      }
     })
       .then((res) => {
         if (!res.ok) throw new Error('Failed to fetch protected data');
