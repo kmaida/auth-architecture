@@ -1,6 +1,6 @@
 # External Resource API
 
-This folder contains a resource API that should be called by all of the architecture demos (BFF, TMB, and BBOC). It represents an external resource server that does not share an origin with FusionAuth or with any of the application architectures.
+This folder contains a resource API that is called by <em>all</em> of the architecture demos (BFF, TMB, and BBOC). It represents an external resource server that does not share an origin with FusionAuth or with any of the application architectures.
 
 The API only has one endpoint (`/api/recipe`) which is secured with `Authorization` header access tokens. It returns a randomly-generated recipe in a JSON response.
 
@@ -13,7 +13,7 @@ The API only has one endpoint (`/api/recipe`) which is secured with `Authorizati
 
 ## Server URL Configuration
 
-The resource server is meant to simulate cross-origin requests. Browsers resolve all `localhost` ports as the same origin, meaning it becomes difficult to test CORS. The resource server will automatically try to use `http://resource-api.local:5001` if available, and fall back to `http://localhost:5001` if not. To use the custom domain, you need to update your system's hosts file.
+The resource server is meant to simulate cross-origin requests. Browsers resolve all `localhost` ports as the same origin, so CORS cannot be tested with all parties running on `localhost`. Below is an option to update your `hosts` file on your machine to add an entry that makes the resource server accessible at `http://resource-api.local:5001`. The resource server will automatically try to use `http://resource-api.local:5001` if available, and fall back to `http://localhost:5001` if not. To use the custom domain, you need to update your system's hosts file.
 
 ### Option 1: Use Custom Domain (Recommended)
 
@@ -69,7 +69,7 @@ After updating your hosts file, test the configuration:
 
 ### Option 2: Use Localhost (Default Fallback)
 
-If you don't want to modify your hosts file, the server will automatically fall back to `http://localhost:5001`.
+If you don't want to modify your hosts file, the server will automatically fall back to `http://localhost:5001`, but the requests won't be cross-origin.
 
 ## Usage Notes
 
