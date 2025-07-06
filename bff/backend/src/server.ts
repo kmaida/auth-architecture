@@ -7,6 +7,7 @@ import cors from 'cors';
 import { validateEnvironmentVariables } from './utils/config';
 import { setupAuthRoutes } from './auth';
 import { api } from './api';
+import { resourceApi } from './resource-api';
 
 // Extend Express Request interface to include 'user'
 declare global {
@@ -86,8 +87,12 @@ app.use(cors({
 // Set up auth API and get the secure middleware
 const authApi = setupAuthRoutes(app, client, clientId, clientSecret, fusionAuthURL, frontendURL, backendURL);
 
-// Set up protected API routes
+// Set up local protected API routes
 api(app, authApi);
+
+// Set up external resource API routes
+// This is a sample API proxy endpoint that fetches data from an external API and returns it to the client
+resourceApi(app, authApi);
 
 /*----------- Health check endpoint ------------*/
 

@@ -2,7 +2,7 @@ import express from 'express';
 
 export function api(app: express.Application, secure: express.RequestHandler) {
   /*---------------------------------
-          Protected API
+        Protected Local API
   ---------------------------------*/
 
   /*----------- GET /api/protected-data ------------*/

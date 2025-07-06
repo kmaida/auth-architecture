@@ -20,7 +20,7 @@ function ProtectedPage() {
   return (
     <div>
       <h1>Protected API Data</h1>
-      <p>This page makes a secured <code>GET</code> request to the backend API to fetch and display a simple message. The user must be logged in and have a valid access token in an <code>httpOnly</code> cookie in order to retrieve protected API data. The returned data is a simple JSON object with a <code>message</code> property, but you can return your own secure data instead in <code>/backend/src/api.ts</code>.</p>
+      <p>This page makes a secured <code>GET</code> request to the backend API to fetch and display a simple message. The user must be logged in and have a valid session in an <code>httpOnly</code> cookie in order for the backend to look up the access token andretrieve protected API data. The returned data is a simple JSON object with a <code>message</code> property, but you can return your own secure data instead in <code>/backend/src/api.ts</code>.</p>
       {error && <pre style={{color: 'red'}}>Error: {error.message}</pre>}
       {!error && (
         data ? (

@@ -20,7 +20,6 @@ body {
   background-size: 24px 24px;
   background-attachment: fixed;
 }
-
 html,
 body,
 #root {
@@ -54,7 +53,6 @@ header {
   text-decoration: none;
   letter-spacing: -0.02em;
 }
-
 .site-brand-icon {
   width: 36px;
   height: 36px;
@@ -68,18 +66,15 @@ header {
   color: #181f2a;
   box-shadow: 0 2px 8px rgba(56, 189, 248, 0.25);
 }
-
 .site-brand-text {
   display: flex;
   flex-direction: column;
   line-height: 1.1;
 }
-
 .site-brand-main {
   font-size: 1em;
   color: #fff;
 }
-
 .site-brand-sub {
   font-size: 0.6em;
   font-weight: 500;
@@ -172,7 +167,6 @@ h1, h2, h3 {
   letter-spacing: -0.03em;
   line-height: 1.1;
 }
-
 .hero-subtitle {
   font-size: 1.1rem;
   font-weight: 500;
@@ -181,7 +175,6 @@ h1, h2, h3 {
   margin: 0 0 2rem 0;
   letter-spacing: 0.01em;
 }
-
 h2, h3 {
   margin: 1em 0;
 }
@@ -252,6 +245,13 @@ code {
   line-height: .94em;
   padding: 4px 5px;
   border-radius: 4px;
+}
+pre.json {
+  text-align: left;
+}
+pre.error {
+  color: #ff0000;
+  border: 1px solid #920707;
 }
 
 /*-- Responsive adjustments --*/

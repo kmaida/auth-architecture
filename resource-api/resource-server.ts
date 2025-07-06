@@ -1,5 +1,7 @@
 import express from 'express';
 import cors from 'cors';
+import { promisify } from 'util';
+import { lookup } from 'dns';
 import verifyJWT from './verifyJWT';
 import { resourceApi } from './resource-api';
 
@@ -15,7 +17,24 @@ declare global {
 // Import environment variables
 import * as dotenv from "dotenv";
 dotenv.config();
-const resourceServerURL = process.env.RESOURCE_SERVER_URL || 'http://localhost:5001';
+
+// Function to check if resource-api.local is available
+const dnsLookup = promisify(lookup);
+
+async function getServerURL(): Promise<string> {
+  const port = process.env.PORT || 5001;
+  const preferredHost = 'resource-api.local';
+  const fallbackHost = 'localhost';
+  
+  try {
+    await dnsLookup(preferredHost);
+    console.log(`✓ ${preferredHost} is available`);
+    return `http://${preferredHost}:${port}`;
+  } catch (error) {
+    console.log(`✗ ${preferredHost} not found in hosts file, falling back to ${fallbackHost}`);
+    return `http://${fallbackHost}:${port}`;
+  }
+}
 
 // Set up app
 const app = express();
@@ -71,6 +90,12 @@ app.all('*', async (req, res) => {
 /*----------- Start the server ------------*/
 
 // npm run dev
-app.listen(port, () => {
-  console.log(`Server started at ${resourceServerURL}`);
-});
+async function startServer() {
+  const serverURL = await getServerURL();
+  
+  app.listen(port, () => {
+    console.log(`Server started at ${serverURL}`);
+  });
+}
+
+startServer().catch(console.error);
