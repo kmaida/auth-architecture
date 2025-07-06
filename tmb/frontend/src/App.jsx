@@ -6,6 +6,7 @@ import HomePage from './pages/HomePage';
 import ProtectedRoute from './components/ProtectedRoute';
 import ProtectedPage from './pages/ProtectedPage';
 import ProfilePage from './pages/ProfilePage';
+import LoginCallbackPage from './pages/LoginCallback';
 import './App.css'
 
 function App() {
@@ -46,6 +47,7 @@ function App() {
       <div className="container-content">
         <Routes>
           <Route path="/" element={<HomePage />} />
+          <Route path="/login/callback" element={<LoginCallbackPage />} />
           <Route
             path="/protected"
             element={

@@ -1,14 +1,17 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../services/AuthContext';
 import { useCallback } from 'react';
 
 export default function Header() {
-  const { loggedIn, userInfo } = useAuth();
+  const { loggedIn, userInfo, setPreLoginPath } = useAuth();
+  const location = useLocation();
   const apiUrl = import.meta.env.VITE_API_URL;
 
   const initLogin = useCallback(() => {
+    // Store current page path in AuthContext
+    setPreLoginPath(location.pathname + location.search + location.hash);
     window.location.href = `${apiUrl}/auth/login`;
-  }, [apiUrl]);
+  }, [apiUrl, location, setPreLoginPath]);
 
   const initLogout = useCallback(() => {
     window.location.href = `${apiUrl}/auth/logout`;

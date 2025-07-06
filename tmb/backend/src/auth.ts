@@ -12,7 +12,8 @@ import {
   fetchUserSession,
   createUserSession,
   setSessionCookie,
-  fetchAndSetUserInfo
+  fetchAndSetUserInfo,
+  UserSession
 } from './utils/session';
 import { 
   generateStateValue, 
@@ -177,13 +178,34 @@ export function setupAuthRoutes(
       // Create session, set tokens, and set user info in session cache
       const newSessionData = await createUserSession(accessToken, refreshToken, userInfo);
       setSessionCookie(req, res, newSessionData.sid as string);
+      console.log('User session created:', newSessionData.sid);
+      console.log('Cookie options:', JSON.stringify(COOKIE_OPTIONS.httpOnly));
+      console.log('Environment:', process.env.ENVIRONMENT);
+      
       // Delete PKCE session cookie
       res.clearCookie(COOKIE_NAMES.PKCE_SESSION);
-      // Redirect user to frontend homepage
-      res.redirect(302, frontendURL);
+      // Redirect user to frontend callback URL
+      res.redirect(302, `${frontendURL}/callback`);
     } catch (err: any) {
       console.error('Error during OAuth callback:', err);
       res.redirect(302, frontendURL);
+    }
+  });
+
+  /*----------- GET /login/callback ------------*/
+
+  // Callback API endpoint the frontend calls after user login
+  // This is not used by the backend, sends the access token to the frontend
+  app.get('/login/callback', async (req, res, next) => {
+    const sid = getUserSessionIdFromCookie(req);
+    if (sid) {
+      fetchUserSession(sid).then((userSession) => {
+        const accessToken = userSession && userSession.at ? { at: userSession.at } : null;
+        res.json(accessToken);
+      });
+    }
+    else {
+      res.status(401).json({ error: 'User session not found' });
     }
   });
 

@@ -7,6 +7,8 @@ export function AuthProvider({ children }) {
   const [loggedIn, setLoggedIn] = useState(false);
   const [userInfo, setUserInfo] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [preLoginPath, setPreLoginPath] = useState('/');
+  const [aToken, setAToken] = useState(null);
 
   // Check if user is logged in by sending cookie to auth API
   const checkSession = useCallback(async () => {
@@ -31,13 +33,36 @@ export function AuthProvider({ children }) {
       console.error('Error checking session:', error);
       setLoggedIn(false);
       setUserInfo(null);
+    }
+    // Get access token from backend
+    try {
+      setIsLoading(true);
+      const response = await fetch(`${apiUrl}/login/callback`, {
+        credentials: 'include',
+      });
+      const at = await response.json(); // { at: 'accessToken' }
+      setAToken(at);
+      return at;
+    } catch (error) {
+      console.error('Error getting access token:', error);
+      setAToken(null);
     } finally {
       setIsLoading(false);
     }
   }, []);
 
+
   return (
-    <AuthContext.Provider value={{ loggedIn, setLoggedIn, checkSession, userInfo, isLoading }}>
+    <AuthContext.Provider value={{ 
+      loggedIn, 
+      setLoggedIn, 
+      checkSession, 
+      userInfo, 
+      isLoading, 
+      aToken, 
+      preLoginPath, 
+      setPreLoginPath 
+    }}>
       {children}
     </AuthContext.Provider>
   );

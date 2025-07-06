@@ -76,7 +76,8 @@
           "oauthConfiguration": {
             "authorizedRedirectURLs": [
               "http://localhost:4001", 
-              "http://localhost:4001/auth/callback"
+              "http://localhost:4001/auth/callback",
+              "http://localhost:5173/login/callback"
             ],
             "authorizedOriginURLs": [
               "http://localhost:4001",
