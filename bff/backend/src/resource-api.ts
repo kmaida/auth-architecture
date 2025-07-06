@@ -1,8 +1,8 @@
 import express from 'express';
 
-export function api(app: express.Application, secure: express.RequestHandler) {
+export function resourceApi(app: express.Application, secure: express.RequestHandler) {
   /*---------------------------------
-        Protected Local API
+         External API proxy
   ---------------------------------*/
 
   /*----------- GET /resource/api/recipe ------------*/
@@ -21,7 +21,7 @@ export function api(app: express.Application, secure: express.RequestHandler) {
       }
 
       // Make call to external API with authorization header
-      const response = await fetch('http://resource-api.local:5001/api/recipe', {
+      const response = await fetch(`${process.env.RESOURCE_API_URL}/api/recipe`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${accessToken}`,

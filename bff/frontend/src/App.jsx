@@ -6,6 +6,7 @@ import HomePage from './pages/HomePage';
 import ProtectedRoute from './components/ProtectedRoute';
 import ProtectedPage from './pages/ProtectedPage';
 import ProfilePage from './pages/ProfilePage';
+import ResourceApiPage from './pages/ResourceApiPage';
 import './App.css'
 
 function App() {
@@ -59,6 +60,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <ProfilePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/call-api"
+            element={
+              <ProtectedRoute>
+                <ResourceApiPage />
               </ProtectedRoute>
             }
           />

@@ -21,10 +21,10 @@ function ProfilePage() {
     <div>
       <h1>User Profile</h1>
       <p>This page makes a secured <code>GET</code> request to the backend auth API to fetch updated profile info. The user must be logged in and have a valid access token in an <code>httpOnly</code> cookie in order to retrieve their user info. The returned data is a JSON object.</p>
-      {error && <pre style={{color: 'red'}}>Error: {error.message}</pre>}
+      {error && <pre className="error">Error: {error.message}</pre>}
       {!error && (
         userinfo ? (
-          <pre style={{ textAlign: 'left' }}>{JSON.stringify(userinfo, null, 2)}</pre>
+          <pre className='json'>{JSON.stringify(userinfo, null, 2)}</pre>
         ) : (
           <pre>Fetching user info...</pre>
         )
