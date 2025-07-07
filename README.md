@@ -5,6 +5,7 @@ This repo contains a set of apps demonstrating different auth architectures and 
 - Backend-for-Frontend (BFF) [spec](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#name-backend-for-frontend-bff)
 - Token-Mediating Backend (TMB) [spec](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#name-token-mediating-backend)
 - Browser-based OAuth 2.0 client (BBOC) [spec](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#name-browser-based-oauth-20-clie)
+- Resource API
 
 ## Prerequisites
 
@@ -26,8 +27,12 @@ This repo contains a set of apps demonstrating different auth architectures and 
 
 Use the READMEs in each architecture folder (`/bff`, `/tmb`, `/bboc`) for instructions on setting up that architecture. All demos use one FusionAuth instance. 
 
-## Concurrent architectures
+### Concurrent architectures
 
 You will not be able to run multiple architecture demos at the same time because they share ports. If you'd like to run multiple apps at the same time, you must change the ports.
 
 All apps share the same FusionAuth instance, so there is no need to run multiple FusionAuth containers.
+
+## Resource API
+
+Use the README in the `/resource-api` folder for setup instructions.
