@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useCallback } from 'react';
 import { FusionAuthClient } from '@fusionauth/typescript-client';
+import pkceChallenge from 'pkce-challenge';
 
 const AuthContext = createContext();
 const clientId = import.meta.env.VITE_CLIENT_ID;
@@ -8,10 +9,20 @@ const apiUrl = import.meta.env.VITE_API_URL;
 const fusionAuthUrl = import.meta.env.VITE_AUTHZ_SERVER_URL;
 const client = new FusionAuthClient(null, fusionAuthUrl);
 
-const setupPKCE = () => {
-  // This function should implement PKCE setup if needed
-  const codeVerifier = 'dummyCodeVerifier';
-  const codeChallenge = 'dummyCodeChallenge';
+const generateStateValue = () => {
+  return Array(6).fill(0).map(() => Math.random().toString(36).substring(2, 15)).join('');
+};
+
+const setupPKCE = async () => {
+  const stateValue = generateStateValue();
+  const pkcePair = await pkceChallenge();
+  const codeVerifier = pkcePair.code_verifier;
+  const codeChallenge = pkcePair.code_challenge;
+
+  // Store the state and PKCE values in session storage
+  sessionStorage.setItem('state', stateValue);
+  sessionStorage.setItem('code_verifier', codeVerifier);
+  sessionStorage.setItem('code_challenge', codeChallenge);
   return { codeVerifier, codeChallenge };
 };
 
@@ -67,6 +78,8 @@ export function AuthProvider({ children }) {
         setIsLoading(false);
         console.log('No access token found, user is not logged in.');
         // @TODO: Check for refresh token by userId
+        // This is just here for testing authz req
+        setupPKCE();
         return;
       }
 
@@ -81,6 +94,7 @@ export function AuthProvider({ children }) {
         const resUser = await client.retrieveUser(resValidate.successResponse.token);
         if (resUser.wasSuccessful()) {
           setUserInfo(resUser.successResponse.user);
+          console.log('User info retrieved:', resUser.successResponse.user);
         } else {
           setUserInfo(null);
         }
@@ -105,13 +119,14 @@ export function AuthProvider({ children }) {
   const login = useCallback(async () => {
     try {
       setIsLoading(true);
-      // @TODO: oauth2/authorize request to FusionAuth
-      const resAuthorize = await client.startOAuth2AuthorizationCodeFlow({
-        clientId: clientId,
-        redirectUri: `${frontendUrl}/auth/callback`,
-        scope: 'openid profile email',
-      });
-      
+      window.location.href=`${fusionAuthUrl}/oauth2/authorize?` +
+        `client_id=${clientId}` +
+        `&response_type=code` +
+        `&redirect_uri=${encodeURIComponent(`${frontendUrl}/login/callback`)}` +
+        `&scope=${encodeURIComponent('openid profile email')}` +
+        `&state=${encodeURIComponent(sessionStorage.getItem('state'))}` +
+        `&code_challenge=${encodeURIComponent(sessionStorage.getItem('code_challenge'))}` +
+        `&code_challenge_method=S256`;
     } catch (error) {
       console.error('Error checking session:', error);
       setLoggedIn(false);
@@ -131,7 +146,8 @@ export function AuthProvider({ children }) {
       isLoading, 
       aToken, 
       preLoginPath, 
-      setPreLoginPath 
+      setPreLoginPath,
+      login
     }}>
       {children}
     </AuthContext.Provider>
