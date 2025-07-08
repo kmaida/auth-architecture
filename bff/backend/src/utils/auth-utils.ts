@@ -2,7 +2,7 @@ import express from 'express';
 import { verify, GetPublicKeyOrSecret, JwtPayload } from 'jsonwebtoken';
 import FusionAuthClient from "@fusionauth/typescript-client";
 import jwksClient, { RsaSigningKey } from 'jwks-rsa';
-import { COOKIE_NAMES, createUserSession, fetchUserSession, setSessionCookie, sessionCache } from './session';
+import { COOKIE_NAMES, fetchUserSession, setSessionCookie, sessionCache } from './session';
 
 // Promisify JWT verification
 export function verifyJwtAsync(token: string, getKey: GetPublicKeyOrSecret): Promise<string | JwtPayload | undefined> {
