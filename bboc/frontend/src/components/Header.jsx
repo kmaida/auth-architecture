@@ -22,7 +22,7 @@ export default function Header() {
     <header>
       <NavLink to="/" className="site-brand">
         <div className="site-brand-icon">
-          <img src="https://fusionauth.io/img/favicon.png" alt="TMB Auth" />
+          <img src="https://fusionauth.io/img/favicon.png" alt="BBOC Auth" />
         </div>
         <div className="site-brand-text">
           <span className="site-brand-main">BBOC Auth</span>
