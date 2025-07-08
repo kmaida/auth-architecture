@@ -15,6 +15,40 @@ const setupPKCE = () => {
   return { codeVerifier, codeChallenge };
 };
 
+const getRefreshToken = async (userId) => {
+  try {
+    const response = await client.retrieveRefreshTokens(userId);
+    if (response.wasSuccessful()) {
+      const refreshToken = response.successResponse.refreshToken;
+      console.log('Refresh token retrieved:', refreshToken);
+      return refreshToken;
+    } else {
+      console.error('Failed to retrieve refresh token:', response);
+      throw new Error('Failed to retrieve refresh token');
+    }
+  } catch (error) {
+    console.error('Error retrieving refresh token:', error);
+    throw error;
+  }
+};
+
+const refreshAccessToken = async (refreshToken) => {
+  try {
+    const response = await client.refreshJWT(refreshToken);
+    if (response.wasSuccessful()) {
+      const newAccessToken = response.successResponse.token;
+      console.log('New access token:', newAccessToken);
+      return newAccessToken;
+    } else {
+      console.error('Failed to refresh access token:', response);
+      throw new Error('Failed to refresh access token');
+    }
+  } catch (error) {
+    console.error('Error refreshing access token:', error);
+    throw error;
+  }
+};
+
 export function AuthProvider({ children }) {
   const [loggedIn, setLoggedIn] = useState(false);
   const [userInfo, setUserInfo] = useState(null);
@@ -32,6 +66,7 @@ export function AuthProvider({ children }) {
         setUserInfo(null);
         setIsLoading(false);
         console.log('No access token found, user is not logged in.');
+        // @TODO: Check for refresh token by userId
         return;
       }
 
