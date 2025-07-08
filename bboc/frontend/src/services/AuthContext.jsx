@@ -43,15 +43,23 @@ const getRefreshToken = async (userId) => {
   }
 };
 
-const refreshAccessToken = async (refreshToken) => {
+const refreshAccessToken = async () => {
   try {
-    const response = await client.refreshJWT(refreshToken);
-    if (response.wasSuccessful()) {
-      const newAccessToken = response.successResponse.token;
+    const uid = localStorage.getItem('uid');
+    const refreshToken = await getRefreshToken(uid);
+    if (!refreshToken) {
+      console.error('No refresh token found for user');
+      throw new Error('No refresh token found');
+    }
+    const resRefresh = await client.refreshJWT(refreshToken);
+    if (resRefresh.wasSuccessful()) {
+      const newAccessToken = resRefresh.response.access_token;
       console.log('New access token:', newAccessToken);
+      setUserToken(newAccessToken);
+      localStorage.setItem('uid', resRefresh.response.userId);
       return newAccessToken;
     } else {
-      console.error('Failed to refresh access token:', response);
+      console.error('Failed to refresh access token:', resRefresh);
       throw new Error('Failed to refresh access token');
     }
   } catch (error) {
@@ -65,14 +73,14 @@ export function AuthProvider({ children }) {
   const [userInfo, setUserInfo] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [preLoginPath, setPreLoginPath] = useState('/');
-  const [at, setAt] = useState(null);
+  const [userToken, setUserToken] = useState(null);
 
   // Check if user is logged in by sending the access token to FusionAuth (if it exists)
   const checkSession = useCallback(async () => {
     try {
       setIsLoading(true);
       
-      if (!at) {
+      if (!userToken) {
         setLoggedIn(false);
         setUserInfo(null);
         setIsLoading(false);
@@ -81,7 +89,7 @@ export function AuthProvider({ children }) {
       }
 
       // Validate access token with FusionAuth
-      const resValidate = await client.validateJWT(aToken);
+      const resValidate = await client.validateJWT(userToken);
 
       console.log('Token validation response:', resValidate);
 
@@ -101,7 +109,7 @@ export function AuthProvider({ children }) {
         setLoggedIn(false);
         // setUserInfo(null);
         // Remove invalid token
-        setAToken(null);
+        setIsLoading(null);
       }
     } catch (error) {
       console.error('Error checking session:', error);
@@ -117,7 +125,7 @@ export function AuthProvider({ children }) {
     try {
       setIsLoading(true);
       
-      // Generate PKCE values right before using them
+      // Generate PKCE pair and state value
       await setupPKCE();
       
       window.location.href=`${fusionAuthUrl}/oauth2/authorize?` +
@@ -172,11 +180,13 @@ export function AuthProvider({ children }) {
 
       if (tokenRes.wasSuccessful()) {
         const accessToken = tokenRes.response.access_token;
-        setAt(accessToken);
-        console.log('Access token received and set:', at, accessToken);
+        setUserToken(accessToken);
+        console.log('Access token received and set:', accessToken);
         setLoggedIn(true);
-        setUserInfo(tokenRes.response.user); // Assuming user info is returned in the response
+        // setUserInfo(tokenRes.response.userId); @TODO: retrieve full user info (only the userId is returned)
+        localStorage.setItem('uid', tokenRes.response.userId);
         console.log('User ID:', tokenRes.response.userId);
+
         return true; // Indicate success
       } else {
         console.error('Failed to exchange code for token:', {
@@ -190,8 +200,32 @@ export function AuthProvider({ children }) {
       console.error('Error exchanging code for token:', error);
       setLoggedIn(false);
       setUserInfo(null);
-      setAToken(null);
+      setUserToken(null);
       throw error; // Re-throw so the caller can handle it
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const logout = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      // Clear user token and info
+      setUserToken(null);
+      setLoggedIn(false);
+      setUserInfo(null);
+      // Clear storage
+      sessionStorage.removeItem('state');
+      sessionStorage.removeItem('code_verifier');
+      sessionStorage.removeItem('code_challenge');
+      localStorage.removeItem('uid');
+      // Log out from FusionAuth and clear all refresh tokens
+      await client.logout(true);
+      console.log('User logged out successfully');
+      // Redirect to home page or login page
+      navigate('/');
+    } catch (error) {
+      console.error('Error during logout:', error);
     } finally {
       setIsLoading(false);
     }
@@ -204,11 +238,12 @@ export function AuthProvider({ children }) {
       checkSession, 
       userInfo, 
       isLoading, 
-      at, 
+      userToken, 
       preLoginPath, 
       setPreLoginPath,
       login,
-      exchangeCodeForToken
+      exchangeCodeForToken,
+      logout
     }}>
       {children}
     </AuthContext.Provider>

@@ -3,8 +3,7 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 function LoginCallbackPage() {
-  // This page is used to handle the login callback from the backend.
-  const { exchangeCodeForToken, preLoginPath } = useAuth();
+  const { exchangeCodeForToken, preLoginPath, userToken } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -14,13 +13,13 @@ function LoginCallbackPage() {
         const code = params.get('code');
         const state = params.get('state');
 
-        console.log('Login callback params:', { code, state });
-
-        if (!code || !state) {
-          throw new Error('Code or state parameter missing');
+        if (!userToken && code && state) {
+          const result = await exchangeCodeForToken(code, state);
+          sessionStorage.removeItem('state');
+          sessionStorage.removeItem('code_verifier');
+          sessionStorage.removeItem('code_challenge');
+          console.log('Authentication result:', result);
         }
-        const result = await exchangeCodeForToken(code, state);
-        console.log('Authentication result:', result);
         // Redirect to the page user was on before login, or homepage if none
         navigate(preLoginPath || '/');
       } catch (error) {
@@ -31,7 +30,7 @@ function LoginCallbackPage() {
     };
 
     handleCallback();
-  }, [navigate, preLoginPath]);
+  }, [navigate, preLoginPath, exchangeCodeForToken]);
 
   return (
     <>
