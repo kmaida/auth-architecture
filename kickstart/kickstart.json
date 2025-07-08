@@ -127,6 +127,7 @@
               "authorization_code",
               "refresh_token"
             ],
+            "clientAuthenticationPolicy": "NotRequired",
             "proofKeyForCodeExchangePolicy": "Required",
             "scopeHandlingPolicy": "Compatibility",
             "debug": true,

@@ -1,7 +1,19 @@
 import { createContext, useContext, useState, useCallback } from 'react';
+import { FusionAuthClient } from '@fusionauth/typescript-client';
 
 const AuthContext = createContext();
+const clientId = import.meta.env.VITE_CLIENT_ID;
+const frontendUrl= import.meta.env.VITE_FRONTEND_URL || 'http://localhost:5173';
 const apiUrl = import.meta.env.VITE_API_URL;
+const fusionAuthUrl = import.meta.env.VITE_AUTHZ_SERVER_URL;
+const client = new FusionAuthClient(null, fusionAuthUrl);
+
+const setupPKCE = () => {
+  // This function should implement PKCE setup if needed
+  const codeVerifier = 'dummyCodeVerifier';
+  const codeChallenge = 'dummyCodeChallenge';
+  return { codeVerifier, codeChallenge };
+};
 
 export function AuthProvider({ children }) {
   const [loggedIn, setLoggedIn] = useState(false);
@@ -10,46 +22,69 @@ export function AuthProvider({ children }) {
   const [preLoginPath, setPreLoginPath] = useState('/');
   const [aToken, setAToken] = useState(null);
 
-  // Check if user is logged in by sending cookie to auth API
+  // Check if user is logged in by sending the access token to FusionAuth (if it exists)
   const checkSession = useCallback(async () => {
     try {
       setIsLoading(true);
-      const response = await fetch(`${apiUrl}/auth/checksession`, {
-        credentials: 'include',
-      });
-      const data = await response.json(); // data: { loggedIn: boolean, user: object|null }
-      setLoggedIn(data.loggedIn);
-
-      if (data.loggedIn) {
-        if (data.user) {
-          setUserInfo(data.user); // Always trust the backend response
-        }
-        // NOTE: Could add fallback logic to check cookies if needed, but backend should always provide user info
-      } else {
-        // User is not logged in, no user info
+      
+      if (!aToken) {
+        setLoggedIn(false);
         setUserInfo(null);
+        setIsLoading(false);
+        console.log('No access token found, user is not logged in.');
+        return;
+      }
+
+      // Validate access token with FusionAuth
+      const resValidate = await client.validateJWT(aToken);
+
+      console.log('Token validation response:', resValidate);
+
+      if (resValidate.wasSuccessful()) {
+        setLoggedIn(true);
+        // Get user info from FusionAuth
+        const resUser = await client.retrieveUser(resValidate.successResponse.token);
+        if (resUser.wasSuccessful()) {
+          setUserInfo(resUser.successResponse.user);
+        } else {
+          setUserInfo(null);
+        }
+      } else {
+        console.log('Invalid access token, user is not logged in.');
+        // @TODO: Check for refresh token by userId
+        setLoggedIn(false);
+        // setUserInfo(null);
+        // Remove invalid token
+        setAToken(null);
       }
     } catch (error) {
       console.error('Error checking session:', error);
       setLoggedIn(false);
       setUserInfo(null);
-    }
-    // Get access token from backend
-    try {
-      setIsLoading(true);
-      const response = await fetch(`${apiUrl}/login/callback`, {
-        credentials: 'include',
-      });
-      const at = await response.json(); // { at: 'accessToken' }
-      setAToken(at);
-      return at;
-    } catch (error) {
-      console.error('Error getting access token:', error);
-      setAToken(null);
     } finally {
       setIsLoading(false);
     }
-  }, [apiUrl]);
+  }, []);
+
+  // Initiate login process
+  const login = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      // @TODO: oauth2/authorize request to FusionAuth
+      const resAuthorize = await client.startOAuth2AuthorizationCodeFlow({
+        clientId: clientId,
+        redirectUri: `${frontendUrl}/auth/callback`,
+        scope: 'openid profile email',
+      });
+      
+    } catch (error) {
+      console.error('Error checking session:', error);
+      setLoggedIn(false);
+      setUserInfo(null);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
 
   return (
