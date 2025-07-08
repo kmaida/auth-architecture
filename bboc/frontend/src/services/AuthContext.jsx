@@ -65,14 +65,14 @@ export function AuthProvider({ children }) {
   const [userInfo, setUserInfo] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [preLoginPath, setPreLoginPath] = useState('/');
-  const [aToken, setAToken] = useState(null);
+  const [at, setAt] = useState(null);
 
   // Check if user is logged in by sending the access token to FusionAuth (if it exists)
   const checkSession = useCallback(async () => {
     try {
       setIsLoading(true);
       
-      if (!aToken) {
+      if (!at) {
         setLoggedIn(false);
         setUserInfo(null);
         setIsLoading(false);
@@ -88,10 +88,10 @@ export function AuthProvider({ children }) {
       if (resValidate.wasSuccessful()) {
         setLoggedIn(true);
         // Get user info from FusionAuth
-        const resUser = await client.retrieveUser(resValidate.successResponse.token);
+        const resUser = await client.retrieveUser(resValidate.response.access_token);
         if (resUser.wasSuccessful()) {
-          setUserInfo(resUser.successResponse.user);
-          console.log('User info retrieved:', resUser.successResponse.user);
+          setUserInfo(resUser.response.user);
+          console.log('User info retrieved:', resUser.response.user);
         } else {
           setUserInfo(null);
         }
@@ -160,7 +160,7 @@ export function AuthProvider({ children }) {
         throw new Error('Code verifier is missing');
       }
       
-      const response = await client.exchangeOAuthCodeForAccessTokenUsingPKCE(
+      const tokenRes = await client.exchangeOAuthCodeForAccessTokenUsingPKCE(
         code,
         clientId,
         null,
@@ -168,20 +168,23 @@ export function AuthProvider({ children }) {
         codeVerifier
       );
 
-      console.log('Token exchange response:', response);
+      console.log('Token exchange response:', tokenRes);
 
-      if (response.wasSuccessful()) {
-        const accessToken = response.successResponse.access_token;
-        setAToken(accessToken);
-        console.log('Access token received:', accessToken);
+      if (tokenRes.wasSuccessful()) {
+        const accessToken = tokenRes.response.access_token;
+        setAt(accessToken);
+        console.log('Access token received and set:', at, accessToken);
+        setLoggedIn(true);
+        setUserInfo(tokenRes.response.user); // Assuming user info is returned in the response
+        console.log('User ID:', tokenRes.response.userId);
         return true; // Indicate success
       } else {
         console.error('Failed to exchange code for token:', {
-          status: response.statusCode,
-          errorResponse: response.errorResponse,
-          exception: response.exception
+          status: tokenRes.statusCode,
+          errorResponse: tokenRes.errorResponse,
+          exception: tokenRes.exception
         });
-        throw new Error(`Token exchange failed: ${response.statusCode}`);
+        throw new Error(`Token exchange failed: ${tokenRes.statusCode}`);
       }
     } catch (error) {
       console.error('Error exchanging code for token:', error);
@@ -201,7 +204,7 @@ export function AuthProvider({ children }) {
       checkSession, 
       userInfo, 
       isLoading, 
-      aToken, 
+      at, 
       preLoginPath, 
       setPreLoginPath,
       login,
