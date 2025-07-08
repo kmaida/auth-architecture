@@ -77,9 +77,6 @@ export function AuthProvider({ children }) {
         setUserInfo(null);
         setIsLoading(false);
         console.log('No access token found, user is not logged in.');
-        // @TODO: Check for refresh token by userId
-        // This is just here for testing authz req
-        setupPKCE();
         return;
       }
 
@@ -119,6 +116,10 @@ export function AuthProvider({ children }) {
   const login = useCallback(async () => {
     try {
       setIsLoading(true);
+      
+      // Generate PKCE values right before using them
+      await setupPKCE();
+      
       window.location.href=`${fusionAuthUrl}/oauth2/authorize?` +
         `client_id=${clientId}` +
         `&response_type=code` +
@@ -128,7 +129,7 @@ export function AuthProvider({ children }) {
         `&code_challenge=${encodeURIComponent(sessionStorage.getItem('code_challenge'))}` +
         `&code_challenge_method=S256`;
     } catch (error) {
-      console.error('Error checking session:', error);
+      console.error('Error during login:', error);
       setLoggedIn(false);
       setUserInfo(null);
     } finally {
@@ -136,6 +137,62 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
+  const exchangeCodeForToken = useCallback(async (code, authzState) => {
+    try {
+      setIsLoading(true);
+      const state = sessionStorage.getItem('state');
+      const codeVerifier = sessionStorage.getItem('code_verifier');
+      
+      console.log('Token exchange parameters:', {
+        code,
+        authzState,
+        storedState: state,
+        codeVerifier: codeVerifier ? 'present' : 'missing'
+      });
+      
+      if (authzState !== state) {
+        console.error('State mismatch during token exchange:', { authzState, state });
+        throw new Error('State mismatch during token exchange');
+      }
+      
+      if (!codeVerifier) {
+        console.error('Code verifier is missing from session storage');
+        throw new Error('Code verifier is missing');
+      }
+      
+      const response = await client.exchangeOAuthCodeForAccessTokenUsingPKCE(
+        code,
+        clientId,
+        null,
+        frontendUrl + '/login/callback',
+        codeVerifier
+      );
+
+      console.log('Token exchange response:', response);
+
+      if (response.wasSuccessful()) {
+        const accessToken = response.successResponse.access_token;
+        setAToken(accessToken);
+        console.log('Access token received:', accessToken);
+        return true; // Indicate success
+      } else {
+        console.error('Failed to exchange code for token:', {
+          status: response.statusCode,
+          errorResponse: response.errorResponse,
+          exception: response.exception
+        });
+        throw new Error(`Token exchange failed: ${response.statusCode}`);
+      }
+    } catch (error) {
+      console.error('Error exchanging code for token:', error);
+      setLoggedIn(false);
+      setUserInfo(null);
+      setAToken(null);
+      throw error; // Re-throw so the caller can handle it
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   return (
     <AuthContext.Provider value={{ 
@@ -147,7 +204,8 @@ export function AuthProvider({ children }) {
       aToken, 
       preLoginPath, 
       setPreLoginPath,
-      login
+      login,
+      exchangeCodeForToken
     }}>
       {children}
     </AuthContext.Provider>
