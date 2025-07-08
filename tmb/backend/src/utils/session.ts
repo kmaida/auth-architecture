@@ -43,7 +43,6 @@ export const COOKIE_NAMES = {
 
 // Cookie-setting options based on environment
 // Production cookies must be only set over HTTPS (secure), with httpOnly & SameSite
-// Production cookies may also need a domain
 export const COOKIE_OPTIONS = {
   httpOnly: { 
     httpOnly: true, 
