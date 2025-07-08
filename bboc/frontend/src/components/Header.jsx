@@ -3,7 +3,7 @@ import { useAuth } from '../services/AuthContext';
 import { useCallback } from 'react';
 
 export default function Header() {
-  const { loggedIn, userInfo, setPreLoginPath, setUserToken, login, logout } = useAuth();
+  const { loggedIn, userInfo, setPreLoginPath, login, logout } = useAuth();
   const location = useLocation();
   const apiUrl = import.meta.env.VITE_API_URL;
 
@@ -15,6 +15,7 @@ export default function Header() {
 
   const initLogout = useCallback(() => {
     logout();
+    // @TODO: Redirect to home page on successful logout
   }, [logout]);
 
   return (
