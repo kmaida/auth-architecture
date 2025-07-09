@@ -69,7 +69,7 @@ export function setupAuthRoutes(
       let user = verifyResult.user;
       
       if (!user) {
-        // Try userInfo cookie first
+        // Try userInfo cookie next
         const userInfoCookie = req.cookies[COOKIE_NAMES.USER_INFO];
         user = userInfoCookie ? parseJsonCookie(userInfoCookie) : null;
         
@@ -78,7 +78,7 @@ export function setupAuthRoutes(
           // Get UPDATED session data from cache (important: fetch again after potential token refresh)
           const updatedSessionData = await fetchUserSession(sid);
           if (updatedSessionData && updatedSessionData.sid && updatedSessionData.at) {
-            user = await fetchAndSetUserInfo(updatedSessionData.sid, updatedSessionData.at, res, client);
+            user = await fetchAndSetUserInfo(updatedSessionData.sid, updatedSessionData.at, res);
           }
         }
       }
@@ -232,7 +232,7 @@ export function setupAuthRoutes(
 
       if (sid && userSession && userSession.at) {
         // Fetch and set user info from FusionAuth
-        freshUserInfo = await fetchAndSetUserInfo(sid, userSession.at, res, client);
+        freshUserInfo = await fetchAndSetUserInfo(sid, userSession.at, res);
       }
     } catch (err: any) {
       console.error('Error fetching user info:', err);

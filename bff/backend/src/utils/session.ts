@@ -195,13 +195,8 @@ export const refreshSessionTokens = async (
   return userSession;
 };
 
-// Fetch user info from FusionAuth, update in session storage
-export const fetchAndSetUserInfo = async (
-  sessionId: string,
-  accessToken: string, 
-  res: express.Response,
-  client: FusionAuthClient
-) => {
+// Get userInfo from FusionAuth oauth2/userinfo endpoint authorized by access token
+export const getUserInfo = async (accessToken: string) => {
   try {
     const userResponse = await fetch(`${process.env.FUSIONAUTH_URL}/oauth2/userinfo`, {
       method: 'GET',
@@ -215,6 +210,25 @@ export const fetchAndSetUserInfo = async (
       }
       return response.json();
     });
+
+    if (userResponse) {
+      return userResponse;
+    }
+  } catch (e) {
+    // Logic falls through - user will be null
+    console.error('Error fetching user info:', e);
+  }
+  return null;
+}
+
+// Fetch user info from FusionAuth, update in session storage
+export const fetchAndSetUserInfo = async (
+  sessionId: string,
+  accessToken: string, 
+  res: express.Response
+) => {
+  try {
+    const userResponse = await getUserInfo(accessToken)
 
     if (userResponse) {
       // Set public cookie with user info
