@@ -19,23 +19,19 @@ export function AuthProvider({ children }) {
   const [preLoginPath, setPreLoginPath] = useState('/');
   const [userToken, setUserToken] = useState(null);
 
-  //----------------------------------- Check session
-
+  // Check session and refresh token if needed
   const checkSession = useCallback(async () => {
+    setIsLoading(true);
     try {
-      setIsLoading(true);
-      
-      // Don't check session or attempt refresh on auth callback pages
-      if (window.location.pathname === '/logout/callback' || window.location.pathname === '/login/callback') {
+      // Skip session check on callback pages
+      const path = window.location.pathname;
+      if (path === '/logout/callback' || path === '/login/callback') {
         setIsLoading(false);
         return;
       }
-      
-      const storedRefreshToken = localStorage.getItem('refresh_token');
 
-      // If no access token in memory but there is a refresh token in storage, try to refresh
+      const storedRefreshToken = localStorage.getItem('refresh_token');
       if (!userToken && storedRefreshToken) {
-        console.log('Refresh token found, initiating refresh grant...');
         try {
           await refreshAccessToken(storedRefreshToken);
         } catch (error) {
@@ -46,23 +42,18 @@ export function AuthProvider({ children }) {
       }
     } catch (error) {
       console.error('Error checking session:', error);
-      setLoggedIn(false);
-      setUserInfo(null);
+      clearSession();
     } finally {
       setIsLoading(false);
     }
   }, [userToken]);
 
-  //----------------------------------- Log in
-
+  // Initiate login with PKCE
   const login = useCallback(async () => {
+    setIsLoading(true);
     try {
-      setIsLoading(true);
-      
-      // Generate PKCE pair and state value
       await setupPKCE();
-      
-      window.location.href=`${fusionAuthUrl}/oauth2/authorize?` +
+      window.location.href = `${fusionAuthUrl}/oauth2/authorize?` +
         `client_id=${clientId}` +
         `&response_type=code` +
         `&redirect_uri=${encodeURIComponent(`${frontendUrl}/login/callback`)}` +
@@ -77,41 +68,26 @@ export function AuthProvider({ children }) {
       setIsLoading(false);
     }
   }, []);
-  
-  //----------------------------------- Exchange code for token (called from LoginCallbackPage)
 
+  // Exchange authorization code for tokens
   const exchangeCodeForToken = useCallback(async (code, authzState) => {
+    setIsLoading(true);
     try {
-      setIsLoading(true);
       const state = sessionStorage.getItem('state');
       const codeVerifier = sessionStorage.getItem('code_verifier');
-      
-      if (authzState !== state) {
-        console.error('State mismatch during token exchange:', { authzState, state });
-        throw new Error('State mismatch during token exchange');
-      }
-      
-      if (!codeVerifier) {
-        console.error('Code verifier is missing from session storage');
-        throw new Error('Code verifier is missing');
-      }
-      
+      if (authzState !== state) throw new Error('State mismatch during token exchange');
+      if (!codeVerifier) throw new Error('Code verifier is missing');
+
       const tokenRes = await client.exchangeOAuthCodeForAccessTokenUsingPKCE(
         code,
         clientId,
-        null, // clientSecret (null for public clients)
-        frontendUrl + '/login/callback',
+        null,
+        `${frontendUrl}/login/callback`,
         codeVerifier
       );
-
       if (tokenRes.wasSuccessful()) {
         await tokensSuccess(tokenRes);
       } else {
-        console.error('Failed to exchange code for token:', {
-          status: tokenRes.statusCode,
-          errorResponse: tokenRes.errorResponse,
-          exception: tokenRes.exception
-        });
         throw new Error(`Token exchange failed: ${tokenRes.statusCode}`);
       }
     } catch (error) {
@@ -123,18 +99,12 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
-  //----------------------------------- Get user info
-
+  // Fetch user info from FusionAuth
   const getUserInfo = useCallback(async (accessToken) => {
+    setIsLoading(true);
     try {
-      setIsLoading(true);
-      // If accessToken is provided, use it; otherwise, use the stored userToken
       const token = accessToken || userToken;
-
-      if (!token) {
-        throw new Error('No access token available, unable to authorize user info request');
-      }
-
+      if (!token) throw new Error('No access token available');
       const resUserInfo = await fetch(`${fusionAuthUrl}/oauth2/userinfo`, {
         method: 'GET',
         headers: {
@@ -142,36 +112,26 @@ export function AuthProvider({ children }) {
           'Content-Type': 'application/json'
         }
       });
-
-      if (!resUserInfo.ok) {
-        throw new Error('Failed to fetch user info');
-      }
-
-      const userInfo = await resUserInfo.json();
-      console.log('User info fetched successfully:', userInfo);
-      return userInfo;
+      if (!resUserInfo.ok) throw new Error('Failed to fetch user info');
+      return await resUserInfo.json();
     } catch (error) {
       console.error('Error fetching user info:', error);
+      return null;
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [userToken]);
 
-  //----------------------------------- Refresh access token
-
+  // Refresh access token using refresh token
   const refreshAccessToken = async (refreshToken) => {
     try {
-      if (!refreshToken) {
-        throw new Error('No refresh token found');
-      }
-      
+      if (!refreshToken) throw new Error('No refresh token found');
       const resRefresh = await client.exchangeRefreshTokenForAccessToken(
         refreshToken,
         clientId,
-        null, // clientSecret (null for public clients)
-        null  // scope (use same as original authorization request)
+        null,
+        null
       );
-      
       if (resRefresh.wasSuccessful()) {
         await tokensSuccess(resRefresh);
       } else {
@@ -183,12 +143,11 @@ export function AuthProvider({ children }) {
     }
   };
 
-  //----------------------------------- Log out
-
+  // Log out and redirect to FusionAuth logout
   const logout = useCallback(async () => {
+    setIsLoading(true);
     try {
-      setIsLoading(true);
-      window.location.href=`${fusionAuthUrl}/oauth2/logout?` +
+      window.location.href = `${fusionAuthUrl}/oauth2/logout?` +
         `client_id=${clientId}` +
         `&redirect_uri=${encodeURIComponent(`${frontendUrl}/logout/callback`)}`;
     } catch (error) {
@@ -198,60 +157,42 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
-  //----------------------------------- Tokens acquired successfully
-
+  // Handle tokens and user info after successful login/refresh
   const tokensSuccess = async (tokenRes) => {
-    const accessToken = tokenRes.response.access_token;
-    const refreshToken = tokenRes.response.refresh_token;
-    const idToken = tokenRes.response.id_token;
-    
-    setUserToken(accessToken);
-    localStorage.setItem('refresh_token', refreshToken);
-    sessionStorage.setItem('id_token', idToken);
+    const { access_token, refresh_token, id_token } = tokenRes.response;
+    setUserToken(access_token);
+    localStorage.setItem('refresh_token', refresh_token);
+    sessionStorage.setItem('id_token', id_token);
 
-    // NOTE: for additional security, you could store the userId separately from the refresh token
-    // and compare the stored userId with the one in the tokenRes.response.userId to further ensure
-    // that the refresh token is valid for the current user session
-    
-    // Get user info from oauth2/userinfo endpoint
-    const userInfo = await getUserInfo(accessToken);
+    const userInfo = await getUserInfo(access_token);
     setUserInfo(userInfo);
     setLoggedIn(true);
 
-    console.log('Successfully exchanged code for token and completed PKCE flow:', tokenRes.response);
-
-    // Clear PKCE values from session storage (if they exist)
+    // Clear PKCE values from session storage
     sessionStorage.removeItem('state');
     sessionStorage.removeItem('code_verifier');
     sessionStorage.removeItem('code_challenge');
+  };
 
-    return true;
-  }
-
-  //----------------------------------- Clear session
-
+  // Clear all session and token state
   const clearSession = () => {
-    // Clear browser storage (session storage and local storage)
     clearAuthStorage();
-    // Clear access token in app memory
     setUserToken(null);
-    // Clear user info and login state
     setUserInfo(null);
     setLoggedIn(false);
-    // Reset loading state
     setIsLoading(false);
   };
 
   return (
-    <AuthContext.Provider value={{ 
-      loggedIn, 
-      setLoggedIn, 
-      checkSession, 
+    <AuthContext.Provider value={{
+      loggedIn,
+      setLoggedIn,
+      checkSession,
       userInfo,
       setUserInfo,
-      isLoading, 
-      userToken, 
-      preLoginPath, 
+      isLoading,
+      userToken,
+      preLoginPath,
       setPreLoginPath,
       login,
       exchangeCodeForToken,

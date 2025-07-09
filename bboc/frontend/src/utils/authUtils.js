@@ -2,6 +2,7 @@ import pkceChallenge from 'pkce-challenge';
 
 /**
  * Generate a random state value for OAuth
+  * @returns {string} - A random string to be used as state
  */
 export const generateStateValue = () => {
   return Array(6).fill(0).map(() => Math.random().toString(36).substring(2, 15)).join('');
@@ -9,27 +10,36 @@ export const generateStateValue = () => {
 
 /**
  * Set up PKCE challenge and state
+  * @returns {Promise<{codeVerifier: string, codeChallenge: string}>} - An object containing the code verifier and code challenge
+    * @throws {Error} - If PKCE challenge generation fails
+    * 
+    * This function generates a random state value and a PKCE challenge pair (code verifier and code challenge).
+    * It stores these values in session storage for later use in the OAuth flow.
  */
 export const setupPKCE = async () => {
-    const stateValue = generateStateValue();
-    const pkcePair = await pkceChallenge();
-    const codeVerifier = pkcePair.code_verifier;
-    const codeChallenge = pkcePair.code_challenge;
+  const stateValue = generateStateValue();
+  const pkcePair = await pkceChallenge();
+  const codeVerifier = pkcePair.code_verifier;
+  const codeChallenge = pkcePair.code_challenge;
 
-    // Store the state and PKCE values in session storage
-    sessionStorage.setItem('state', stateValue);
-    sessionStorage.setItem('code_verifier', codeVerifier);
-    sessionStorage.setItem('code_challenge', codeChallenge);
-    return { codeVerifier, codeChallenge };
-  };
+  // Store the state and PKCE values in session storage
+  sessionStorage.setItem('state', stateValue);
+  sessionStorage.setItem('code_verifier', codeVerifier);
+  sessionStorage.setItem('code_challenge', codeChallenge);
+  return { codeVerifier, codeChallenge };
+};
 
 /**
  * Decode JWT token payload
+ * @param {string} token - The JWT token to decode
+ * @returns {object|null} - The decoded payload or null if invalid
  */
 export const decodeToken = (token) => {
   if (!token) return null;
   try {
-    const payload = JSON.parse(atob(token.split('.')[1]));
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+    const payload = JSON.parse(atob(parts[1]));
     return payload;
   } catch (error) {
     console.error('Error decoding token:', error);
@@ -38,11 +48,12 @@ export const decodeToken = (token) => {
 };
 
 /**
- * Check if a token is valid and not expired
+ * Check if a token is valid and not expired 
+  * @param {string} token - The JWT token to validate
+  * @returns {boolean} - True if valid, false otherwise
  */
 export const isTokenValid = (token) => {
   if (!token) return false;
-  
   try {
     const payload = decodeToken(token);
     if (!payload) return false;
@@ -53,22 +64,6 @@ export const isTokenValid = (token) => {
     console.error('Error validating token:', error);
     return false;
   }
-};
-
-//--------------------------- Extract user info from ID token payload (only if oauth2/userinfo fails)
-
-export const extractUserInfoFromIdToken = (idToken) => {
-  const payload = decodeToken(idToken);
-  if (!payload) return null;
-  
-  return {
-    sub: payload.sub,
-    email: payload.email,
-    name: payload.name,
-    given_name: payload.given_name,
-    family_name: payload.family_name,
-    preferred_username: payload.preferred_username
-  };
 };
 
 /**
