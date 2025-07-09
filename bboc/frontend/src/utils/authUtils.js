@@ -1,9 +1,27 @@
+import pkceChallenge from 'pkce-challenge';
+
 /**
  * Generate a random state value for OAuth
  */
 export const generateStateValue = () => {
   return Array(6).fill(0).map(() => Math.random().toString(36).substring(2, 15)).join('');
 };
+
+/**
+ * Set up PKCE challenge and state
+ */
+export const setupPKCE = async () => {
+    const stateValue = generateStateValue();
+    const pkcePair = await pkceChallenge();
+    const codeVerifier = pkcePair.code_verifier;
+    const codeChallenge = pkcePair.code_challenge;
+
+    // Store the state and PKCE values in session storage
+    sessionStorage.setItem('state', stateValue);
+    sessionStorage.setItem('code_verifier', codeVerifier);
+    sessionStorage.setItem('code_challenge', codeChallenge);
+    return { codeVerifier, codeChallenge };
+  };
 
 /**
  * Decode JWT token payload
@@ -37,9 +55,8 @@ export const isTokenValid = (token) => {
   }
 };
 
-/**
- * Extract user info from ID token payload
- */
+//--------------------------- Extract user info from ID token payload (only if oauth2/userinfo fails)
+
 export const extractUserInfoFromIdToken = (idToken) => {
   const payload = decodeToken(idToken);
   if (!payload) return null;
@@ -55,14 +72,14 @@ export const extractUserInfoFromIdToken = (idToken) => {
 };
 
 /**
- * Clear all authentication-related storage
+ * Clear all authentication-related browser storage
  */
 export const clearAuthStorage = () => {
   // Clear session storage
   sessionStorage.removeItem('state');
   sessionStorage.removeItem('code_verifier');
   sessionStorage.removeItem('code_challenge');
+  sessionStorage.removeItem('id_token');
   // Clear local storage
   localStorage.removeItem('refresh_token');
-  localStorage.removeItem('id_token');
 };

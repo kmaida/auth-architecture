@@ -1,18 +1,14 @@
-import { createContext, useContext, useState, useCallback, use } from 'react';
+import { createContext, useContext, useState, useCallback } from 'react';
 import { FusionAuthClient } from '@fusionauth/typescript-client';
-import pkceChallenge from 'pkce-challenge';
+
 import { 
-  generateStateValue, 
-  decodeToken, 
-  isTokenValid, 
-  extractUserInfoFromIdToken, 
+  setupPKCE,
   clearAuthStorage 
 } from '../utils/authUtils.js';
 
 const AuthContext = createContext();
 const clientId = import.meta.env.VITE_CLIENT_ID;
 const frontendUrl= import.meta.env.VITE_FRONTEND_URL || 'http://localhost:5173';
-const apiUrl = import.meta.env.VITE_API_URL;
 const fusionAuthUrl = import.meta.env.VITE_AUTHZ_SERVER_URL;
 const client = new FusionAuthClient(null, fusionAuthUrl);
 
@@ -22,85 +18,6 @@ export function AuthProvider({ children }) {
   const [isLoading, setIsLoading] = useState(true);
   const [preLoginPath, setPreLoginPath] = useState('/');
   const [userToken, setUserToken] = useState(null);
-  const [refreshToken, setRefreshToken] = useState(null);
-  const [idToken, setIdToken] = useState(null);
-
-  const setupPKCE = async () => {
-    const stateValue = generateStateValue();
-    const pkcePair = await pkceChallenge();
-    const codeVerifier = pkcePair.code_verifier;
-    const codeChallenge = pkcePair.code_challenge;
-
-    // Store the state and PKCE values in session storage
-    sessionStorage.setItem('state', stateValue);
-    sessionStorage.setItem('code_verifier', codeVerifier);
-    sessionStorage.setItem('code_challenge', codeChallenge);
-    return { codeVerifier, codeChallenge };
-  };
-
-  const refreshAccessToken = async (refreshToken) => {
-    try {
-      if (!refreshToken) {
-        throw new Error('No refresh token found');
-      }
-      
-      const resRefresh = await client.exchangeRefreshTokenForAccessToken(
-        refreshToken,
-        clientId,
-        null, // clientSecret (null for public clients)
-        null  // scope
-      );
-      
-      if (resRefresh.wasSuccessful()) {
-        const newAccessToken = resRefresh.response.access_token;
-        const newRefreshToken = resRefresh.response.refresh_token; // Handle rotation
-        const newIdToken = resRefresh.response.id_token;
-        
-        setUserToken(newAccessToken);
-        setIdToken(newIdToken);
-
-        // Must update refresh token because rotation is enabled
-        // Refresh tokens are one-time-use and rotated every time an access token is refreshed
-        setRefreshToken(newRefreshToken);
-        localStorage.setItem('refresh_token', newRefreshToken);
-
-        console.log('Tokens refreshed successfully:', resRefresh.response);
-        localStorage.setItem('id_token', newIdToken);
-        setUserInfoFromIdToken(newIdToken);
-
-        setLoggedIn(true);
-        
-        return newAccessToken;
-      } else {
-        throw new Error('Failed to refresh access token');
-      }
-    } catch (error) {
-      console.error('Error refreshing access token:', error);
-      clearSession();
-      throw error;
-    }
-  };
-
-  const setUserInfoFromIdToken = (idToken) => {
-    const userInfo = extractUserInfoFromIdToken(idToken);
-    if (userInfo) {
-      setUserInfo(userInfo);
-    } else {
-      console.warn('No valid ID token found, user info not set');
-      setUserInfo(null);
-    }
-  };
-
-  const clearSession = () => {
-    clearAuthStorage();
-    // Clear tokens
-    setUserToken(null);
-    setRefreshToken(null);
-    setIdToken(null);
-    // Reset user info and login state
-    setUserInfo(null);
-    setLoggedIn(false);
-  };
 
   //----------------------------------- Check session
 
@@ -115,14 +32,12 @@ export function AuthProvider({ children }) {
       }
       
       const storedRefreshToken = localStorage.getItem('refresh_token');
-      const storedIdToken = localStorage.getItem('id_token');
 
-      // If no access token in memory but there is user info and a refresh token in storage, try to refresh
-      if (!userToken && storedIdToken && storedRefreshToken) {
+      // If no access token in memory but there is a refresh token in storage, try to refresh
+      if (!userToken && storedRefreshToken) {
         console.log('Refresh token found, attempting refresh...');
         try {
           await refreshAccessToken(storedRefreshToken);
-          setUserInfoFromIdToken(storedIdToken);
         } catch (error) {
           console.error('Failed to refresh token:', error);
           clearSession();
@@ -136,7 +51,7 @@ export function AuthProvider({ children }) {
     } finally {
       setIsLoading(false);
     }
-  }, [userToken, idToken]);
+  }, [userToken]);
 
   //----------------------------------- Log in
 
@@ -156,9 +71,8 @@ export function AuthProvider({ children }) {
         `&code_challenge=${encodeURIComponent(sessionStorage.getItem('code_challenge'))}` +
         `&code_challenge_method=S256`;
     } catch (error) {
-      console.error('Error during login:', error);
-      setLoggedIn(false);
-      setUserInfo(null);
+      console.error('Error logging in:', error);
+      clearSession();
     } finally {
       setIsLoading(false);
     }
@@ -192,7 +106,7 @@ export function AuthProvider({ children }) {
       const tokenRes = await client.exchangeOAuthCodeForAccessTokenUsingPKCE(
         code,
         clientId,
-        null,
+        null, // clientSecret (null for public clients)
         frontendUrl + '/login/callback',
         codeVerifier
       );
@@ -205,31 +119,13 @@ export function AuthProvider({ children }) {
         const idToken = tokenRes.response.id_token;
         
         setUserToken(accessToken);
-        setRefreshToken(refreshToken);
         setLoggedIn(true);
         localStorage.setItem('refresh_token', refreshToken);
-        localStorage.setItem('id_token', idToken);
+        sessionStorage.setItem('id_token', idToken);
         
-        // Extract user info from ID token
-        if (idToken) {
-          try {
-            localStorage.setItem('id_token', idToken); // Ensure ID token is stored
-            const payload = JSON.parse(atob(idToken.split('.')[1]));
-            console.log('User info from ID token:', payload);
-            
-            setUserInfo({
-              sub: payload.sub,
-              email: payload.email,
-              name: payload.name,
-              given_name: payload.given_name,
-              family_name: payload.family_name,
-              preferred_username: payload.preferred_username
-            });
-          } catch (parseError) {
-            console.error('Error parsing ID token:', parseError);
-          }
-        }
-        
+        // Get user info from oauth2/userinfo endpoint
+        await getUserInfo(accessToken);
+    
         return true;
       } else {
         console.error('Failed to exchange code for token:', {
@@ -241,14 +137,94 @@ export function AuthProvider({ children }) {
       }
     } catch (error) {
       console.error('Error exchanging code for token:', error);
-      setLoggedIn(false);
-      setUserInfo(null);
-      setUserToken(null);
+      clearSession();
       throw error;
     } finally {
       setIsLoading(false);
     }
   }, []);
+
+  //----------------------------------- Get user info
+
+  const getUserInfo = useCallback(async (accessToken) => {
+    try {
+      setIsLoading(true);
+      // If accessToken is provided, use it; otherwise, use the stored userToken
+      const token = accessToken || userToken;
+
+      if (!token) {
+        throw new Error('No access token available, unable to authorize user info request');
+      }
+
+      const resUserInfo = await fetch(`${fusionAuthUrl}/oauth2/userinfo`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!resUserInfo.ok) {
+        throw new Error('Failed to fetch user info');
+      }
+
+      const userInfo = await resUserInfo.json();
+      console.log('User info fetched successfully:', userInfo);
+      setUserInfo(userInfo);
+    } catch (error) {
+      console.error('Error fetching user info:', error);
+      setUserInfo(null);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  //----------------------------------- Refresh access token
+
+  const refreshAccessToken = async (refreshToken) => {
+    try {
+      if (!refreshToken) {
+        throw new Error('No refresh token found');
+      }
+      
+      const resRefresh = await client.exchangeRefreshTokenForAccessToken(
+        refreshToken,
+        clientId,
+        null, // clientSecret (null for public clients)
+        null  // scope (use same as original authorization request)
+      );
+      
+      if (resRefresh.wasSuccessful()) {
+        const newAccessToken = resRefresh.response.access_token;
+        const newRefreshToken = resRefresh.response.refresh_token; // Refresh token rotation
+        const newIdToken = resRefresh.response.id_token;
+
+        // NOTE: for additional security, you could store the userId separately from the refresh token
+        // and compare the stored userId with the one in the resRefresh.response.userId to further ensure
+        // that the refresh token is valid for the current user session
+        
+        setUserToken(newAccessToken);
+        sessionStorage.setItem('id_token', newIdToken);
+
+        // Must update stored refresh token (refresh token rotation)
+        // Refresh tokens are one-time-use and rotated every time a new access token is issued
+        localStorage.setItem('refresh_token', newRefreshToken);
+
+        console.log('Tokens refreshed successfully:', resRefresh.response);
+        
+        await getUserInfo(newAccessToken);
+
+        setLoggedIn(true);
+        
+        return { newAccessToken, newRefreshToken, newIdToken };
+      } else {
+        throw new Error('Failed to refresh access token');
+      }
+    } catch (error) {
+      console.error('Error refreshing access token:', error);
+      clearSession();
+    }
+  };
 
   //----------------------------------- Log out
 
@@ -264,6 +240,20 @@ export function AuthProvider({ children }) {
       setIsLoading(false);
     }
   }, []);
+
+  //----------------------------------- Clear session
+
+  const clearSession = () => {
+    // Clear browser storage (session storage and local storage)
+    clearAuthStorage();
+    // Clear access token in app memory
+    setUserToken(null);
+    // Clear user info and login state
+    setUserInfo(null);
+    setLoggedIn(false);
+    // Reset loading state
+    setIsLoading(false);
+  };
 
   return (
     <AuthContext.Provider value={{ 
