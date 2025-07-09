@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback } from 'react';
+import { createContext, useContext, useState, useCallback, useRef } from 'react';
 import { FusionAuthClient } from '@fusionauth/typescript-client';
 
 import { 
@@ -18,6 +18,7 @@ export function AuthProvider({ children }) {
   const [isLoading, setIsLoading] = useState(true);
   const [preLoginPath, setPreLoginPath] = useState('/');
   const [userToken, setUserToken] = useState(null);
+  const refreshTimerRef = useRef(null);
 
   /**
    * Check session and refresh tokens if necessary
@@ -31,7 +32,7 @@ export function AuthProvider({ children }) {
         setIsLoading(false);
         return;
       }
-
+      // Check if user is already logged in and if not, try to refresh the session
       const storedRefreshToken = localStorage.getItem('refresh_token');
       if (!userToken && storedRefreshToken) {
         try {
@@ -90,7 +91,7 @@ export function AuthProvider({ children }) {
       const tokenRes = await client.exchangeOAuthCodeForAccessTokenUsingPKCE(
         code,
         clientId,
-        null,
+        null, // No client secret for public clients
         `${frontendUrl}/login/callback`,
         codeVerifier
       );
@@ -162,7 +163,7 @@ export function AuthProvider({ children }) {
   };
 
   /**
-   * Log out and redirect to FusionAuth logout
+   * Log out and redirect to FusionAuth OAuth2 logout endpoint
    * @throws {Error} - If logout fails
    */
   const logout = useCallback(async () => {
@@ -179,6 +180,37 @@ export function AuthProvider({ children }) {
   }, []);
 
   /**
+   * Clear any existing session stay-alive (refresh) timer
+   */
+  const clearRefreshTimer = () => {
+    if (refreshTimerRef.current) {
+      clearTimeout(refreshTimerRef.current);
+      refreshTimerRef.current = null;
+    }
+  };
+
+  /**
+   * Set a timer to refresh the access token before it expires
+    * @param {number} expiresAt - The timestamp when the access token expires
+    * This is important for a good user experience because the access token
+    * expiry time should be very short in OAuth2 flows, especially for
+    * browser-based apps
+   */
+  const scheduleTokenRefresh = (expiresAt) => {
+    clearRefreshTimer();
+    const now = Date.now();
+    // Refresh 1 minute before expiry, but never less than 0
+    const refreshIn = Math.max(expiresAt - now - 60000, 0);
+    refreshTimerRef.current = setTimeout(async () => {
+      const refreshToken = localStorage.getItem('refresh_token');
+      if (refreshToken) {
+        console.log(`Refreshing access token in ${refreshIn / 1000} seconds...`);
+        await refreshAccessToken(refreshToken);
+      }
+    }, refreshIn);
+  };
+
+  /**
    * Handle tokens and user info after successful login/refresh
    * @param {object} tokenRes - The token response object
    */
@@ -187,6 +219,12 @@ export function AuthProvider({ children }) {
     setUserToken(access_token);
     localStorage.setItem('refresh_token', refresh_token);
     sessionStorage.setItem('id_token', id_token);
+    // Calculate the timestamp when the access token expires based on its expiry length
+    const expiresAt = Date.now() + (tokenRes.response.expires_in * 1000);
+    sessionStorage.setItem('access_token_expires_at', expiresAt);
+
+    // Schedule automatic access token refresh for best user experience
+    scheduleTokenRefresh(expiresAt);
 
     const userInfo = await getUserInfo(access_token);
     setUserInfo(userInfo);
@@ -202,6 +240,7 @@ export function AuthProvider({ children }) {
    * Clear all session and token state
    */
   const clearSession = () => {
+    clearRefreshTimer();
     clearAuthStorage();
     setUserToken(null);
     setUserInfo(null);
