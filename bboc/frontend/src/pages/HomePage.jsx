@@ -114,7 +114,7 @@ function HomePage() {
     </ol>
 
     <h2>Other Auth Architectures</h2>
-    <p>Browser-based OAuth 2.0 client is one of three recommended authentication and authorization architecture choices for browser-based apps. The other two architectures are <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#name-backend-for-frontend-bff" target="_blank">Backend-for-Frontend</a> and <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#name-token-mediating-backend" target="_blank">Token-Mediating Backend</a>. Each architecture has different trade-offs and benefits. Demos of both of these architectures are included in this repo.</p>
+    <p>Browser-based OAuth 2.0 client is one of three recommended authentication and authorization architecture choices for browser-based apps. The other two architectures are <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#name-backend-for-frontend-bff" target="_blank">Backend-for-Frontend</a> and <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#name-token-mediating-backend" target="_blank">Token-Mediating Backend</a>. Each architecture has different trade-offs and benefits. Demos of all three architectures are included in this repo.</p>
     </>
   );
 }

@@ -170,7 +170,7 @@ function HomePage() {
     </ol>
 
     <h2>Other Auth Architectures</h2>
-    <p>Backend-for-Frontend is one of three recommended authentication and authorization architecture choices for browser-based apps. The other two architectures are <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#name-token-mediating-backend" target="_blank">Token-Mediating Backend</a> and <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#name-browser-based-oauth-20-clie" target="_blank">Browser-based OAuth 2.0 client</a>. Each architecture has different trade-offs and benefits. Demos of both of these architectures are in progress and will be linked once they are available.</p>
+    <p>Token-Mediating Backend is one of three recommended authentication and authorization architecture choices for browser-based apps. The other two architectures are <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#name-backend-for-frontend-bff" target="_blank">Backend-for-Frontend</a> and <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#name-browser-based-oauth-20-clie" target="_blank">Browser-based OAuth 2.0 client</a>. Each architecture has different trade-offs and benefits. Demos of all three architectures are included in this repo.</p>
     </>
   );
 }
