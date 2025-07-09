@@ -15,8 +15,6 @@ function LoginCallbackPage() {
 
         if (!userToken && code && state) {
           await exchangeCodeForToken(code, state);
-        } else {
-          throw new Error('Missing code or state parameters, or user already authenticated');
         }
         // Redirect to the page user was on before login, or homepage if none
         navigate(preLoginPath || '/');

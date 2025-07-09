@@ -204,7 +204,6 @@ export function AuthProvider({ children }) {
     refreshTimerRef.current = setTimeout(async () => {
       const refreshToken = localStorage.getItem('refresh_token');
       if (refreshToken) {
-        console.log(`Refreshing access token in ${refreshIn / 1000} seconds...`);
         await refreshAccessToken(refreshToken);
       }
     }, refreshIn);
@@ -229,11 +228,20 @@ export function AuthProvider({ children }) {
     const userInfo = await getUserInfo(access_token);
     setUserInfo(userInfo);
     setLoggedIn(true);
+    setIsLoading(false);
 
     // Clear PKCE values from session storage
     sessionStorage.removeItem('state');
     sessionStorage.removeItem('code_verifier');
     sessionStorage.removeItem('code_challenge');
+
+    // Log successful authentication
+    console.log('Authentication successful:', {
+      userInfo,
+      accessToken: access_token,
+      refreshToken: refresh_token,
+      tokenExpiresAt: new Date(expiresAt).toISOString()
+    });
   };
 
   /**
