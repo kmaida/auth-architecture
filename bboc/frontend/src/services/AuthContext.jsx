@@ -35,7 +35,7 @@ export function AuthProvider({ children }) {
 
       // If no access token in memory but there is a refresh token in storage, try to refresh
       if (!userToken && storedRefreshToken) {
-        console.log('Refresh token found, attempting refresh...');
+        console.log('Refresh token found, initiating refresh grant...');
         try {
           await refreshAccessToken(storedRefreshToken);
         } catch (error) {
@@ -86,13 +86,6 @@ export function AuthProvider({ children }) {
       const state = sessionStorage.getItem('state');
       const codeVerifier = sessionStorage.getItem('code_verifier');
       
-      console.log('Token exchange parameters:', {
-        code,
-        authzState,
-        storedState: state,
-        codeVerifier: codeVerifier ? 'present' : 'missing'
-      });
-      
       if (authzState !== state) {
         console.error('State mismatch during token exchange:', { authzState, state });
         throw new Error('State mismatch during token exchange');
@@ -111,23 +104,8 @@ export function AuthProvider({ children }) {
         codeVerifier
       );
 
-      console.log('Token exchange response:', tokenRes);
-
       if (tokenRes.wasSuccessful()) {
-        const accessToken = tokenRes.response.access_token;
-        const refreshToken = tokenRes.response.refresh_token;
-        const idToken = tokenRes.response.id_token;
-        
-        setUserToken(accessToken);
-        setLoggedIn(true);
-        localStorage.setItem('refresh_token', refreshToken);
-        sessionStorage.setItem('id_token', idToken);
-        
-        // Get user info from oauth2/userinfo endpoint
-        const userInfo = await getUserInfo(accessToken);
-        setUserInfo(userInfo);
-    
-        return true;
+        await tokensSuccess(tokenRes);
       } else {
         console.error('Failed to exchange code for token:', {
           status: tokenRes.statusCode,
@@ -195,29 +173,7 @@ export function AuthProvider({ children }) {
       );
       
       if (resRefresh.wasSuccessful()) {
-        const newAccessToken = resRefresh.response.access_token;
-        const newRefreshToken = resRefresh.response.refresh_token; // Refresh token rotation
-        const newIdToken = resRefresh.response.id_token;
-
-        // NOTE: for additional security, you could store the userId separately from the refresh token
-        // and compare the stored userId with the one in the resRefresh.response.userId to further ensure
-        // that the refresh token is valid for the current user session
-        
-        setUserToken(newAccessToken);
-        sessionStorage.setItem('id_token', newIdToken);
-
-        // Must update stored refresh token (refresh token rotation)
-        // Refresh tokens are one-time-use and rotated every time a new access token is issued
-        localStorage.setItem('refresh_token', newRefreshToken);
-
-        console.log('Tokens refreshed successfully:', resRefresh.response);
-        
-        const userInfo = await getUserInfo(newAccessToken);
-        setUserInfo(userInfo);
-
-        setLoggedIn(true);
-        
-        return { newAccessToken, newRefreshToken, newIdToken };
+        await tokensSuccess(resRefresh);
       } else {
         throw new Error('Failed to refresh access token');
       }
@@ -241,6 +197,36 @@ export function AuthProvider({ children }) {
       setIsLoading(false);
     }
   }, []);
+
+  //----------------------------------- Tokens acquired successfully
+
+  const tokensSuccess = async (tokenRes) => {
+    const accessToken = tokenRes.response.access_token;
+    const refreshToken = tokenRes.response.refresh_token;
+    const idToken = tokenRes.response.id_token;
+    
+    setUserToken(accessToken);
+    localStorage.setItem('refresh_token', refreshToken);
+    sessionStorage.setItem('id_token', idToken);
+
+    // NOTE: for additional security, you could store the userId separately from the refresh token
+    // and compare the stored userId with the one in the tokenRes.response.userId to further ensure
+    // that the refresh token is valid for the current user session
+    
+    // Get user info from oauth2/userinfo endpoint
+    const userInfo = await getUserInfo(accessToken);
+    setUserInfo(userInfo);
+    setLoggedIn(true);
+
+    console.log('Successfully exchanged code for token and completed PKCE flow:', tokenRes.response);
+
+    // Clear PKCE values from session storage (if they exist)
+    sessionStorage.removeItem('state');
+    sessionStorage.removeItem('code_verifier');
+    sessionStorage.removeItem('code_challenge');
+
+    return true;
+  }
 
   //----------------------------------- Clear session
 

@@ -14,11 +14,9 @@ function LoginCallbackPage() {
         const state = params.get('state');
 
         if (!userToken && code && state) {
-          const result = await exchangeCodeForToken(code, state);
-          sessionStorage.removeItem('state');
-          sessionStorage.removeItem('code_verifier');
-          sessionStorage.removeItem('code_challenge');
-          console.log('Authentication result:', result);
+          await exchangeCodeForToken(code, state);
+        } else {
+          throw new Error('Missing code or state parameters, or user already authenticated');
         }
         // Redirect to the page user was on before login, or homepage if none
         navigate(preLoginPath || '/');
