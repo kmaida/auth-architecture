@@ -25,8 +25,8 @@ export function AuthProvider({ children }) {
     try {
       setIsLoading(true);
       
-      // Don't attempt refresh on logout callback page
-      if (window.location.pathname === '/logout/callback') {
+      // Don't check session or attempt refresh on auth callback pages
+      if (window.location.pathname === '/logout/callback' || window.location.pathname === '/login/callback') {
         setIsLoading(false);
         return;
       }
@@ -267,6 +267,7 @@ export function AuthProvider({ children }) {
       setPreLoginPath,
       login,
       exchangeCodeForToken,
+      getUserInfo,
       logout,
       clearSession
     }}>

@@ -5,17 +5,15 @@ import { useCallback } from 'react';
 export default function Header() {
   const { loggedIn, userInfo, setPreLoginPath, login, logout } = useAuth();
   const location = useLocation();
-  const apiUrl = import.meta.env.VITE_API_URL;
 
   const initLogin = useCallback(() => {
     // Store current page path in AuthContext
     setPreLoginPath(location.pathname + location.search + location.hash);
     login();
-  }, [apiUrl, location, setPreLoginPath, login]);
+  }, [location, setPreLoginPath, login]);
 
   const initLogout = useCallback(() => {
     logout();
-    // @TODO: Redirect to home page on successful logout
   }, [logout]);
 
   return (

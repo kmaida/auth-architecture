@@ -12,7 +12,7 @@ function LogoutCallbackPage() {
         await clearSession();
         navigate('/');
       } catch (error) {
-        console.error('Authentication failed:', error);
+        console.error('Logout failed:', error);
         // Redirect to homepage
         navigate('/');
       }
