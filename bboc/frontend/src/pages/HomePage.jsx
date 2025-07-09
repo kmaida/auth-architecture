@@ -21,7 +21,10 @@ function HomePage() {
     <h2>Features</h2>
     <ul>
       <li>
-        User authentication with FusionAuth using OAuth 2.0 Authorization Code flow with PKCE
+        Severless architecture with no backend
+      </li>
+      <li>
+        Frontend user authentication with FusionAuth using OAuth 2.0 Authorization Code flow with PKCE
       </li>
       <li>
         Session persistence with refresh token grant (with short-lived access tokens and refresh token rotation)
