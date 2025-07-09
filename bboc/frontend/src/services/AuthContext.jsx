@@ -124,7 +124,8 @@ export function AuthProvider({ children }) {
         sessionStorage.setItem('id_token', idToken);
         
         // Get user info from oauth2/userinfo endpoint
-        await getUserInfo(accessToken);
+        const userInfo = await getUserInfo(accessToken);
+        setUserInfo(userInfo);
     
         return true;
       } else {
@@ -170,10 +171,9 @@ export function AuthProvider({ children }) {
 
       const userInfo = await resUserInfo.json();
       console.log('User info fetched successfully:', userInfo);
-      setUserInfo(userInfo);
+      return userInfo;
     } catch (error) {
       console.error('Error fetching user info:', error);
-      setUserInfo(null);
     } finally {
       setIsLoading(false);
     }
@@ -212,7 +212,8 @@ export function AuthProvider({ children }) {
 
         console.log('Tokens refreshed successfully:', resRefresh.response);
         
-        await getUserInfo(newAccessToken);
+        const userInfo = await getUserInfo(newAccessToken);
+        setUserInfo(userInfo);
 
         setLoggedIn(true);
         
@@ -260,7 +261,8 @@ export function AuthProvider({ children }) {
       loggedIn, 
       setLoggedIn, 
       checkSession, 
-      userInfo, 
+      userInfo,
+      setUserInfo,
       isLoading, 
       userToken, 
       preLoginPath, 
