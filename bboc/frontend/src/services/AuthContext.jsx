@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback } from 'react';
+import { createContext, useContext, useState, useCallback, use } from 'react';
 import { FusionAuthClient } from '@fusionauth/typescript-client';
 import pkceChallenge from 'pkce-challenge';
 
@@ -16,7 +16,7 @@ export function AuthProvider({ children }) {
   const [preLoginPath, setPreLoginPath] = useState('/');
   const [userToken, setUserToken] = useState(null);
   const [refreshToken, setRefreshToken] = useState(null);
-  const [idToken, setIdToken] = useState(null); // Add this
+  const [idToken, setIdToken] = useState(null);
 
   const generateStateValue = () => {
     return Array(6).fill(0).map(() => Math.random().toString(36).substring(2, 15)).join('');
@@ -51,14 +51,21 @@ export function AuthProvider({ children }) {
       if (resRefresh.wasSuccessful()) {
         const newAccessToken = resRefresh.response.access_token;
         const newRefreshToken = resRefresh.response.refresh_token; // Handle rotation
+        const newIdToken = resRefresh.response.id_token;
         
         setUserToken(newAccessToken);
-        
-        // Update refresh token if rotation is enabled
-        if (newRefreshToken) {
-          setRefreshToken(newRefreshToken);
-          localStorage.setItem('refresh_token', newRefreshToken);
-        }
+        setIdToken(newIdToken);
+
+        // Must update refresh token because rotation is enabled
+        // Refresh tokens are one-time-use and rotated every time an access token is refreshed
+        setRefreshToken(newRefreshToken);
+        localStorage.setItem('refresh_token', newRefreshToken);
+
+        console.log('Tokens refreshed successfully:', resRefresh.response);
+        localStorage.setItem('id_token', newIdToken);
+        setUserInfoFromIdToken(newIdToken);
+
+        setLoggedIn(true);
         
         return newAccessToken;
       } else {
@@ -71,6 +78,34 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const decodeIdToken = (idToken) => {
+    if (!idToken) return null;
+    try {
+      const payload = JSON.parse(atob(idToken.split('.')[1]));
+      return payload;
+    } catch (error) {
+      console.error('Error decoding ID token:', error);
+      return null;
+    }
+  };
+
+  const setUserInfoFromIdToken = (idToken) => {
+    const payload = decodeIdToken(idToken);
+    if (payload) {
+      setUserInfo({
+        sub: payload.sub,
+        email: payload.email,
+        name: payload.name,
+        given_name: payload.given_name,
+        family_name: payload.family_name,
+        preferred_username: payload.preferred_username
+      });
+    } else {
+      console.warn('No valid ID token found, user info not set');
+      setUserInfo(null);
+    }
+  };
+
   const clearSession = () => {
     // Clear session storage
     sessionStorage.removeItem('state');
@@ -78,10 +113,11 @@ export function AuthProvider({ children }) {
     sessionStorage.removeItem('code_challenge');
     // Clear local storage
     localStorage.removeItem('refresh_token');
+    localStorage.removeItem('id_token');
     // Clear tokens
     setUserToken(null);
     setRefreshToken(null);
-    setIdToken(null); // Add this
+    setIdToken(null);
     // Reset user info and login state
     setUserInfo(null);
     setLoggedIn(false);
@@ -107,80 +143,28 @@ export function AuthProvider({ children }) {
   const checkSession = useCallback(async () => {
     try {
       setIsLoading(true);
+      
+      // Don't attempt refresh on logout callback page
+      if (window.location.pathname === '/logout/callback') {
+        setIsLoading(false);
+        return;
+      }
+      
       const storedRefreshToken = localStorage.getItem('refresh_token');
+      const storedIdToken = localStorage.getItem('id_token');
 
-      // If no access token but we have a refresh token, try to refresh
-      if (!userToken && storedRefreshToken) {
+      // If no access token in memory but there is user info and a refresh token in storage, try to refresh
+      if (!userToken && storedIdToken && storedRefreshToken) {
         console.log('Refresh token found, attempting refresh...');
         try {
           await refreshAccessToken(storedRefreshToken);
-          return;
+          setUserInfoFromIdToken(storedIdToken);
         } catch (error) {
           console.error('Failed to refresh token:', error);
           clearSession();
           return;
         }
       }
-
-      // Check if we have a valid token
-      if (!userToken || !isTokenValid(userToken)) {
-        console.log('No valid access token available');
-        
-        if (storedRefreshToken) {
-          try {
-            await refreshAccessToken(storedRefreshToken);
-            return;
-          } catch (error) {
-            clearSession();
-            return;
-          }
-        }
-        
-        setLoggedIn(false);
-        setUserInfo(null);
-        return;
-      }
-
-      // Token is valid, extract user info from ID token if available
-      if (idToken) {
-        try {
-          const payload = JSON.parse(atob(idToken.split('.')[1]));
-          console.log('User info from ID token:', payload);
-          
-          setLoggedIn(true);
-          setUserInfo({
-            response: {
-              sub: payload.sub,
-              email: payload.email,
-              name: payload.name,
-              given_name: payload.given_name,
-              family_name: payload.family_name,
-              preferred_username: payload.preferred_username,
-            }
-          });
-        } catch (parseError) {
-          console.error('Error parsing ID token:', parseError);
-          setLoggedIn(false);
-          setUserInfo(null);
-        }
-      } else {
-        // Fallback: extract basic info from access token
-        try {
-          const payload = JSON.parse(atob(userToken.split('.')[1]));
-          setLoggedIn(true);
-          setUserInfo({
-            response: {
-              sub: payload.sub,
-              email: payload.email,
-            }
-          });
-        } catch (parseError) {
-          console.error('Error parsing access token:', parseError);
-          setLoggedIn(false);
-          setUserInfo(null);
-        }
-      }
-
     } catch (error) {
       console.error('Error checking session:', error);
       setLoggedIn(false);
@@ -260,10 +244,12 @@ export function AuthProvider({ children }) {
         setRefreshToken(refreshToken);
         setLoggedIn(true);
         localStorage.setItem('refresh_token', refreshToken);
+        localStorage.setItem('id_token', idToken);
         
         // Extract user info from ID token
         if (idToken) {
           try {
+            localStorage.setItem('id_token', idToken); // Ensure ID token is stored
             const payload = JSON.parse(atob(idToken.split('.')[1]));
             console.log('User info from ID token:', payload);
             
@@ -305,18 +291,9 @@ export function AuthProvider({ children }) {
   const logout = useCallback(async () => {
     try {
       setIsLoading(true);
-      // Clear user token and info
-      setUserToken(null);
-      setLoggedIn(false);
-      setUserInfo(null);
-      // Clear storage
-      sessionStorage.removeItem('state');
-      sessionStorage.removeItem('code_verifier');
-      sessionStorage.removeItem('code_challenge');
-      localStorage.removeItem('uid');
-      // Log out from FusionAuth and clear all refresh tokens
-      await client.logout(true);
-      console.log('User logged out successfully');
+      window.location.href=`${fusionAuthUrl}/oauth2/logout?` +
+        `client_id=${clientId}` +
+        `&redirect_uri=${encodeURIComponent(`${frontendUrl}/logout/callback`)}`;
     } catch (error) {
       console.error('Error during logout:', error);
     } finally {
@@ -336,7 +313,8 @@ export function AuthProvider({ children }) {
       setPreLoginPath,
       login,
       exchangeCodeForToken,
-      logout
+      logout,
+      clearSession
     }}>
       {children}
     </AuthContext.Provider>

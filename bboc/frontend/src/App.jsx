@@ -6,6 +6,7 @@ import HomePage from './pages/HomePage';
 import ProtectedRoute from './components/ProtectedRoute';
 import ProfilePage from './pages/ProfilePage';
 import LoginCallbackPage from './pages/LoginCallback';
+import LogoutCallbackPage from './pages/LogoutCallback';
 import ResourceApiPage from './pages/ResourceApiPage';
 import './App.css'
 
@@ -47,6 +48,7 @@ function App() {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/login/callback" element={<LoginCallbackPage />} />
+          <Route path="/logout/callback" element={<LogoutCallbackPage />} />
           <Route
             path="/profile"
             element={
