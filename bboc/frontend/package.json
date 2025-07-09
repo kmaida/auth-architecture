@@ -1,5 +1,5 @@
 {
-  "name": "fusionauth-tmb-frontend",
+  "name": "fusionauth-bboc-frontend",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -11,6 +11,8 @@
   },
   "author": "Kim Maida",
   "dependencies": {
+    "@fusionauth/typescript-client": "^1.57.0",
+    "pkce-challenge": "^5.0.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
   },

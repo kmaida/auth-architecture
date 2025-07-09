@@ -116,17 +116,18 @@
           "oauthConfiguration": {
             "authorizedRedirectURLs": [
               "http://localhost:5173",
-              "http://localhost:5173/auth/callback"
+              "http://localhost:5173/login/callback"
             ],
             "authorizedOriginURLs": [
               "http://localhost:5173"
             ],
             "clientSecret": "lEL5U0PjDq5YqYJzYJu__kb-9-wEUsQfXsLEU60k-F0",
-            "logoutURL": "http://localhost:5173/auth/logout/callback",
+            "logoutURL": "http://localhost:5173/logout/callback",
             "enabledGrants": [
               "authorization_code",
               "refresh_token"
             ],
+            "clientAuthenticationPolicy": "NotRequired",
             "proofKeyForCodeExchangePolicy": "Required",
             "scopeHandlingPolicy": "Compatibility",
             "debug": true,
