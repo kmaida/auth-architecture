@@ -5,11 +5,11 @@ function ResourceApiPage() {
   const [recipe, setRecipe] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
-  const { aToken } = useAuth();
+  const { userToken } = useAuth();
   const resourceApiUrl = import.meta.env.VITE_RESOURCE_API_URL;
 
   const fetchRecipe = async () => {
-    if (!aToken) {
+    if (!userToken) {
       setError(new Error('No access token available'));
       return;
     }
@@ -18,7 +18,7 @@ function ResourceApiPage() {
     try {
       const res = await fetch(`${resourceApiUrl}/api/recipe`, {
         headers: {
-          'Authorization': `Bearer ${aToken.at}`,
+          'Authorization': `Bearer ${userToken}`,
           'Content-Type': 'application/json'
         }
       });
@@ -33,10 +33,10 @@ function ResourceApiPage() {
   };
 
   useEffect(() => {
-    if (aToken) {
+    if (userToken) {
       fetchRecipe();
     }
-  }, [resourceApiUrl, aToken]);
+  }, [resourceApiUrl, userToken]);
 
   return (
     <div>
