@@ -224,6 +224,13 @@ strong {
   color: #fff;
   outline: none;
 }
+.btn:disabled {
+  background-color: #94a3b8;
+  border-color: #64748b;
+  color: #f8fafc;
+  cursor: not-allowed;
+  box-shadow: none;
+}
 
 /*-- Code styles --*/
 
