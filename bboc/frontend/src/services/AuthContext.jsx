@@ -1,6 +1,13 @@
 import { createContext, useContext, useState, useCallback, use } from 'react';
 import { FusionAuthClient } from '@fusionauth/typescript-client';
 import pkceChallenge from 'pkce-challenge';
+import { 
+  generateStateValue, 
+  decodeToken, 
+  isTokenValid, 
+  extractUserInfoFromIdToken, 
+  clearAuthStorage 
+} from '../utils/authUtils.js';
 
 const AuthContext = createContext();
 const clientId = import.meta.env.VITE_CLIENT_ID;
@@ -17,10 +24,6 @@ export function AuthProvider({ children }) {
   const [userToken, setUserToken] = useState(null);
   const [refreshToken, setRefreshToken] = useState(null);
   const [idToken, setIdToken] = useState(null);
-
-  const generateStateValue = () => {
-    return Array(6).fill(0).map(() => Math.random().toString(36).substring(2, 15)).join('');
-  };
 
   const setupPKCE = async () => {
     const stateValue = generateStateValue();
@@ -78,28 +81,10 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const decodeIdToken = (idToken) => {
-    if (!idToken) return null;
-    try {
-      const payload = JSON.parse(atob(idToken.split('.')[1]));
-      return payload;
-    } catch (error) {
-      console.error('Error decoding ID token:', error);
-      return null;
-    }
-  };
-
   const setUserInfoFromIdToken = (idToken) => {
-    const payload = decodeIdToken(idToken);
-    if (payload) {
-      setUserInfo({
-        sub: payload.sub,
-        email: payload.email,
-        name: payload.name,
-        given_name: payload.given_name,
-        family_name: payload.family_name,
-        preferred_username: payload.preferred_username
-      });
+    const userInfo = extractUserInfoFromIdToken(idToken);
+    if (userInfo) {
+      setUserInfo(userInfo);
     } else {
       console.warn('No valid ID token found, user info not set');
       setUserInfo(null);
@@ -107,13 +92,7 @@ export function AuthProvider({ children }) {
   };
 
   const clearSession = () => {
-    // Clear session storage
-    sessionStorage.removeItem('state');
-    sessionStorage.removeItem('code_verifier');
-    sessionStorage.removeItem('code_challenge');
-    // Clear local storage
-    localStorage.removeItem('refresh_token');
-    localStorage.removeItem('id_token');
+    clearAuthStorage();
     // Clear tokens
     setUserToken(null);
     setRefreshToken(null);
@@ -121,21 +100,6 @@ export function AuthProvider({ children }) {
     // Reset user info and login state
     setUserInfo(null);
     setLoggedIn(false);
-  };
-
-  const isTokenValid = (token) => {
-    if (!token) return false;
-    
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      const currentTime = Math.floor(Date.now() / 1000);
-      
-      // Check if token is expired
-      return payload.exp > currentTime;
-    } catch (error) {
-      console.error('Error parsing token:', error);
-      return false;
-    }
   };
 
   //----------------------------------- Check session
