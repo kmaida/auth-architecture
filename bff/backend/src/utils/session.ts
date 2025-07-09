@@ -1,5 +1,5 @@
 import express from 'express';
-import FusionAuthClient, { User } from "@fusionauth/typescript-client";
+import { User } from "@fusionauth/typescript-client";
 import crypto from 'crypto';
 import { createCache } from 'cache-manager';
 import * as dotenv from "dotenv";
@@ -228,7 +228,7 @@ export const fetchAndSetUserInfo = async (
   res: express.Response
 ) => {
   try {
-    const userResponse = await getUserInfo(accessToken)
+    const userResponse = await getUserInfo(accessToken);
 
     if (userResponse) {
       // Set public cookie with user info

@@ -62,8 +62,6 @@ export const handleRefreshGrant = async (
     const userResponse = (await client.retrieveUserUsingJWT(newTokens.access_token)).response;
     
     if (userResponse?.user) {
-      // setNewCookies(res, newTokens, userResponse.user);
-      
       // Get existing user session
       const userSession = await fetchUserSession(sid);
       if (userSession) {

@@ -12,8 +12,7 @@ import {
   fetchUserSession,
   createUserSession,
   setSessionCookie,
-  fetchAndSetUserInfo,
-  UserSession
+  fetchAndSetUserInfo
 } from './utils/session';
 import { 
   generateStateValue, 
@@ -80,7 +79,7 @@ export function setupAuthRoutes(
           // Get UPDATED session data from cache (important: fetch again after potential token refresh)
           const updatedSessionData = await fetchUserSession(sid);
           if (updatedSessionData && updatedSessionData.sid && updatedSessionData.at) {
-            user = await fetchAndSetUserInfo(updatedSessionData.sid, updatedSessionData.at, res, client);
+            user = await fetchAndSetUserInfo(updatedSessionData.sid, updatedSessionData.at, res);
             at = updatedSessionData.at; // Update access token if it was refreshed
           }
         }
@@ -256,7 +255,7 @@ export function setupAuthRoutes(
 
       if (sid && userSession && userSession.at) {
         // Fetch and set user info from FusionAuth
-        freshUserInfo = await fetchAndSetUserInfo(sid, userSession.at, res, client);
+        freshUserInfo = await fetchAndSetUserInfo(sid, userSession.at, res);
       }
     } catch (err: any) {
       console.error('Error fetching user info:', err);
