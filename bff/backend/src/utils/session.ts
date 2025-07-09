@@ -201,21 +201,32 @@ export const fetchAndSetUserInfo = async (
   accessToken: string, 
   res: express.Response,
   client: FusionAuthClient
-): Promise<User | null> => {
+) => {
   try {
-    const userResponse = (await client.retrieveUserUsingJWT(accessToken)).response;
+    const userResponse = await fetch(`${process.env.FUSIONAUTH_URL}/oauth2/userinfo`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
+      }
+    }).then(response => {
+      if (!response.ok) {
+        throw new Error(`Failed to fetch user info: ${response.statusText}`);
+      }
+      return response.json();
+    });
 
-    if (userResponse?.user) {
+    if (userResponse) {
       // Set public cookie with user info
-      res.cookie(COOKIE_NAMES.USER_INFO, 'j:' + JSON.stringify(userResponse.user), COOKIE_OPTIONS.public);
+      res.cookie(COOKIE_NAMES.USER_INFO, 'j:' + JSON.stringify(userResponse), COOKIE_OPTIONS.public);
       // Store user info in session cache
       const cachedUser: UserSession | undefined = await sessionCache.get(sessionId);
       if (cachedUser) {
-        cachedUser.u = userResponse.user;
+        cachedUser.u = userResponse;
         await sessionCache.set(sessionId, cachedUser);
       }
       // Return user info
-      return userResponse.user;
+      return userResponse;
     }
   } catch (e) {
     // Logic falls through - user will be null

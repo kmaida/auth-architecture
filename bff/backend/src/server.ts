@@ -49,9 +49,9 @@ app.use((req, res, next) => {
 });
 
 // Validate and extract required environment variables
-const requiredEnvVars = ['CLIENT_ID', 'CLIENT_SECRET', 'FUSION_AUTH_URL', 'FRONTEND_URL', 'BACKEND_URL'];
+const requiredEnvVars = ['CLIENT_ID', 'CLIENT_SECRET', 'FUSIONAUTH_URL', 'FRONTEND_URL', 'BACKEND_URL'];
 const config = validateEnvironmentVariables(requiredEnvVars);
-const { CLIENT_ID: clientId, CLIENT_SECRET: clientSecret, FUSION_AUTH_URL: fusionAuthURL, FRONTEND_URL: frontendURL, BACKEND_URL: backendURL } = config;
+const { CLIENT_ID: clientId, CLIENT_SECRET: clientSecret, FUSIONAUTH_URL: fusionAuthURL, FRONTEND_URL: frontendURL, BACKEND_URL: backendURL } = config;
 
 // Initialize FusionAuth client
 const client = new FusionAuthClient('noapikeyneeded', fusionAuthURL);

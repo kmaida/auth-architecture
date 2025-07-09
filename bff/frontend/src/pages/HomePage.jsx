@@ -65,7 +65,7 @@ function HomePage() {
         If verification shows that the access token is expired, the backend checks for a refresh token and initiates a <a href="https://datatracker.ietf.org/doc/html/rfc6749#section-1.5" target="_blank">refresh grant</a> to get new tokens, if possible
       </li>
       <li>
-        If the FusionAuth user session and access token are valid and not expired, the user's authenticated state is maintained and they are logged into the frontend app
+        If the FusionAuth user session and access token are valid and not expired, the user's authenticated state is restored and they are logged into the frontend app
       </li>
       <li>
         If there is no session cookie, the user's session is invalid, and/or if there is no refresh token, the backend prepares for an authorization request using <a href="https://datatracker.ietf.org/doc/html/rfc6749#section-4.1" target="_blank">OAuth 2.0 Authorization Code flow</a> with <a href="https://datatracker.ietf.org/doc/html/rfc7636" target="_blank">PKCE</a> by generating a <code>state</code> and...

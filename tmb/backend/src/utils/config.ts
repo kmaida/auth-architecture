@@ -10,7 +10,7 @@ export const validateEnvironmentVariables = (requiredVars: string[]) => {
   return {
     CLIENT_ID: process.env.CLIENT_ID!,
     CLIENT_SECRET: process.env.CLIENT_SECRET!,
-    FUSION_AUTH_URL: process.env.FUSION_AUTH_URL!,
+    FUSIONAUTH_URL: process.env.FUSIONAUTH_URL!,
     FRONTEND_URL: process.env.FRONTEND_URL!,
     BACKEND_URL: process.env.BACKEND_URL!
   };
