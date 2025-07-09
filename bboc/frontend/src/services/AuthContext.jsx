@@ -19,7 +19,9 @@ export function AuthProvider({ children }) {
   const [preLoginPath, setPreLoginPath] = useState('/');
   const [userToken, setUserToken] = useState(null);
 
-  // Check session and refresh token if needed
+  /**
+   * Check session and refresh tokens if necessary
+   */
   const checkSession = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -48,7 +50,9 @@ export function AuthProvider({ children }) {
     }
   }, [userToken]);
 
-  // Initiate login with PKCE
+  /**
+   * Initiate login process using PKCE
+   */
   const login = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -69,7 +73,12 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
-  // Exchange authorization code for tokens
+  /**
+   * Exchange authorization code for tokens
+    * @param {string} code - The authorization code received from the callback
+    * @param {string} authzState - The state value to verify against session storage
+    * @throws {Error} - If state or code verifier is missing, or token exchange fails
+   */
   const exchangeCodeForToken = useCallback(async (code, authzState) => {
     setIsLoading(true);
     try {
@@ -99,7 +108,12 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
-  // Fetch user info from FusionAuth
+  /**
+   * Fetch user info from FusionAuth
+    * @param {string} accessToken - Optional access token to use for fetching user info
+    * @returns {Promise<object|null>}
+    * @throws {Error} - If access token is not available or user info fetch fails
+   */
   const getUserInfo = useCallback(async (accessToken) => {
     setIsLoading(true);
     try {
@@ -122,7 +136,11 @@ export function AuthProvider({ children }) {
     }
   }, [userToken]);
 
-  // Refresh access token using refresh token
+  /**
+   * Refresh access token using refresh token
+    * @param {string} refreshToken - The refresh token to use for refreshing the access token
+    * @throws {Error} - If refresh token is not available or refresh fails
+   */
   const refreshAccessToken = async (refreshToken) => {
     try {
       if (!refreshToken) throw new Error('No refresh token found');
@@ -143,7 +161,10 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // Log out and redirect to FusionAuth logout
+  /**
+   * Log out and redirect to FusionAuth logout
+   * @throws {Error} - If logout fails
+   */
   const logout = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -157,7 +178,10 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
-  // Handle tokens and user info after successful login/refresh
+  /**
+   * Handle tokens and user info after successful login/refresh
+   * @param {object} tokenRes - The token response object
+   */
   const tokensSuccess = async (tokenRes) => {
     const { access_token, refresh_token, id_token } = tokenRes.response;
     setUserToken(access_token);
@@ -174,7 +198,9 @@ export function AuthProvider({ children }) {
     sessionStorage.removeItem('code_challenge');
   };
 
-  // Clear all session and token state
+  /**
+   * Clear all session and token state
+   */
   const clearSession = () => {
     clearAuthStorage();
     setUserToken(null);
