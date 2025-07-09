@@ -38,7 +38,7 @@ function HomePage() {
     <p>Here are all the steps for authentication in this BBOC example in explicit detail. With this explanation, you should be able to trace the entire authentication lifecycle.</p>
     <ol>
       <li>
-        User navigates to the frontend app (Since the access token is stored in app memory only, there will never be an access token present on a fresh load of the app)
+        User navigates to the frontend app (since the access token is stored in app memory only, there will never be an access token present on a fresh load of the app)
       </li>
       <li>
         App calls a <code>checkSession</code> function to determine user's authentication state and verify presence or absence of a refresh token

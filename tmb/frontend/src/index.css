@@ -294,6 +294,21 @@ pre.error {
   margin: 0.5rem 0;
 }
 
+/*-- Footer styles --*/
+
+.footer-text {
+  text-align: center;
+  font-size: 0.75rem;
+  color: #94a3b8;
+  margin: 2rem 0;
+}
+.footer-text a {
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.footer-text a:hover {
+  color: #38bdf8;
+}
 
 /*-- Responsive adjustments --*/
 
