@@ -4,7 +4,11 @@ import FusionAuthClient from "@fusionauth/typescript-client";
 import jwksClient, { RsaSigningKey } from 'jwks-rsa';
 import { fetchUserSession, sessionCache } from './session';
 
-// Promisify JWT verification
+/** Promisify JWT verification 
+  * @param token JWT token to verify
+  * @param getKey Function to get the public key or secret for verification
+  * @returns Promise resolving to the decoded JWT payload or undefined if verification fails
+  */
 export function verifyJwtAsync(token: string, getKey: GetPublicKeyOrSecret): Promise<JwtPayload | undefined> {
   return new Promise((resolve, reject) => {
     verify(token, getKey, undefined, (err, decoded) => {
@@ -24,7 +28,13 @@ export function verifyJwtAsync(token: string, getKey: GetPublicKeyOrSecret): Pro
   });
 }
 
-// Request new tokens from FusionAuth using the refresh token (needs clientId and clientSecret)
+/** Request new tokens from FusionAuth
+  * @param refreshTokenValue The refresh token to use
+  * @param client The FusionAuth client instance
+  * @param clientId The client ID for the FusionAuth application
+  * @param clientSecret The client secret for the FusionAuth application
+  * @returns The new tokens or null if the request failed
+  */
 export const refreshTokens = async (
   refreshTokenValue: string,
   client: FusionAuthClient,
@@ -46,12 +56,26 @@ export const refreshTokens = async (
   }
 };
 
-// Generate state value for CSRF protection
+/** Generate state value for CSRF protection
+  * @returns A random string
+  */
 export const generateStateValue = () => {
   return Array(6).fill(0).map(() => Math.random().toString(36).substring(2, 15)).join('');
 };
 
-// Handle refresh token grant
+/** Handle refresh token grant
+  * Calls FusionAuth to exchange the refresh token for new access and refresh tokens
+  * Updates the user session with the new tokens and user info
+  * Schedules a new token refresh before the access token expires
+  * @param sid User's session ID
+  * @param refreshToken User's refresh token to use
+  * @param res The Express response object
+  * @param client The FusionAuth client instance
+  * @param clientId The client ID for the FusionAuth application
+  * @param clientSecret The client secret for the FusionAuth application
+  * @param getKey Function to get the public key or secret for verification
+  * @returns The new tokens or false if the request failed
+  */
 export const handleRefreshGrant = async (
   sid: string,
   refreshToken: string,
@@ -112,15 +136,22 @@ export const handleRefreshGrant = async (
   return false;
 };
 
-// JWKS client for getting public keys from FusionAuth
+/**
+ * Create a function to get the public key or secret for JWT verification
+ * @param jwks The JWKS client instance
+ * @returns A function that retrieves the signing key for a given JWT header
+ */
 export const createJwksClient = (fusionAuthURL: string) => {
   return jwksClient({
     jwksUri: `${fusionAuthURL}/.well-known/jwks.json`
   });
 };
 
-// Get the public key from FusionAuth
-// Verify the JWT signature
+/**
+ * Create a function to get the public key or secret for JWT verification
+ * @param jwks The JWKS client instance
+ * @returns A function that retrieves the signing key for a given JWT header
+ */
 export const createGetKey = (jwks: jwksClient.JwksClient): GetPublicKeyOrSecret => {
   return (header, callback) => {
     jwks.getSigningKey(header.kid, (err, key) => {
@@ -131,10 +162,20 @@ export const createGetKey = (jwks: jwksClient.JwksClient): GetPublicKeyOrSecret 
   };
 };
 
-// Verify tokens
-// For checksession & middleware for protected API requests
-// If JWT invalid or expired, check for refresh token 
-// Initiate refresh grant to get new tokens from FusionAuth if necessary
+/** Verify tokens
+ * For checksession & middleware for protected API requests
+ * If JWT invalid or expired, check for refresh token
+ * Initiate refresh grant to get new tokens from FusionAuth if necessary
+ * @param sid The session ID
+ * @param accessToken The access token to verify
+ * @param refreshToken The refresh token to use if access token is invalid
+ * @param res The Express response object
+ * @param client The FusionAuth client instance
+ * @param clientId The client ID for the FusionAuth application
+ * @param clientSecret The client secret for the FusionAuth application
+ * @param getKey Function to get the public key or secret for verification
+ * @returns The decoded JWT payload and user info if verification is successful, false otherwise
+ */
 export const verifyJWT = async (
   sid: string | undefined | null,
   accessToken: string | undefined | null,
@@ -233,10 +274,17 @@ export const scheduleTokenRefresh = (
         Middleware factory
 ---------------------------------*/
 
-// Factory to create auth middleware ('secure') to secure API endpoints
-// Checks if the user is authenticated by verifying JWT in authorization header
-// If JWT is invalid or expired, attempt to refresh access token using refresh token
-// If user is authenticated: proceed
+/** Create a function to get the public key or secret for JWT verification
+ * Factory to create auth middleware ('secure') to secure API endpoints
+ * Checks if the user is authenticated by verifying JWT in userToken cookie
+ * If JWT is invalid or expired, attempt to refresh access token using refresh token
+ * If user is authenticated: proceed
+ * @param client The FusionAuth client instance
+ * @param clientId The client ID for the FusionAuth application
+ * @param clientSecret The client secret for the FusionAuth application
+ * @param getKey Function to get the public key or secret for verification
+ * @returns A function that retrieves the signing key for a given JWT header
+ */
 export const createSecureMiddleware = (
   client: FusionAuthClient,
   clientId: string,
@@ -281,10 +329,18 @@ export const createSecureMiddleware = (
       Validation & helpers
 ---------------------------------*/
 
+/** Check if the session ID is valid
+ * @param sessionId The session ID to validate
+ * @returns True if the session ID is a non-empty string of 64 hexadecimal characters, false otherwise
+ */
 export const isValidSessionId = (sessionId: string | undefined | null): sessionId is string => {
   return typeof sessionId === 'string' && sessionId.length > 0 && /^[a-f0-9]{64}$/.test(sessionId);
 };
 
+/** Check if the JWT token is valid
+ * @param token The JWT token to validate
+ * @returns True if the token is a non-empty string with 3 parts separated by dots, false otherwise
+ */
 export const isValidJWT = (token: string | undefined | null): token is string => {
   return typeof token === 'string' && token.length > 0 && token.split('.').length === 3;
 };

@@ -191,7 +191,7 @@ export function AuthProvider({ children }) {
 
   /**
    * Set a timer to refresh the access token before it expires
-    * @param {number} expiresAt - The timestamp when the access token expires
+    * @param {number} expiresAt - The timestamp when the access token expires in ms
     * This is important for a good user experience because the access token
     * expiry time should be very short in OAuth2 flows, especially for
     * browser-based apps
