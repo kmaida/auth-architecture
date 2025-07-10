@@ -58,8 +58,10 @@ export function AuthProvider({ children }) {
       setLoggedIn, 
       checkSession, 
       userInfo, 
+      setUserInfo,
       isLoading, 
       aToken, 
+      setAToken,
       preLoginPath, 
       setPreLoginPath 
     }}>
