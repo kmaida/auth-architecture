@@ -255,8 +255,7 @@ export const scheduleTokenRefresh = (
   const now = Date.now();
   // Refresh 1 minute before expiry, but never less than 0
   const refreshIn = Math.max(expiresAt - now - 60000, 0);
-  console.log(expiresAt, now, refreshIn);
-  console.log(`Scheduling token refresh in ${refreshIn}ms for session ${sid}`);
+  console.log(`Scheduling token refresh in ${Math.floor(refreshIn / 1000 / 60)} minutes for session ${sid}`);
   refreshTimer = setTimeout(async () => {
     await handleRefreshGrant(
       sid,
