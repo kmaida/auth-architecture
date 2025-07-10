@@ -19,6 +19,8 @@ import {
   createJwksClient,
   createGetKey,
   verifyJWT,
+  scheduleTokenRefresh,
+  clearRefreshTimer,
   createSecureMiddleware
 } from './utils/auth-utils';
 
@@ -65,9 +67,25 @@ export function setupAuthRoutes(
     );
 
     if (verifyResult && verifyResult.decoded) {
+      // Set proactive refresh timer if access token is close to expiry
+      // Default to 59 minutes if no expiry in token
+      const nowInSeconds = Math.floor(Date.now() / 1000);
+      const expiresAt = verifyResult.decoded.exp || (nowInSeconds + 3540); // 59 minutes from now
+      // Pass through parameters for handling refresh tokens
+      scheduleTokenRefresh(
+        expiresAt * 1000, // Convert to milliseconds
+        sid as string,
+        refreshToken || '',
+        res,
+        client,
+        clientId,
+        clientSecret,
+        getKey
+      );
+
       // User is authenticated - get user info
       let user = verifyResult.user;
-      let at = verifyResult.decoded;
+      let at;
       
       if (!user) {
         // Try userInfo cookie first
@@ -179,9 +197,9 @@ export function setupAuthRoutes(
       // Create session, set tokens, and set user info in session cache
       const newSessionData = await createUserSession(accessToken, refreshToken, userInfo);
       setSessionCookie(req, res, newSessionData.sid as string);
-      console.log('User session created:', newSessionData.sid);
-      console.log('Cookie options:', JSON.stringify(COOKIE_OPTIONS.httpOnly));
-      console.log('Environment:', process.env.ENVIRONMENT);
+      
+      // Note: we don't need to schedule a proactive refresh here because the frontend
+      // will call /auth/checksession after the redirect
       
       // Delete PKCE session cookie
       res.clearCookie(COOKIE_NAMES.PKCE_SESSION);
@@ -237,6 +255,9 @@ export function setupAuthRoutes(
     res.clearCookie(COOKIE_NAMES.PKCE_SESSION); // This should already be cleared in the login callback, but just in case
     res.clearCookie(COOKIE_NAMES.USER_SESSION);
     res.clearCookie(COOKIE_NAMES.USER_INFO);
+
+    // Clear any active refresh timers
+    clearRefreshTimer();
     
     // Redirect user to frontend homepage
     res.redirect(302, frontendURL);

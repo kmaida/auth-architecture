@@ -23,7 +23,6 @@ import {
   clearRefreshTimer,
   createSecureMiddleware
 } from './utils/auth-utils';
-import { verify } from "crypto";
 
 export function setupAuthRoutes(
   app: express.Application,
@@ -70,7 +69,8 @@ export function setupAuthRoutes(
     if (verifyResult && verifyResult.decoded) {
       // Set proactive refresh timer if access token is close to expiry
       // Default to 59 minutes if no expiry in token
-      const expiresAt = verifyResult.decoded.exp || new Date().getTime() + 3540; 
+      const nowInSeconds = Math.floor(Date.now() / 1000);
+      const expiresAt = verifyResult.decoded.exp || (nowInSeconds + 3540); // 59 minutes from now
       // Pass through parameters for handling refresh tokens
       scheduleTokenRefresh(
         expiresAt * 1000, // Convert to milliseconds

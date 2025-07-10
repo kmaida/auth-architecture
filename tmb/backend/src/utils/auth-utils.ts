@@ -5,11 +5,21 @@ import jwksClient, { RsaSigningKey } from 'jwks-rsa';
 import { fetchUserSession, sessionCache } from './session';
 
 // Promisify JWT verification
-export function verifyJwtAsync(token: string, getKey: GetPublicKeyOrSecret): Promise<string | JwtPayload | undefined> {
+export function verifyJwtAsync(token: string, getKey: GetPublicKeyOrSecret): Promise<JwtPayload | undefined> {
   return new Promise((resolve, reject) => {
     verify(token, getKey, undefined, (err, decoded) => {
       if (err) return reject(err);
-      resolve(decoded);
+      if (typeof decoded === 'string') {
+        // Try to parse as JSON, otherwise wrap as object
+        try {
+          const parsed = JSON.parse(decoded);
+          resolve(parsed as JwtPayload);
+        } catch {
+          resolve({ decoded } as JwtPayload);
+        }
+      } else {
+        resolve(decoded as JwtPayload);
+      }
     });
   });
 }
@@ -79,6 +89,20 @@ export const handleRefreshGrant = async (
       }
       const decodedFromJwt = await verifyJwtAsync(newTokens.access_token, getKey);
       console.log('Tokens and user info refreshed successfully');
+
+      const expiresAt = Math.floor(Date.now()) + (newTokens.expires_in || 3590) * 1000;
+      // Pass through parameters for handling refresh tokens
+      scheduleTokenRefresh(
+        expiresAt,
+        sid as string,
+        refreshToken || '',
+        res,
+        client,
+        clientId,
+        clientSecret,
+        getKey
+      );
+
       return { decoded: decodedFromJwt, user: userResponse.user };
     }
   } catch (err) {
@@ -120,7 +144,7 @@ export const verifyJWT = async (
   clientId: string,
   clientSecret: string,
   getKey: GetPublicKeyOrSecret
-): Promise<{ decoded: string | JwtPayload | undefined, user?: any } | false> => {
+): Promise<{ decoded: JwtPayload | undefined, user?: any } | false> => {
   // Validate inputs
   if (!isValidSessionId(sid)) {
     console.log('Invalid session ID provided to verifyJWT');
@@ -153,6 +177,56 @@ export const verifyJWT = async (
 
   // No valid tokens found
   return false;
+};
+
+/**
+  * Clear any existing session stay-alive (refresh) timer
+  */
+export const clearRefreshTimer = () => {
+  if (refreshTimer) {
+    clearTimeout(refreshTimer);
+    refreshTimer = null;
+  }
+};
+
+/**
+  * Set a timer to refresh the access token before it expires
+  * @param {number} expiresAt - The timestamp when the access token expires
+  * @param {string} refreshToken - The refresh token to use for refreshing the access token
+  * @param {FusionAuthClient} client - The FusionAuth client instance to use for refreshing tokens
+  * @param {string} clientId - The client ID for the FusionAuth application
+  * @param {string} clientSecret - The client secret for the FusionAuth application
+  * This is important for a good user experience because the access token
+  * expiry time should be very short in OAuth2 flows, especially for
+  * browser-based apps
+  */
+export const scheduleTokenRefresh = (
+  expiresAt: number,
+  sid: string,
+  refreshToken: string,
+  res: express.Response,
+  client: FusionAuthClient,
+  clientId: string,
+  clientSecret: string,
+  getKey: GetPublicKeyOrSecret
+): void => {
+  clearRefreshTimer();
+  const now = Date.now();
+  // Refresh 1 minute before expiry, but never less than 0
+  const refreshIn = Math.max(expiresAt - now - 60000, 0);
+  console.log(expiresAt, now, refreshIn);
+  console.log(`Scheduling token refresh in ${refreshIn}ms for session ${sid}`);
+  refreshTimer = setTimeout(async () => {
+    await handleRefreshGrant(
+      sid,
+      refreshToken,
+      res,
+      client,
+      clientId,
+      clientSecret,
+      getKey
+    );
+  }, refreshIn);
 };
 
 /*---------------------------------
@@ -203,7 +277,10 @@ export const createSecureMiddleware = (
   };
 };
 
-// Input validation helpers
+/*---------------------------------
+      Validation & helpers
+---------------------------------*/
+
 export const isValidSessionId = (sessionId: string | undefined | null): sessionId is string => {
   return typeof sessionId === 'string' && sessionId.length > 0 && /^[a-f0-9]{64}$/.test(sessionId);
 };
@@ -211,3 +288,5 @@ export const isValidSessionId = (sessionId: string | undefined | null): sessionI
 export const isValidJWT = (token: string | undefined | null): token is string => {
   return typeof token === 'string' && token.length > 0 && token.split('.').length === 3;
 };
+
+let refreshTimer: NodeJS.Timeout | null = null;
