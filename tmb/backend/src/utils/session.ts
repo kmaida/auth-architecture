@@ -19,13 +19,14 @@ export interface UserSession {
   last: number; // Timestamp
 }
 
-// Create user session ID
+/** Create user session ID */
 const createUserSessionId = () => {
   return crypto.randomBytes(SESSION_ID_BYTES).toString('hex');
 };
 
-// Create cache for user sessions
-// Time To Live (TTL) should match FusionAuth's refresh token TTL
+/** Create cache for user sessions
+ * Time To Live (TTL) should match FusionAuth's refresh token TTL
+ */
 export const sessionCache = createCache({
   ttl: REFRESH_TTL * 1000 // Convert to milliseconds
 });
@@ -57,7 +58,10 @@ export const COOKIE_OPTIONS = {
   }
 };
 
-// Parse cookie and return JSON object
+/** Parse cookie and return JSON object
+ * @param cookie The cookie string to parse
+ * @returns The parsed User object or null if parsing fails
+ */
 export const parseJsonCookie = (cookie: string): User | null => {
   try {
     // Cookie is prefixed with 'j:' to indicate it's a JSON object
@@ -67,7 +71,10 @@ export const parseJsonCookie = (cookie: string): User | null => {
   }
 };
 
-// Get user session ID from cookie
+/** Get user session ID from cookie
+ * @param req Express request object
+ * @returns The user session ID or null if not found
+ */
 export const getUserSessionIdFromCookie = (req: express.Request): string | null => {
   const userSessionCookie = req.cookies[COOKIE_NAMES.USER_SESSION];
   if (userSessionCookie) {
@@ -83,6 +90,11 @@ export const getUserSessionIdFromCookie = (req: express.Request): string | null 
   return null;
 };
 
+/**
+ * Fetch user session from cache
+ * @param sessionId The session ID to fetch from the cache
+ * @returns The user session or null if not found
+ */
 export const fetchUserSession = async (sessionId: string): Promise<UserSession | null> => {
   // Validate session ID format
   if (!sessionId || typeof sessionId !== 'string' || sessionId.length === 0) {
@@ -109,6 +121,12 @@ export const fetchUserSession = async (sessionId: string): Promise<UserSession |
   return null;
 };
 
+/** Create a new user session
+ * @param at The access token
+ * @param rt The refresh token
+ * @param u The user object
+ * @returns The created user session
+ */
 export const createUserSession = async ( 
   at: string, 
   rt: string | undefined,
@@ -128,6 +146,15 @@ export const createUserSession = async (
   return userSession;
 };
 
+/** Update existing user session or create a new session
+ * if none exists
+ * @param at The access token
+ * @param rt The refresh token
+ * @param sid The session ID (if exists)
+ * @param u The user object (if exists)
+ * @param last The last accessed timestamp (if exists)
+ * @returns The updated or created user session
+ */
 export const updateOrCreateUserSession = async (
   at: string, 
   rt: string,
@@ -163,10 +190,15 @@ export const updateOrCreateUserSession = async (
   }
 }
 
-// Set session cookie after updating user session
-// This is used after user session is created or updated with access/refresh tokens
-// It sets the session ID cookie in the response
-// If the session ID is already set in the cookie, it does not update it
+/** Set session cookie after updating user session
+  * This is used after user session is created or updated with access/refresh tokens
+  * It sets the session ID cookie in the response
+  * If the session ID is already set in the cookie, it does not update it
+  * @param req Express request object
+  * @param res Express response object
+  * @param sessionId The session ID to set in the cookie
+  * @returns void
+ */
 export const setSessionCookie = (req: express.Request, res: express.Response, sessionId: string) => {
   console.log('Setting session cookie with ID:', sessionId);
   console.log('Cookie name:', COOKIE_NAMES.USER_SESSION);
@@ -183,8 +215,14 @@ export const setSessionCookie = (req: express.Request, res: express.Response, se
   console.log('Session cookie set successfully');
 };
 
-// Update tokens in an existing user session (after refresh; login will always create a new session)
-export const refreshSessionTokens = async (
+/** Update tokens in an existing user session (after refresh;
+ * login will always create a new session)
+ * @param sessionId The session ID to update
+ * @param accessToken The new access token
+ * @param refreshToken The new refresh token
+ * @returns The updated user session
+ */
+ export const refreshSessionTokens = async (
   sessionId: string, 
   accessToken: string | null, 
   refreshToken: string | null
@@ -202,7 +240,10 @@ export const refreshSessionTokens = async (
   return userSession;
 };
 
-// Get userInfo from FusionAuth oauth2/userinfo endpoint authorized by access token
+/** Get userInfo from FusionAuth oauth2/userinfo endpoint authorized by access token
+  * @param accessToken The access token to authorize the request
+  * @returns The user info object or null if not found
+  */
 export const getUserInfo = async (accessToken: string) => {
   try {
     const userResponse = await fetch(`${process.env.FUSIONAUTH_URL}/oauth2/userinfo`, {
@@ -228,7 +269,11 @@ export const getUserInfo = async (accessToken: string) => {
   return null;
 }
 
-// Fetch user info from FusionAuth, update in session storage
+/** Fetch user info from FusionAuth, update in session storage
+ * @param sessionId The session ID to update
+ * @param accessToken The access token to authorize the request
+ * @param res The Express response object
+ */
 export const fetchAndSetUserInfo = async (
   sessionId: string,
   accessToken: string, 
