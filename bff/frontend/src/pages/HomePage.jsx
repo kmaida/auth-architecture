@@ -42,7 +42,7 @@ function HomePage() {
         Session management with <code>httpOnly</code> session ID cookies and lookup using server-side session storage cache
       </li>
       <li>
-        Session persistence with refresh token grant on the backend
+        Session persistence with refresh token grant on the backend and proactive session renewal
       </li>
       <li>
         No tokens are ever exposed to the frontend

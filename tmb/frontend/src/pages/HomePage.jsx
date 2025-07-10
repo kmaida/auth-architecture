@@ -39,7 +39,7 @@ function HomePage() {
         Authentication API on the backend
       </li>
       <li>
-        Session persistence with refresh token grant on the backend
+        Session persistence with refresh token grant on the backend and proactive session renewal
       </li>
       <li>
         Frontend can call the resource server directly with access tokens
@@ -132,37 +132,17 @@ function HomePage() {
       </li>
     </ol>
 
-    <h2>How TMB Local API Authorization Works</h2>
-    <p>When a user requests access to secure data, the backend authorizes access to an API (resource server). The frontend should protect routes that require authentication by checking the session before permitting navigation to the page that will call the secure API. Frontend checks like this improve the user experience.</p>
+    <h2>How TMB   API Authorization Works</h2>
+    <p>When a user requests access to secure data (either from a local backend API or external resource server), the frontend presents an access token to authorize access to the API (resource server). The frontend should protect routes that require authentication by checking the session before permitting navigation to the page that will call the secure API. Frontend checks like this improve the user experience.</p>
     <ol>
       <li>
-        Authenticated user navigates to a protected frontend route that calls a secure, local API
-      </li>
-      <li>
-        Frontend makes a request to the backend API for protected resources with <code>credentials: include</code> to attach the session cookie (for example, to the <code>/api/protected-data</code> endpoint)
-      </li>
-      <li>
-        Backend uses middleware to use the provided session cookie (containing the session ID) to look up the user's server-side session, retrieve their JWT access token, and verify it
-      </li>
-      <li>
-        If the user isn't logged in or there's a problem with the session ID or access token, the backend checks for a refresh token and executes a refresh grant if possible; otherwise, it returns a <code>401: Unauthorized</code> status
-      </li>
-      <li>
-        If the access token is successfully verified (or the user is successfully reauthenticated through the refresh grant), protected data is returned to the frontend
-      </li>
-    </ol>
-
-    <h2>How TMB External Resource Server Authorization Works</h2>
-    <p>When a user requests data from an external resource server, the frontend makes a request to the resource server with an <code>Authorization: Bearer</code> header. The frontend should protect routes that require authentication by checking the session before permitting navigation to the page that will call the secure API. Frontend checks like this improve the user experience.</p>
-    <ol>
-      <li>
-        Authenticated user navigates to a protected frontend route that calls a secure, external API
+        Authenticated user navigates to a protected frontend route that calls a secure API
       </li>
       <li>
         Frontend makes a request to the resource API for protected data with <code>Authorization: Bearer 'accessToken'</code> as authorization (for example, to the <code>http://resource-api.local:5001/api/recipe</code> endpoint)
       </li>
       <li>
-        Resource server verifies the access token in the <code>Authorization</code> header and returns data to the frontend if the token is valid
+        API middleware verifies the access token in the <code>Authorization</code> header and returns data to the frontend if the token is valid
       </li>
       <li>
         If the user isn't logged in or there's a problem with the access token, the resource server returns a <code>401: Unauthorized</code> error, which is displayed in the frontend

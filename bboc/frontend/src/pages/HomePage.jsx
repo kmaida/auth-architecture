@@ -27,7 +27,7 @@ function HomePage() {
         Frontend user authentication with FusionAuth using OAuth 2.0 Authorization Code flow with PKCE
       </li>
       <li>
-        Session persistence with refresh token grant (with short-lived access tokens and refresh token rotation)
+        Session persistence with refresh token grant (with short-lived access tokens, refresh token rotation, and proactive session renewal)
       </li>
       <li>
         Frontend calls the resource server with access tokens
