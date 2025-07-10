@@ -354,6 +354,7 @@ label.error {
 }
 form .form-row span.error {
   color: var(--error-color);
+  text-align: left;
 }
 input.error {
   background: var(--error-background);
