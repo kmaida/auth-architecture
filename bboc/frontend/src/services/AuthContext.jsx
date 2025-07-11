@@ -16,7 +16,6 @@ export function AuthProvider({ children }) {
   const [loggedIn, setLoggedIn] = useState(false);
   const [userInfo, setUserInfo] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [preLoginPath, setPreLoginPath] = useState('/');
   const [userToken, setUserToken] = useState(null);
   const refreshTimerRef = useRef(null);
 
@@ -265,8 +264,6 @@ export function AuthProvider({ children }) {
       setUserInfo,
       isLoading,
       userToken,
-      preLoginPath,
-      setPreLoginPath,
       login,
       exchangeCodeForToken,
       getUserInfo,

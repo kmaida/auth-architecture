@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 function LoginCallbackPage() {
-  const { exchangeCodeForToken, preLoginPath, userToken } = useAuth();
+  const { exchangeCodeForToken, userToken } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -16,8 +16,8 @@ function LoginCallbackPage() {
         if (!userToken && code && state) {
           await exchangeCodeForToken(code, state);
         }
-        // Redirect to the page user was on before login, or homepage if none
-        navigate(preLoginPath || '/');
+        // Redirect to homepage if none
+        navigate('/');
       } catch (error) {
         console.error('Authentication failed:', error);
         // Redirect to homepage
@@ -26,7 +26,7 @@ function LoginCallbackPage() {
     };
 
     handleCallback();
-  }, [navigate, preLoginPath, exchangeCodeForToken]);
+  }, [navigate, exchangeCodeForToken]);
 
   return (
     <>

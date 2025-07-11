@@ -3,14 +3,12 @@ import { useAuth } from '../services/AuthContext';
 import { useCallback } from 'react';
 
 export default function Header() {
-  const { loggedIn, userInfo, setPreLoginPath, login, logout } = useAuth();
+  const { loggedIn, userInfo, login, logout } = useAuth();
   const location = useLocation();
 
   const initLogin = useCallback(() => {
-    // Store current page path in AuthContext
-    setPreLoginPath(location.pathname + location.search + location.hash);
     login();
-  }, [location, setPreLoginPath, login]);
+  }, [login]);
 
   const initLogout = useCallback(() => {
     logout();
