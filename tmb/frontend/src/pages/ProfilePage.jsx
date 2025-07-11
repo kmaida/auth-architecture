@@ -5,22 +5,32 @@ function ProfilePage() {
   const [userinfo, setUserinfo] = useState(null);
   const [error, setError] = useState(null);
   const apiUrl = import.meta.env.VITE_API_URL;
-  const { aToken } = useAuth();
+  const { getAccessToken } = useAuth();
+
+  const fetchUserInfo = async () => {
+    try {
+      const accessToken = await getAccessToken();
+      if (!accessToken) {
+        setError(new Error('No access token available'));
+        return;
+      }
+      const res = await fetch(`${apiUrl}/auth/userinfo`, {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`, // Headers authorize API access
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include' // Session cookie needed to look up user info
+      });
+      if (!res.ok) throw new Error('Failed to fetch user info');
+      const result = await res.json();
+      setUserinfo(result);
+    } catch (error) {
+      setError(error);
+    }
+  };
 
   useEffect(() => {
-    fetch(`${apiUrl}/auth/userinfo`, {
-      headers: {
-        'Authorization': `Bearer ${aToken.at}`, // Headers authorize API access
-        'Content-Type': 'application/json'
-      },
-      credentials: 'include' // Session cookie needed to look up user info
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error('Failed to fetch user info');
-        return res.json();
-      })
-      .then(setUserinfo)
-      .catch(setError);
+    fetchUserInfo();
   }, []);
 
   return (

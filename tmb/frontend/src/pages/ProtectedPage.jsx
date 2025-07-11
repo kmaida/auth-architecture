@@ -5,22 +5,32 @@ function ProtectedPage() {
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
   const apiUrl = import.meta.env.VITE_API_URL;
-  const { aToken } = useAuth();
+  const { getAccessToken } = useAuth();
 
+  const fetchData = async () => {
+    setError(null);
+    try {
+      const accessToken = await getAccessToken();
+      if (!accessToken) {
+        setError(new Error('No access token available'));
+        return;
+      }
+      const res = await fetch(`${apiUrl}/api/protected-data`, {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      if (!res.ok) throw new Error('Failed to fetch protected data');
+      const result = await res.json();
+      setData(result);
+    } catch (err) {
+      setError(err);
+    }
+  };
 
   useEffect(() => {
-    fetch(`${apiUrl}/api/protected-data`, {
-      headers: {
-        'Authorization': `Bearer ${aToken.at}`,
-        'Content-Type': 'application/json'
-      }
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error('Failed to fetch protected data');
-        return res.json();
-      })
-      .then(setData)
-      .catch(setError);
+    fetchData();
   }, []);
 
   return (

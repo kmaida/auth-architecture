@@ -203,19 +203,18 @@ export function setupAuthRoutes(
       
       // Delete PKCE session cookie
       res.clearCookie(COOKIE_NAMES.PKCE_SESSION);
-      // Redirect user to frontend callback URL
-      res.redirect(302, `${frontendURL}/login/callback`);
     } catch (err: any) {
       console.error('Error during OAuth callback:', err);
-      res.redirect(302, frontendURL);
     }
+    // Redirect user to frontend callback URL
+    res.redirect(302, frontendURL);
   });
 
-  /*----------- GET /login/callback ------------*/
+  /*----------- GET /auth/token ------------*/
 
-  // Callback API endpoint the frontend calls after user login
-  // This is not used by the backend, sends the access token to the frontend
-  app.get('/login/callback', async (req, res, next) => {
+  // API endpoint the frontend calls to get access token
+  // This is not used by the backend
+  app.get('/auth/token', async (req, res, next) => {
     const sid = getUserSessionIdFromCookie(req);
     if (sid) {
       fetchUserSession(sid).then((userSession) => {

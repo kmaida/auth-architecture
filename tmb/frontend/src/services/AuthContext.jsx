@@ -7,7 +7,6 @@ export function AuthProvider({ children }) {
   const [loggedIn, setLoggedIn] = useState(false);
   const [userInfo, setUserInfo] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [aToken, setAToken] = useState(null);
 
   // Check if user is logged in by sending cookie to auth API
   const checkSession = useCallback(async () => {
@@ -32,24 +31,29 @@ export function AuthProvider({ children }) {
       console.error('Error checking session:', error);
       setLoggedIn(false);
       setUserInfo(null);
-    }
-    // Get access token from backend
-    try {
-      setIsLoading(true);
-      const response = await fetch(`${apiUrl}/login/callback`, {
-        credentials: 'include',
-      });
-      const at = await response.json(); // { at: 'accessToken' }
-      setAToken(at);
-      return at;
-    } catch (error) {
-      console.error('Error getting access token:', error);
-      setAToken(null);
     } finally {
       setIsLoading(false);
     }
   }, [apiUrl]);
 
+  // Get access token from backend (backend handles all session management)
+  const getAccessToken = useCallback(async () => {
+    try {
+      // Fetch the latest access token from the backend
+      const atRes = await fetch(`${apiUrl}/auth/token`, {
+        credentials: 'include',
+        headers: { 'Accept': 'application/json' }
+      });
+      if (!atRes.ok) throw new Error('Unable to get access token');
+      const atJson = await atRes.json();
+      const accessToken = atJson?.at;
+      if (!accessToken) throw new Error('No access token available');
+      return accessToken;
+    } catch (error) {
+      console.error('Error fetching access token:', error);
+      return null;
+    }
+  }, [apiUrl]);
 
   return (
     <AuthContext.Provider value={{ 
@@ -59,8 +63,7 @@ export function AuthProvider({ children }) {
       userInfo, 
       setUserInfo,
       isLoading, 
-      aToken, 
-      setAToken
+      getAccessToken
     }}>
       {children}
     </AuthContext.Provider>

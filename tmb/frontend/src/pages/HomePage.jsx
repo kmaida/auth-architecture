@@ -113,10 +113,10 @@ function HomePage() {
         Backend sets the <code>userInfo</code> in a cookie that is public to the frontend (note: this cookie is not actually read in this demo, but it's common practice to store user information in a cookie or ID token in the frontend)
       </li>
       <li>
-        Backend <code>/auth/callback</code> redirects to the frontend login callback page
+        Backend <code>/auth/token</code> is now available for the frontend to call when it needs the access token (e.g., to authorize API calls)
       </li>
       <li>
-        Frontend runs <code>checkSession</code>, confirms authentication state, sets access token in app memory, fetches <code>userInfo</code>, and uses the information to set user-specific variables, etc.
+        Frontend runs <code>checkSession</code>, confirms authentication state, fetches <code>userInfo</code>, and uses the information to set user-specific variables, etc.
       </li>
       <li>
         When the user clicks the <code>Log Out</code> button, the frontend redirects to the backend <code>/auth/logout</code> endpoint
@@ -132,11 +132,17 @@ function HomePage() {
       </li>
     </ol>
 
-    <h2>How TMB   API Authorization Works</h2>
-    <p>When a user requests access to secure data (either from a local backend API or external resource server), the frontend presents an access token to authorize access to the API (resource server). The frontend should protect routes that require authentication by checking the session before permitting navigation to the page that will call the secure API. Frontend checks like this improve the user experience.</p>
+    <h2>How TMB API Authorization Works</h2>
+    <p>When a user requests access to secure data (either from a local backend API or external resource server), the frontend requests the user's access token from the backend in order to authorize access to the API (resource server). The frontend should protect routes that require authentication by checking the session before permitting navigation to the page that will call the secure API. Frontend checks like this improve the user experience.</p>
     <ol>
       <li>
         Authenticated user navigates to a protected frontend route that calls a secure API
+      </li>
+      <li>
+        Frontend calls the backend <code>/auth/token</code> endpoint with the user's session cookie to get the access token
+      </li>
+      <li>
+        Frontend makes a request to the resource API for protected data with <code>Authorization: Bearer 'accessToken'</code> as authorization (for example, to the <code>http://resource-api.local:5001/api/recipe</code> endpoint)
       </li>
       <li>
         Frontend makes a request to the resource API for protected data with <code>Authorization: Bearer 'accessToken'</code> as authorization (for example, to the <code>http://resource-api.local:5001/api/recipe</code> endpoint)
