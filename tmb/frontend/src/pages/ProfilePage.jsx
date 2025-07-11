@@ -5,7 +5,7 @@ function ProfilePage() {
   const [userinfo, setUserinfo] = useState(null);
   const [error, setError] = useState(null);
   const apiUrl = import.meta.env.VITE_API_URL;
-  const { checkSession, aToken } = useAuth();
+  const { aToken } = useAuth();
 
   useEffect(() => {
     fetch(`${apiUrl}/auth/userinfo`, {

@@ -7,7 +7,6 @@ export function AuthProvider({ children }) {
   const [loggedIn, setLoggedIn] = useState(false);
   const [userInfo, setUserInfo] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [preLoginPath, setPreLoginPath] = useState('/');
   const [aToken, setAToken] = useState(null);
 
   // Check if user is logged in by sending cookie to auth API
@@ -61,9 +60,7 @@ export function AuthProvider({ children }) {
       setUserInfo,
       isLoading, 
       aToken, 
-      setAToken,
-      preLoginPath, 
-      setPreLoginPath 
+      setAToken
     }}>
       {children}
     </AuthContext.Provider>

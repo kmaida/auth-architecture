@@ -13,7 +13,6 @@ import './App.css'
 
 function App() {
   const { checkSession, loggedIn, isLoading } = useAuth();
-  const location = useLocation();
 
   // Check authentication session on initial load only
   useEffect(() => {
