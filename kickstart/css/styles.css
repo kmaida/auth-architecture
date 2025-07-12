@@ -1,5 +1,5 @@
 :root {
-  font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif !important;
   color-scheme: dark;
   color: #e5e7eb;
   background-color: #181f2a;
@@ -87,7 +87,9 @@ main.page-body .row:last-of-type a {
   box-shadow: var(--shadow) !important;
   border-top: none;
   color: #fff !important;
-  padding: 2rem;
+  font-size: 0.85rem !important;
+  line-height: 1.5;
+  padding: 2rem !important;
   text-align: left;
 }
 .panel h2 {
@@ -107,6 +109,49 @@ label {
 }
 #local-select::after {
   color: var(--input-text-color);
+}
+
+/*-- Frontpage --*/
+
+.panel .logo-container + main {
+  font-size: 1rem;
+  font-family: 'Inter',
+    system-ui,
+    Avenir,
+    Helvetica,
+    Arial,
+    sans-serif !important;
+  line-height: 1.5;
+}
+.panel .logo-container+main {
+  padding: 0 !important;
+}
+.panel .logo-container + main a {
+  color: var(--main-accent-color) !important;
+  text-decoration: none;
+}
+.logo-container + main .p-3.pb-5 p {
+  display: none;
+}
+.logo-container+main .p-3.pb-5 {
+  padding-bottom: 1rem;
+}
+.logo-container+main .p-3.pb-5::before {
+  content: 'Auth Architecture Demo';
+  font-size: 2rem;
+  text-align: center;
+  display: block;
+  margin-bottom: 1.5rem;
+}
+.logo-container + main .p-3.pb-5::after {
+  content: 'To log in, please visit /admin';
+  display: block;
+}
+.logo-container+main .p-3.pb-5 div img {
+  display: none;
+}
+.panel .logo-container+main ul[style] {
+  display: none !important;
 }
 
 /*-- Hide help bar –*/
@@ -377,6 +422,14 @@ input.error {
 }
 .fa-info-circle {
   color: var(--main-accent-color) !important;
+}
+
+/*-- Code --*/
+
+.panel .code {
+  background: #000000;
+  border: none;
+  border-radius: 6px;
 }
 
 /*-- FusionAuth footer --*/
