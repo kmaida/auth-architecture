@@ -110,7 +110,7 @@ export function AuthProvider({ children }) {
 
   /**
    * Fetch user info from FusionAuth
-    * @param {string} accessToken - Optional access token to use for fetching user info
+    * @param {string} accessToken - Access token to use for fetching user info
     * @returns {Promise<object|null>}
     * @throws {Error} - If access token is not available or user info fetch fails
    */
@@ -126,7 +126,7 @@ export function AuthProvider({ children }) {
           'Content-Type': 'application/json'
         }
       });
-      if (!resUserInfo.ok) throw new Error('Failed to fetch user info');
+      if (!resUserInfo) throw new Error('Failed to fetch user info');
       return await resUserInfo.json();
     } catch (error) {
       console.error('Error fetching user info:', error);
