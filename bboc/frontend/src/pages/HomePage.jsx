@@ -41,7 +41,7 @@ function HomePage() {
         User navigates to the frontend app (since the access token is stored in app memory only, there will never be an access token present on a fresh load of the app)
       </li>
       <li>
-        App calls a <code>checkSession</code> function to determine user's authentication state and verify presence or absence of a refresh token
+        App calls a <code>checkSession</code> function to determine user's authentication state and verify presence or absence of a refresh token in session storage
       </li>
       <li>
         If a refresh token is present, a <a href="https://datatracker.ietf.org/doc/html/rfc6749#section-1.5" target="_blank">refresh grant</a> is initiated to use the refresh token to get a new access token, new refresh token, and fetch user information
@@ -56,7 +56,7 @@ function HomePage() {
         App prepares for <a href="https://datatracker.ietf.org/doc/html/rfc6749#section-4.1" target="_blank">OAuth 2.0 Authorization Code flow</a> with <a href="https://datatracker.ietf.org/doc/html/rfc7636" target="_blank">PKCE</a>, generating a <code>state</code>, a <code>code_verifier</code>, and a hash of the code verifier called a <code>code_challenge</code>, which is created with a hashing function called a <code>code_challenge_method</code>
       </li>
       <li>
-        App temporarily stores the <code>state</code>, <code>code_verifier</code>, and <code>code_challenge</code> in session storage
+        App temporarily stores the <code>state</code>, <code>code_verifier</code>, and <code>code_challenge</code> in session storage so it will persist through the redirect to the authorization server and back
       </li>
       <li>
         App sends an authorization request to the authorization server's (<a href="https://fusionauth.io" target="_blank">FusionAuth</a>'s) <code>/oauth2/authorize</code> endpoint with the necessary configuration (e.g., <code>client_id</code>, <code>state</code>, etc.) and the <code>code_challenge</code> 

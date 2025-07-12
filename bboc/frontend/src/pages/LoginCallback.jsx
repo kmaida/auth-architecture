@@ -7,26 +7,23 @@ function LoginCallbackPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const handleCallback = async () => {
-      try {
-        const params = new URLSearchParams(window.location.search);
-        const code = params.get('code');
-        const state = params.get('state');
-
-        if (!userToken && code && state) {
-          await exchangeCodeForToken(code, state);
-        }
-        // Redirect to homepage if none
-        navigate('/');
-      } catch (error) {
-        console.error('Authentication failed:', error);
-        // Redirect to homepage
-        navigate('/');
-      }
-    };
-
     handleCallback();
   }, [navigate, exchangeCodeForToken]);
+
+  const handleCallback = async () => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const code = params.get('code');
+      const state = params.get('state');
+
+      if (!userToken && code && state) {
+        await exchangeCodeForToken(code, state);
+      }
+    } catch (error) {
+      console.error('Authentication failed:', error);
+    }
+    navigate('/');
+  };
 
   return (
     <>

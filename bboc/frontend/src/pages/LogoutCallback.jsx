@@ -7,19 +7,19 @@ function LogoutCallbackPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const handleCallback = async () => {
-      try {
-        await clearSession();
-        navigate('/');
-      } catch (error) {
-        console.error('Logout failed:', error);
-        // Redirect to homepage
-        navigate('/');
-      }
-    };
-
     handleCallback();
   }, [navigate, clearSession]);
+
+  const handleCallback = async () => {
+    try {
+      await clearSession();
+      navigate('/');
+    } catch (error) {
+      console.error('Logout failed:', error);
+      // Redirect to homepage
+      navigate('/');
+    }
+  };
 
   return (
     <>

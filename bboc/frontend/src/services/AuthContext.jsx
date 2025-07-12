@@ -32,7 +32,7 @@ export function AuthProvider({ children }) {
         return;
       }
       // Check if user is already logged in and if not, try to refresh the session
-      const storedRefreshToken = localStorage.getItem('refresh_token');
+      const storedRefreshToken = sessionStorage.getItem('refresh_token');
       if (!userToken && storedRefreshToken) {
         try {
           await refreshAccessToken(storedRefreshToken);
@@ -201,7 +201,7 @@ export function AuthProvider({ children }) {
     // Refresh 1 minute before expiry, but never less than 0
     const refreshIn = Math.max(expiresAt - now - 60000, 0);
     refreshTimerRef.current = setTimeout(async () => {
-      const refreshToken = localStorage.getItem('refresh_token');
+      const refreshToken = sessionStorage.getItem('refresh_token');
       if (refreshToken) {
         await refreshAccessToken(refreshToken);
       }
@@ -215,7 +215,7 @@ export function AuthProvider({ children }) {
   const tokensSuccess = async (tokenRes) => {
     const { access_token, refresh_token, id_token } = tokenRes.response;
     setUserToken(access_token);
-    localStorage.setItem('refresh_token', refresh_token);
+    sessionStorage.setItem('refresh_token', refresh_token);
     sessionStorage.setItem('id_token', id_token);
     // Calculate the timestamp when the access token expires based on its expiry length
     const expiresAt = Date.now() + (tokenRes.response.expires_in * 1000);

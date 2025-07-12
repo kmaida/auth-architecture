@@ -76,6 +76,5 @@ export const clearAuthStorage = () => {
   sessionStorage.removeItem('code_challenge');
   sessionStorage.removeItem('id_token');
   sessionStorage.removeItem('access_token_expires_at');
-  // Clear local storage
-  localStorage.removeItem('refresh_token');
+  sessionStorage.removeItem('refresh_token');
 };
