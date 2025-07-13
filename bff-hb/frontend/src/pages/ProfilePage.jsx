@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import { useAuth } from '../services/AuthContext';
+import { useFusionAuth } from '@fusionauth/react-sdk';
 
 function ProfilePage() {
   const [error, setError] = useState(null);
-  const { userInfo } = useAuth();
+  const { userInfo } = useFusionAuth();
 
   useEffect(() => {
     if (!userInfo) {

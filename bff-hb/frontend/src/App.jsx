@@ -6,7 +6,6 @@ import Footer from './components/Footer';
 import HomePage from './pages/HomePage';
 import ProtectedRoute from './components/ProtectedRoute';
 import ProfilePage from './pages/ProfilePage';
-import LogoutCallbackPage from './pages/LogoutCallback';
 import ResourceApiPage from './pages/ResourceApiPage';
 import './App.css'
 

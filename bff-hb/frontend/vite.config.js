@@ -7,10 +7,11 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      '/resource-api': {
-        target: 'http://resource-api.local:5001/api',
+      '/api': {
+        target: 'http://resource-api.local:5001',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/resource-api/, '')
+        cookieDomainRewrite: '',
+        secure: false
       }
     }
   }

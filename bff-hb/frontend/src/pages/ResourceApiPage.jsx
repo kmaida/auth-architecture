@@ -10,7 +10,7 @@ function ResourceApiPage() {
     setError(null);
     try {
       const res = await fetch(`/api/recipe`, {
-        include: 'credentials'
+        credentials: 'include'
       });
       if (!res.ok) throw new Error('Failed to fetch resource API data');
       const result = await res.json();
