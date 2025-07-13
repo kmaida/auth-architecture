@@ -8,7 +8,7 @@ function HomePage() {
     <h2>Architecture Overview</h2>
     <ul>
       <li>
-          <strong>Frontend:</strong> <a href="https://react.dev" target="_blank">React</a> app (<a href="https://vite.dev" target="_blank">Vite</a>) with Authorization Code flow with PKCE authentication and session management using <a href="https://fusionauth.io/docs/lifecycle/authenticate-users/oauth/endpoints" target="_blank">FusionAuth</a> and the <a href="https://github.com/FusionAuth/fusionauth-javascript-sdk/tree/main/packages/sdk-react" target="_blank">React SDK</a> (which uses the <a href="https://fusionauth.io/docs/apis/hosted-backend" target="_blank">FusionAuth Hosted Backend</a>)
+          <strong>Frontend:</strong> <a href="https://react.dev" target="_blank">React</a> app (<a href="https://vite.dev" target="_blank">Vite</a>) with Authorization Code flow with PKCE authentication and session management using <a href="https://fusionauth.io" target="_blank">FusionAuth</a> and the <a href="https://github.com/FusionAuth/fusionauth-javascript-sdk/tree/main/packages/sdk-react" target="_blank">React SDK</a> (which uses the <a href="https://fusionauth.io/docs/apis/hosted-backend" target="_blank">FusionAuth Hosted Backend</a>)
       </li>
       <li>
         <strong>Authorization server:</strong> Self-hosted <a href="https://fusionauth.io" target="_blank">FusionAuth</a> running in a Docker container
