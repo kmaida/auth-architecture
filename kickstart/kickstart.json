@@ -123,8 +123,7 @@
           "oauthConfiguration": {
             "authorizedRedirectURLs": [
               "http://localhost:5173",
-              "http://localhost:5173/login/callback",
-              "http://localhost:5173/logout/callback"
+              "http://localhost:5173/login/callback"
             ],
             "authorizedOriginURLs": [
               "http://localhost:5173"

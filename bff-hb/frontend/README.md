@@ -7,4 +7,4 @@
 
 If you have the FusionAuth container running, you should be able to log into the frontend app with the admin credentials provided in the FusionAuth installation section.
 
-This demo uses Vite to proxy the `resource-api` in order to use cookies (requires same origin) to access the API.
+This demo uses Vite to set up a proxy for requests to the external `resource-api` in order to use cookies (requires same origin) to access the API.

@@ -12,7 +12,7 @@ const frontendUrl = import.meta.env.VITE_FRONTEND_URL || 'http://localhost:5173'
 const config = {
   clientId: clientId,
   redirectUri: frontendUrl,
-  postLogoutRedirectUri: `${frontendUrl}/logout/callback`,
+  postLogoutRedirectUri: frontendUrl,
   serverUrl: authzServerUrl,
   shouldAutoFetchUserInfo: true,
   shouldAutoRefresh: true,
