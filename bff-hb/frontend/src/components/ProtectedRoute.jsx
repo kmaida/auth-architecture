@@ -1,8 +1,8 @@
 import { Navigate } from 'react-router-dom';
-import { useAuth } from '../services/AuthContext';
+import { useFusionAuth } from '@fusionauth/react-sdk';
 
 function ProtectedRoute({ children }) {
-  const { loggedIn, isLoading } = useAuth();
+  const { isLoggedIn, isLoading } = useFusionAuth();
 
   // Show loading while checking session
   if (isLoading) {
@@ -14,7 +14,7 @@ function ProtectedRoute({ children }) {
     );
   }
 
-  if (!loggedIn) {
+  if (!isLoggedIn) {
     return <Navigate to="/" replace />;
   }
   return children;

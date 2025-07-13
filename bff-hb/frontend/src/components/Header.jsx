@@ -25,7 +25,7 @@ export default function Header() {
           <p className="header-email">{userInfo?.email}</p>
           <button
             className="btn btn-logout"
-            onClick={startLogout()}
+            onClick={() => startLogout()}
           >
             Log Out
           </button>
@@ -33,7 +33,7 @@ export default function Header() {
       ) : (
         <button
           className="btn btn-login"
-          onClick={startLogin()}
+          onClick={() => startLogin()}
         >
           Log In
         </button>
