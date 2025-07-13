@@ -36,10 +36,11 @@ const verifyJWT = async (
   next: NextFunction
 ): Promise<void> => {
   const authHeader: string | undefined = req.headers.authorization;
-  const accessToken: string | null = authHeader ? authHeader.split(' ')[1] : null;
+  const tokenFromHeader = authHeader ? authHeader.split(' ')[1] : null;
+  const accessToken = req.cookies['app.at'] || tokenFromHeader;
   
   if (!accessToken) {
-    res.status(401).send({ error: 'Missing Authorization header' });
+    res.status(401).send({ error: 'Missing access token' });
     return;
   }
 
