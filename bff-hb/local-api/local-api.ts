@@ -1,9 +1,6 @@
 import express from 'express';
 import cors from 'cors';
-import { promisify } from 'util';
-import { lookup } from 'dns';
 import verifyJWT from './verifyJWT';
-import { resourceApi } from './resource-api';
 
 // Extend Express Request interface to include 'user'
 declare global {
@@ -17,24 +14,6 @@ declare global {
 // Import environment variables
 import * as dotenv from "dotenv";
 dotenv.config();
-
-// Function to check if resource-api.local is available
-const dnsLookup = promisify(lookup);
-
-async function getServerURL(): Promise<string> {
-  const port = process.env.PORT || 5001;
-  const preferredHost = 'resource-api.local';
-  const fallbackHost = 'localhost';
-  
-  try {
-    await dnsLookup(preferredHost);
-    console.log(`✓ ${preferredHost} is available`);
-    return `http://${preferredHost}:${port}`;
-  } catch (error) {
-    console.log(`✗ ${preferredHost} not found in hosts file, falling back to ${fallbackHost}`);
-    return `http://${fallbackHost}:${port}`;
-  }
-}
 
 // Set up app
 const app = express();
@@ -68,19 +47,21 @@ app.use((req, res, next) => {
 
 /*----------- Helpers, middleware, setup ------------*/
 
-// Add CORS middleware to allow connections from anywhere
-// You'd typically restrict this in production to specific origins
-// In this case, allowed origins should be the BFF backend,
-// TMB frontend, and BBOC frontend
-// For the sake of simplicity, we allow all origins so you don't
-// have to manage .env synchronization across multiple architecture demos 
 app.use(cors({
-  origin: '*',
+  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
   credentials: true // Allow cookies to be sent with requests
 }));
 
-// Set up protected API routes
-resourceApi(app, verifyJWT);
+/*----------- Protected Data Route ------------*/
+
+app.get('/api/protected-data', verifyJWT, async (req, res) => {
+  // Data that should be returned to authenticated users
+  // Replace with your actual protected data
+  const protectedData = {
+    message: 'This is protected data that only authenticated users can access.'
+  };
+  res.status(200).json(protectedData);
+});
 
 /*----------- Non-specified routes ------------*/
 
@@ -92,8 +73,8 @@ app.all('*', async (req, res) => {
 
 // npm run dev
 async function startServer() {
-  const serverURL = await getServerURL();
-  
+  const serverURL = `http://localhost:${port}`;
+
   app.listen(port, () => {
     console.log(`Server started at ${serverURL}`);
   });
