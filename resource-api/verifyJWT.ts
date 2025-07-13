@@ -37,30 +37,29 @@ const verifyJWT = async (
 ): Promise<void> => {
   const authHeader: string | undefined = req.headers.authorization;
   const tokenFromHeader = authHeader ? authHeader.split(' ')[1] : null;
-  // const accessToken = req.cookies['app.at'] || tokenFromHeader;
-
-  console.log(req.cookies);
+  // If no token in header, accept same-site cookies from FusionAuth
+  const accessToken = req.cookies['app.at'] || tokenFromHeader;
   
-  // if (!accessToken) {
-  //   res.status(401).send({ error: 'Missing access token' });
-  //   return;
-  // }
+  if (!accessToken) {
+    res.status(401).send({ error: 'Missing access token' });
+    return;
+  }
 
-  // try {
-  //   await jwtVerify(accessToken, jwksClient, {
-  //     issuer: fusionAuthURL,
-  //     audience: [bffTmbClientId, bbocClientId],
-  //   });
-  //   req.verifiedToken = accessToken;
-  //   next();
-  // } catch (e: unknown) {
-  //   if (e instanceof errors.JOSEError) {
-  //     res.status(401).send({ error: e.message, code: e.code });
-  //   } else {
-  //     console.error(`Internal server error: ${e}`);
-  //     res.status(500).send({ error: 'Internal server error' });
-  //   }
-  // }
+  try {
+    await jwtVerify(accessToken, jwksClient, {
+      issuer: fusionAuthURL,
+      audience: [bffTmbClientId, bbocClientId],
+    });
+    req.verifiedToken = accessToken;
+    next();
+  } catch (e: unknown) {
+    if (e instanceof errors.JOSEError) {
+      res.status(401).send({ error: e.message, code: e.code });
+    } else {
+      console.error(`Internal server error: ${e}`);
+      res.status(500).send({ error: 'Internal server error' });
+    }
+  }
 };
 
 export default verifyJWT;
