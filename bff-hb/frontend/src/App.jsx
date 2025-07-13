@@ -29,7 +29,7 @@ function App() {
       <div className="container-content">
         <Routes>
           <Route path="/" element={<HomePage />} />
-          <Route path="/logout/callback" element={<LogoutCallbackPage />} />
+          <Route path="/logout/callback" element={<HomePage />} />
           <Route
             path="/profile"
             element={

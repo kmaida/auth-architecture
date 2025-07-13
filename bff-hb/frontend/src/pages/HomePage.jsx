@@ -1,8 +1,8 @@
 function HomePage() {
   return (
     <>
-    <h1 className="hero-title">Browser-based OAuth 2.0 Client</h1>
-    <p className="hero-subtitle">Serverless Frontend Auth Architecture Demo</p>
+      <h1 className="hero-title">Serverless with FusionAuth BFF</h1>
+      <p className="hero-subtitle">Serverless BFF Auth Architecture Demo</p>
       <p>This is a demo of the <strong>Browser-based OAuth 2.0 Client</strong> architecture pattern, specifically as described in the <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#name-browser-based-oauth-20-clie" target="_blank">OAuth 2.0 for Browser-Based Applications</a> specification draft. This is a serverless architecture; there is no backend and the frontend directly interacts with the authorization server (<a href="https://fusionauth.io" target="_blank">FusionAuth</a>). Access tokens are requested by the frontend so the frontend can call the resource server. Access tokens are stored in local app memory and have a short expiry. <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#section-6.3.3" target="_blank">Browser-based OAuth 2.0 Client is the least secure</a> of the three architecture patterns for browser-based apps, and it is even more important to follow <a href="https://maida.kim/oauth2-best-practices-for-developers/" target="_blank">best current practices for OAuth security</a>.</p>
 
     <h2>Architecture Overview</h2>

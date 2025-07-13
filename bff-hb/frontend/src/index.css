@@ -31,7 +31,7 @@ body,
 /*-- Header styles --*/
 
 header {
-  background: linear-gradient(135deg, #059669 0%, #10b981 50%, #047857 100%);
+  background: linear-gradient(135deg, #f58320 0%, #ffb347 50%, #fbbf24 100%);
   box-shadow: var(--shadow);
   font-size: .85rem;
   padding: 1.5rem 2rem;
@@ -39,6 +39,9 @@ header {
   align-items: center;
   justify-content: space-between;
   border-bottom: 1px solid var(--border);
+}
+.header-email {
+  color: #000000;
 }
 
 /*-- Site Title/Brand styles --*/
@@ -56,15 +59,15 @@ header {
 .site-brand-icon {
   width: 36px;
   height: 36px;
-  background: linear-gradient(135deg, #ffffff 0%, #ecfdf5 100%);
+  background: linear-gradient(135deg, #fff7ed 0%, #ffe5b4 100%);
   border-radius: 100px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 900;
   font-size: 1.1rem;
-  color: #059669;
-  box-shadow: 0 2px 8px rgba(255, 255, 255, 0.35);
+  color: #f58320;
+  box-shadow: 0 2px 8px rgba(255, 186, 73, 0.25);
 }
 .site-brand-text {
   display: flex;
@@ -73,12 +76,12 @@ header {
 }
 .site-brand-main {
   font-size: 1em;
-  color: #fff;
+  color: #ffffff;
 }
 .site-brand-sub {
   font-size: 0.6em;
   font-weight: 500;
-  color: #86efac;
+  color: #ffe4bf;
   opacity: 0.9;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -91,7 +94,7 @@ header {
   gap: 1.5rem;
 }
 .nav-link {
-  color: #ffffff;
+  color: #000000;
   text-decoration: none;
   font-weight: 500;
   padding: 1em 1.2em;
@@ -115,7 +118,7 @@ header {
   width: 80%;
   height: 2px;
   border-radius: 2px;
-  background: linear-gradient(90deg, #00ff7b 0%, #089a53 100%);
+  background: linear-gradient(90deg, #ff8e2c 0%, #f07501 100%);
   opacity: 0;
   transform: scaleX(0.7);
   transition: opacity 0.2s, transform 0.2s;
@@ -123,7 +126,7 @@ header {
 }
 .nav-link.active,
 .nav-link:hover {
-  color: #ffffff;
+  color: #000000;
   box-shadow: 0 2px 8px rgba(0,0,0,0.25);
   background: linear-gradient(90deg, rgba(255,255,255,0.15) 0%, rgba(236,253,245,0.2) 100%);
 }
@@ -156,16 +159,16 @@ h1, h2, h3 {
 
 /*-- Hero title with gradient effect --*/
 
-.hero-title {
-  font-size: 2.5rem;
-  font-weight: 800;
-  background: linear-gradient(135deg, #059669 0%, #fff 50%, #10b981 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  text-align: center;
-  margin: 0 0 1rem 0;
-  letter-spacing: -0.03em;
+  .hero-title {
+    font-size: 2.5rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #f58320 0%, #fff7ed 50%, #ffb347 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-align: center;
+    margin: 0 0 1rem 0;
+    letter-spacing: -0.03em;
 }
 
 .hero-subtitle {

@@ -23,8 +23,8 @@ function LogoutCallbackPage() {
 
   return (
     <>
-    <h1 className="hero-title">Token-Mediating Backend</h1>
-    <p className="hero-subtitle">Secure Token-Mediating Backend Auth Architecture Demo</p>
+    <h1 className="hero-title">BFF with FusionAuth Hosted Backend</h1>
+    <p className="hero-subtitle">Secure Backend-for-Frontend with FusionAuth Hosted Backend Auth Architecture Demo</p>
     <p className="hero-subtitle">Logging out...</p>
     </>
   );
