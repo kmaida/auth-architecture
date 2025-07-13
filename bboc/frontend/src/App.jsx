@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { Navigate, Route, Routes } from 'react-router-dom';
 import { useAuth } from './services/AuthContext';
 import Header from './components/Header';
 import Footer from './components/Footer';
@@ -17,7 +17,7 @@ function App() {
   // Check authentication session on initial load only
   useEffect(() => {
     checkSession();
-  }, [checkSession]); // Include checkSession in dependencies
+  }, [checkSession]);
 
   // Add body class for authentication state
   useEffect(() => {
