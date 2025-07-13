@@ -3,6 +3,7 @@ import cors from 'cors';
 import { promisify } from 'util';
 import { lookup } from 'dns';
 import verifyJWT from './verifyJWT';
+import cookieParser from 'cookie-parser';
 import { resourceApi } from './resource-api';
 
 // Extend Express Request interface to include 'user'
@@ -78,6 +79,9 @@ app.use(cors({
   origin: '*',
   credentials: true // Allow cookies to be sent with requests
 }));
+
+// Parse cookies and make them available in request
+app.use(cookieParser());
 
 // Set up protected API routes
 resourceApi(app, verifyJWT);

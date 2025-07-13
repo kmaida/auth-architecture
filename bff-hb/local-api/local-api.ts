@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import verifyJWT from './verifyJWT';
+import cookieParser from 'cookie-parser';
 
 // Extend Express Request interface to include 'user'
 declare global {
@@ -51,6 +52,9 @@ app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:5173',
   credentials: true // Allow cookies to be sent with requests
 }));
+
+// Parse cookies and make them available in request
+app.use(cookieParser());
 
 /*----------- Protected Data Route ------------*/
 
