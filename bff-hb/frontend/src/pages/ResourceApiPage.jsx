@@ -29,7 +29,7 @@ function ResourceApiPage() {
   return (
     <div>
       <h1>Call a Proxied External API</h1>
-      <p>This page makes a <code>GET</code> request to an external API that has been proxied to <code>/api/recipe</code>on page load and each time the <code>Get New Recipe</code> button is clicked. The resource server requires authorization, which the request delivers with the <code>app.at</code> coookie set by FusionAuth's hosted backend. The returned data is a randomized, made-up recipe (though you're welcome to try to cook it).</p>
+      <p>This page makes a <code>GET</code> request to an external API that has been proxied to <code>/api</code>. A request is made on page load and each time the <code>Get New Recipe</code> button is clicked. The resource server requires authorization, which the request delivers with the <code>app.at</code> cookie set by FusionAuth's hosted backend. The returned data is a randomized, made-up recipe (though you're welcome to try to cook it).</p>
 
       <button
         onClick={fetchRecipe}

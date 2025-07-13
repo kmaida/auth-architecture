@@ -5,7 +5,7 @@ import Header from './components/Header';
 import Footer from './components/Footer';
 import HomePage from './pages/HomePage';
 import ProtectedRoute from './components/ProtectedRoute';
-import ProtectedPage from './pages/ProtectedPage';
+import ResourceApiPage from './pages/ResourceApiPage';
 import ProfilePage from './pages/ProfilePage';
 import './App.css'
 
@@ -30,18 +30,18 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/logout/callback" element={<HomePage />} />
           <Route
-            path="/protected"
-            element={
-              <ProtectedRoute>
-                <ProtectedPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
             path="/profile"
             element={
               <ProtectedRoute>
                 <ProfilePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/call-api"
+            element={
+              <ProtectedRoute>
+                <ResourceApiPage />
               </ProtectedRoute>
             }
           />
