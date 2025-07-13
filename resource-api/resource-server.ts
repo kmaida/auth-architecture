@@ -3,6 +3,7 @@ import cors from 'cors';
 import { promisify } from 'util';
 import { lookup } from 'dns';
 import verifyJWT from './verifyJWT';
+import cookieParser from 'cookie-parser';
 import { resourceApi } from './resource-api';
 
 // Extend Express Request interface to include 'user'
@@ -75,8 +76,12 @@ app.use((req, res, next) => {
 // For the sake of simplicity, we allow all origins so you don't
 // have to manage .env synchronization across multiple architecture demos 
 app.use(cors({
-  origin: '*'
+  origin: '*',
+  credentials: true // Allow cookies to be sent with requests
 }));
+
+// Parse cookies and make them available in request
+app.use(cookieParser());
 
 // Set up protected API routes
 resourceApi(app, verifyJWT);
