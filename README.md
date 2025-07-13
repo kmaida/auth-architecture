@@ -5,6 +5,7 @@ This repo contains a set of apps demonstrating different auth architectures, a r
 - Backend-for-Frontend (BFF) [spec](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#name-backend-for-frontend-bff)
 - Token-Mediating Backend (TMB) [spec](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#name-token-mediating-backend)
 - Browser-based OAuth 2.0 client (BBOC) [spec](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#name-browser-based-oauth-20-clie)
+- Backend-for-Frontend (BFF) with FusionAuth [FusionAuth hosted backend](https://fusionauth.io/docs/apis/hosted-backend)
 - Resource API server
 
 ## Prerequisites
@@ -21,11 +22,11 @@ This repo contains a set of apps demonstrating different auth architectures, a r
 5. Verify that FusionAuth is installed and configured properly by navigating to `http://localhost:9011/admin`
 6. If you get a login screen at `http://localhost:9011/admin`, the kickstart was successful
 7. Log in with the admin credentials: `admin@example.com` / `password`
-8. In the FusionAuth dashboard, go to Applications and make sure there are three apps: `Auth Architecture (BFF & TMB)`, `Auth Architecture (BBOC)`, and `FusionAuth`
+8. In the FusionAuth dashboard, go to Applications and make sure there are three apps: `Auth Architecture (BFF & TMB)`, `Auth Architecture (BBOC & BFF-HB)`, and `FusionAuth`
 
 ## Architecture
 
-Use the READMEs in each architecture folder (`/bff`, `/tmb`, `/bboc`) for instructions on setting up that architecture. All demos use one FusionAuth instance. 
+Use the READMEs in each architecture folder (`/bff`, `/tmb`, `/bboc`, `/bff-hb`) for instructions on setting up that architecture. All demos use one FusionAuth instance.
 
 ### Concurrent architectures
 
