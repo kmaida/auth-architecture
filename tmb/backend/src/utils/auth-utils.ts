@@ -330,10 +330,11 @@ export const createSecureMiddleware = (
 
 /** Check if the session ID is valid
  * @param sessionId The session ID to validate
- * @returns True if the session ID is a non-empty string of 64 hexadecimal characters, false otherwise
+ * @returns True if the session ID is a non-empty string of X*2 hexadecimal characters, false otherwise
  */
 export const isValidSessionId = (sessionId: string | undefined | null): sessionId is string => {
-  return typeof sessionId === 'string' && sessionId.length > 0 && /^[a-f0-9]{64}$/.test(sessionId);
+  const bytes = process.env.SESSION_ID_BYTES ? parseInt(process.env.SESSION_ID_BYTES, 10) : 64; // Default to 64 bytes if not set
+  return typeof sessionId === 'string' && sessionId.length > 0 && new RegExp(`^[a-f0-9]{${bytes * 2}}$`).test(sessionId);
 };
 
 /** Check if the JWT token is valid

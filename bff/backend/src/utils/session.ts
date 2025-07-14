@@ -8,7 +8,7 @@ dotenv.config();
 
 // Configuration constants
 const REFRESH_TTL = parseInt(process.env.REFRESH_TTL || '43200', 10); // Default to 12 hours if not set
-const SESSION_ID_BYTES = 32;
+const SESSION_ID_BYTES = process.env.SESSION_ID_BYTES ? parseInt(process.env.SESSION_ID_BYTES, 10) : 64; // Default to 64 bytes if not set
 
 // TYPE: user session data
 export interface UserSession {
