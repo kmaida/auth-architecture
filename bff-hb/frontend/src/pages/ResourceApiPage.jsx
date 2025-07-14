@@ -5,6 +5,10 @@ function ResourceApiPage() {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    fetchRecipe();
+  }, []);
+
   const fetchRecipe = async () => {
     setLoading(true);
     setError(null);
@@ -21,10 +25,6 @@ function ResourceApiPage() {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    fetchRecipe();
-  }, []);
 
   return (
     <div>

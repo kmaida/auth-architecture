@@ -8,7 +8,7 @@ function LoginCallbackPage() {
 
   useEffect(() => {
     handleCallback();
-  }, [navigate, exchangeCodeForToken]);
+  }, []);
 
   const handleCallback = async () => {
     try {

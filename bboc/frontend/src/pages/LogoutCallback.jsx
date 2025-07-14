@@ -8,7 +8,7 @@ function LogoutCallbackPage() {
 
   useEffect(() => {
     handleCallback();
-  }, [navigate, clearSession]);
+  }, []);
 
   const handleCallback = async () => {
     try {
