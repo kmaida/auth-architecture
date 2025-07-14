@@ -212,7 +212,7 @@
       "url": "/api/user/registration/#{adminUserId}",
       "body": {
         "registration": {
-          "applicationId": "#{bbocApplicationId}"
+          "applicationId": "#{bbocBffHbApplicationId}"
         }
       }
     },
@@ -237,7 +237,7 @@
       "url": "/api/user/registration/#{userUserId}",
       "body": {
         "registration": {
-          "applicationId": "#{bbocApplicationId}"
+          "applicationId": "#{bbocBffHbApplicationId}"
         }
       }
     }
