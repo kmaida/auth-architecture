@@ -1,10 +1,9 @@
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import { useAuth } from '../services/AuthContext';
 import { useCallback } from 'react';
 
 export default function Header() {
   const { loggedIn, userInfo, login, logout } = useAuth();
-  const location = useLocation();
 
   const initLogin = useCallback(() => {
     login();

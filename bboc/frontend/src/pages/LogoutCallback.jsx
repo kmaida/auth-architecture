@@ -13,20 +13,10 @@ function LogoutCallbackPage() {
   const handleCallback = async () => {
     try {
       await clearSession();
-      navigate('/');
     } catch (error) {
       console.error('Logout failed:', error);
-      // Redirect to homepage
-      navigate('/');
     }
+    navigate('/', { replace: true });
   };
-
-  return (
-    <>
-    <h1 className="hero-title">Token-Mediating Backend</h1>
-    <p className="hero-subtitle">Secure Token-Mediating Backend Auth Architecture Demo</p>
-    <p className="hero-subtitle">Logging out...</p>
-    </>
-  );
 }
 export default LogoutCallbackPage;

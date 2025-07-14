@@ -8,6 +8,12 @@ function ResourceApiPage() {
   const { userToken } = useAuth();
   const resourceApiUrl = import.meta.env.VITE_RESOURCE_API_URL;
 
+  useEffect(() => {
+    if (userToken) {
+      fetchRecipe();
+    }
+  }, [resourceApiUrl, userToken]);
+
   const fetchRecipe = async () => {
     if (!userToken) {
       setError(new Error('No access token available'));
@@ -31,12 +37,6 @@ function ResourceApiPage() {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    if (userToken) {
-      fetchRecipe();
-    }
-  }, [resourceApiUrl, userToken]);
 
   return (
     <div>
