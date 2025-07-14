@@ -11,12 +11,12 @@ import ResourceApiPage from './pages/ResourceApiPage';
 import './App.css'
 
 function App() {
-  const { checkSession, loggedIn, isLoading } = useAuth();
+  const { checkSession, loggedIn } = useAuth();
 
   // Check authentication session on initial load only
   useEffect(() => {
     checkSession();
-  }, [checkSession]); // Include checkSession in dependencies
+  }, [checkSession]);
 
   // Add body class for authentication state
   useEffect(() => {
@@ -27,19 +27,6 @@ function App() {
       document.body.classList.remove('logged-in', 'logged-out');
     };
   }, [loggedIn]);
-
-  // Show loading while checking initial session
-  if (isLoading) {
-    return (
-      <>
-        <Header />
-        <div className="container-content">
-          <h2>Loading...</h2>
-          <p>Checking authentication status...</p>
-        </div>
-      </>
-    );
-  }
 
   return (
     <>
