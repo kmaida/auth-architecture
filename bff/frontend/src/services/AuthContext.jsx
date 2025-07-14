@@ -13,7 +13,7 @@ export function AuthProvider({ children }) {
     try {
       setIsLoading(true);
       const response = await fetch(`${apiUrl}/auth/checksession`, {
-        credentials: 'include',
+        credentials: 'include' // send session ID cookie
       });
       const data = await response.json(); // data: { loggedIn: boolean, user: object|null }
       setLoggedIn(data.loggedIn);

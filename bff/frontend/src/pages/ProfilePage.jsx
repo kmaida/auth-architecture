@@ -7,7 +7,7 @@ function ProfilePage() {
 
   useEffect(() => {
     fetch(`${apiUrl}/auth/userinfo`, {
-      credentials: 'include', // send cookies
+      credentials: 'include' // send session ID cookie
     })
       .then((res) => {
         if (!res.ok) throw new Error('Failed to fetch user info');

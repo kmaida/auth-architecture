@@ -7,7 +7,7 @@ function ProtectedPage() {
 
   useEffect(() => {
     fetch(`${apiUrl}/api/protected-data`, {
-      credentials: 'include', // send cookies
+      credentials: 'include' // send session ID cookie
     })
       .then((res) => {
         if (!res.ok) throw new Error('Failed to fetch protected data');

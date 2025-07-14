@@ -12,7 +12,7 @@ function ResourceApiPage() {
     if (userToken) {
       fetchRecipe();
     }
-  }, [resourceApiUrl, userToken]);
+  }, [userToken]);
 
   const fetchRecipe = async () => {
     if (!userToken) {

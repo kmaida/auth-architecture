@@ -6,6 +6,10 @@ function ResourceApiPage() {
   const [loading, setLoading] = useState(false);
   const apiUrl = import.meta.env.VITE_API_URL;
 
+  useEffect(() => {
+    fetchRecipe();
+  }, []);
+
   const fetchRecipe = async () => {
     setLoading(true);
     setError(null);
@@ -22,10 +26,6 @@ function ResourceApiPage() {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    fetchRecipe();
-  }, [apiUrl]);
 
   return (
     <div>
