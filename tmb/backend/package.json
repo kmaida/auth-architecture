@@ -1,5 +1,5 @@
 {
-  "name": "fusionauth-tmb-backend",
+  "name": "tmb-backend",
   "version": "0.1.0",
   "description": "Express API Token-Mediating Backend (TMB) using FusionAuth",
   "scripts": {

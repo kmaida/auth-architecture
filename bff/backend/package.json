@@ -1,5 +1,5 @@
 {
-  "name": "fusionauth-bff-backend",
+  "name": "bff-backend",
   "version": "0.1.0",
   "description": "Express API backend for Frontend (BFF) using FusionAuth",
   "scripts": {
