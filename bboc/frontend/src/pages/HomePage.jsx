@@ -21,7 +21,7 @@ function HomePage() {
     <h2>Features</h2>
     <ul>
       <li>
-        Severless architecture with no backend
+        Serverless architecture with no backend
       </li>
       <li>
         Frontend user authentication with FusionAuth using OAuth 2.0 Authorization Code flow with PKCE
