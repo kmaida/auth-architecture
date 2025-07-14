@@ -94,16 +94,6 @@ api(app, authApi);
 // This is a sample API proxy endpoint that fetches data from an external API and returns it to the client
 resourceApi(app, authApi);
 
-/*----------- Health check endpoint ------------*/
-
-app.get('/health', (req, res) => {
-  res.status(200).json({ 
-    status: 'ok', 
-    timestamp: new Date().toISOString(),
-    service: 'tmb-backend' 
-  });
-});
-
 /*----------- Non-specified routes ------------*/
 
 // Handle API routes that don't exist

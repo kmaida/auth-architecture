@@ -7,6 +7,10 @@ function ProtectedPage() {
   const apiUrl = import.meta.env.VITE_API_URL;
   const { getAccessToken } = useAuth();
 
+  useEffect(() => {
+    fetchData();
+  }, []);
+
   const fetchData = async () => {
     setError(null);
     try {
@@ -28,10 +32,6 @@ function ProtectedPage() {
       setError(err);
     }
   };
-
-  useEffect(() => {
-    fetchData();
-  }, []);
 
   return (
     <div>

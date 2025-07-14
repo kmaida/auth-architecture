@@ -16,7 +16,7 @@ function App() {
   // Check authentication session on initial load only
   useEffect(() => {
     checkSession();
-  }, [checkSession]);
+  }, []);
 
   // Add body class for authentication state
   useEffect(() => {

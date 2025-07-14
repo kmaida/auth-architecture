@@ -89,16 +89,6 @@ const authApi = setupAuthRoutes(app, client, clientId, clientSecret, fusionAuthU
 // Set up protected API routes
 api(app, authApi);
 
-/*----------- Health check endpoint ------------*/
-
-app.get('/health', (req, res) => {
-  res.status(200).json({ 
-    status: 'ok', 
-    timestamp: new Date().toISOString(),
-    service: 'tmb-backend' 
-  });
-});
-
 /*----------- Non-specified routes ------------*/
 
 // Handle API routes that don't exist

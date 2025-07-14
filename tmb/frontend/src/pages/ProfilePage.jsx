@@ -7,6 +7,10 @@ function ProfilePage() {
   const apiUrl = import.meta.env.VITE_API_URL;
   const { getAccessToken } = useAuth();
 
+  useEffect(() => {
+    fetchUserInfo();
+  }, []);
+
   const fetchUserInfo = async () => {
     try {
       const accessToken = await getAccessToken();
@@ -28,10 +32,6 @@ function ProfilePage() {
       setError(error);
     }
   };
-
-  useEffect(() => {
-    fetchUserInfo();
-  }, []);
 
   return (
     <div>
