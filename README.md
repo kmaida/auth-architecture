@@ -5,7 +5,7 @@ This repo contains a set of apps demonstrating different auth architectures, a r
 - Backend-for-Frontend (BFF) [spec](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#name-backend-for-frontend-bff)
 - Token-Mediating Backend (TMB) [spec](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#name-token-mediating-backend)
 - Browser-based OAuth 2.0 client (BBOC) [spec](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#name-browser-based-oauth-20-clie)
-- Backend-for-Frontend (BFF) with FusionAuth [FusionAuth hosted backend](https://fusionauth.io/docs/apis/hosted-backend)
+- Backend-for-Frontend (BFF) with [FusionAuth hosted backend](https://fusionauth.io/docs/apis/hosted-backend)
 - Resource API server
 
 ## Prerequisites
