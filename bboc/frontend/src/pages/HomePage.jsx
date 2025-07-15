@@ -80,7 +80,7 @@ function HomePage() {
         Authorization server sends an access token and refresh token to the app
       </li>
       <li>
-        App deletes the PKCE session storage, stores the access token in app memory, sets the refresh token in localStorage, and fetches <code>userInfo</code> from the authorization server using the access token
+        App deletes the PKCE session storage, stores the access token in app memory, sets the refresh token in sessionStorage, and fetches <code>userInfo</code> from the authorization server using the access token
       </li>
       <li>
         App sets a timer to refresh the access token using the refresh token before it expires to provide a seamless user experience since the access token expiration must be short (typically 5-15 minutes) in order to minimize the risk of token theft
@@ -92,7 +92,7 @@ function HomePage() {
         Authorization server logs the user out and redirects to the <code>/logout/callback</code> page
       </li>
       <li>
-        App deletes all session and local storage and redirects the unauthenticated user to the homepage
+        App deletes all session storage and redirects the unauthenticated user to the homepage
       </li>
     </ol>
 
