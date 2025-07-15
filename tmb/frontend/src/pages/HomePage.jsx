@@ -145,9 +145,6 @@ function HomePage() {
         Frontend makes a request to the resource API for protected data with <code>Authorization: Bearer 'accessToken'</code> as authorization (for example, to the <code>http://resource-api.local:5001/api/recipe</code> endpoint)
       </li>
       <li>
-        Frontend makes a request to the resource API for protected data with <code>Authorization: Bearer 'accessToken'</code> as authorization (for example, to the <code>http://resource-api.local:5001/api/recipe</code> endpoint)
-      </li>
-      <li>
         API middleware verifies the access token in the <code>Authorization</code> header and returns data to the frontend if the token is valid
       </li>
       <li>
