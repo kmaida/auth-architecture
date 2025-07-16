@@ -113,9 +113,6 @@ function HomePage() {
         Backend sets an <code>httpOnly</code> cookie for the user's session ID (this only contains the session ID, never tokens)
       </li>
       <li>
-        Backend sets the <code>userInfo</code> in a cookie that is public to the frontend (note: this cookie is not actually read in this demo, but it's common practice to store user information in a cookie or ID token in the frontend)
-      </li>
-      <li>
         Backend <code>/auth/callback</code> redirects to the frontend
       </li>
       <li>
