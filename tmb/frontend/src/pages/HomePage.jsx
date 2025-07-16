@@ -71,7 +71,7 @@ function HomePage() {
         ...a <code>code_verifier</code> and a hash of the code verifier called a <code>code_challenge</code>, which is created by hashing the verifier with a function called a <code>code_challenge_method</code>
       </li>
       <li>
-        Backend sets an <code>httpOnly</code> PKCE cookie with the <code>state</code>, <code>code_verifier</code>, and <code>code_challenge</code>
+        Backend sets an <code>httpOnly</code> PKCE cookie with the <code>state</code>, <code>code_verifier</code>, and <code>code_challenge</code> to tie this login attempt to this user (a backend user session is not created until after successful login)
       </li>
       <li>
         Backend returns a response informing the frontend that the user is not authenticated
