@@ -104,7 +104,10 @@ export function setupAuthRoutes(
       }
       res.status(200).json({ loggedIn: true, at: at, user });
     } else {
+      // User is not authenticated and doesn't have a refresh token
       // Create and store state, code verifier, and code challenge for authorization request with PKCE
+      // Store in httpOnly cookie to tie this login attempt to this user
+      // (User sessions aren't created until after successful login!)
       const stateValue = generateStateValue();
       const pkcePair = pkceChallenge();
       
