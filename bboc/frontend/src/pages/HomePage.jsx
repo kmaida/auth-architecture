@@ -86,7 +86,7 @@ function HomePage() {
         App sets a timer to refresh the access token using the refresh token before it expires to provide a seamless user experience since the access token expiration must be short (typically 5-15 minutes) in order to minimize the risk of token theft
       </li>
       <li>
-        When the user clicks the <code>Log Out</code> button, the app redirects redirects to the authorization server's <code>/oauth2/logout</code> endpoint with appropriate configuration
+        When the user clicks the <code>Log Out</code> button, the app redirects to the authorization server's <code>/oauth2/logout</code> endpoint with appropriate configuration
       </li>
       <li>
         Authorization server logs the user out and redirects to the <code>/logout/callback</code> page
