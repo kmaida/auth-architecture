@@ -4,7 +4,7 @@ This is a demo of the Token-Mediating Backend (TMB) architecture pattern, specif
 
 ## Architecture Overview
 
--   **Frontend:** [React](https://react.dev/ "https://react.dev") app / [Angular](https://angular.dev/ "https://angular.dev/") app
+-   **Frontend:** [React](https://react.dev/ "https://react.dev") app with [Vite](https://vite.dev)
 -   **Backend:** [Node.js](https://nodejs.org/ "https://nodejs.org/") [Express](https://expressjs.com/ "https://expressjs.com/") API and server
 -   **Authorization server:** Self-hosted [FusionAuth](https://fusionauth.io/ "https://fusionauth.io/") running in a Docker container
 -   **Authentication:** `/auth` API on backend using [FusionAuth OAuth 2.0 endpoints](https://fusionauth.io/docs/lifecycle/authenticate-users/oauth/endpoints "https://fusionauth.io/docs/lifecycle/authenticate-users/oauth/endpoints") and [TypeScript SDK](https://github.com/FusionAuth/fusionauth-typescript-client "https://github.com/FusionAuth/fusionauth-typescript-client")
