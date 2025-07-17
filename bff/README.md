@@ -38,29 +38,19 @@ All apps share the same FusionAuth instance, so there is no need to run multiple
 ## Architecture Overview
 
 -   **Frontend:** [React](https://react.dev/ "https://react.dev") app with [Vite](https://vite.dev)
-
 -   **Backend:** [Node.js](https://nodejs.org/ "https://nodejs.org/") [Express](https://expressjs.com/ "https://expressjs.com/") API and server
-
 -   **Authorization server:** Self-hosted [FusionAuth](https://fusionauth.io/ "https://fusionauth.io/") running in a Docker container
-
 -   **Authentication:** `/auth` API on backend using [FusionAuth OAuth 2.0 endpoints](https://fusionauth.io/docs/lifecycle/authenticate-users/oauth/endpoints "https://fusionauth.io/docs/lifecycle/authenticate-users/oauth/endpoints"), [TypeScript SDK](https://github.com/FusionAuth/fusionauth-typescript-client "https://github.com/FusionAuth/fusionauth-typescript-client"), and in-memory cache management for session storage (recommend Redis for production)
-
 -   **Authorization:** `/api` local API on the backend verifies the access token in the user's stored session before allowing access to protected resources
-
 -   **Resource server:** a cross-origin API that requires authorization, directly called by the frontend app (all three architectures use this same resource server)
 
 ## Features
 
 -   User authentication with FusionAuth using OAuth 2.0 Authorization Code flow with PKCE
-
 -   Local API on the backend with FusionAuth authorization through access token verification
-
 -   Authentication API on the backend
-
 -   Session management with `httpOnly` session ID cookies and lookup using server-side session storage cache
-
 -   Session persistence with refresh token grant on the backend and proactive session renewal
-
 -   No tokens are ever exposed to the frontend
 
 ## How BFF Authentication Works
