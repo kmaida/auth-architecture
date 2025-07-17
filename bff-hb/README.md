@@ -41,7 +41,7 @@ All apps share the same FusionAuth instance, so there is no need to run multiple
 
 ## How BFF-HB Authentication Works
 
-Here are the steps for authentication in this BFF-HB example. Most of the authentication lifecycle is handled by the [FusionAuth Angular SDK](https://github.com/FusionAuth/fusionauth-javascript-sdk/tree/main/packages/sdk-angular "https://github.com/FusionAuth/fusionauth-javascript-sdk/tree/main/packages/sdk-angular") and [Hosted Backend](https://fusionauth.io/docs/apis/hosted-backend "https://fusionauth.io/docs/apis/hosted-backend").
+Here are the steps for authentication in this BFF-HB example. Most of the authentication lifecycle is handled by the [FusionAuth React SDK](https://github.com/FusionAuth/fusionauth-javascript-sdk/tree/main/packages/sdk-react "https://github.com/FusionAuth/fusionauth-javascript-sdk/tree/main/packages/sdk-react") and [Hosted Backend](https://fusionauth.io/docs/apis/hosted-backend "https://fusionauth.io/docs/apis/hosted-backend").
 
 1.  User navigates to the frontend app
 
