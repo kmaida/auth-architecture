@@ -1,5 +1,7 @@
 # Backend-for-Frontend Auth Architecture
 
+This is a demo of the Backend-for-Frontend (BFF) architecture pattern, specifically as described in the [OAuth 2.0 for Browser-Based Applications](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#name-backend-for-frontend-bff "https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#name-backend-for-frontend-bff") specification draft. The backend is a confidential client that handles (proxies) all of the authentication and authorization interactions with the authorization server ([FusionAuth](https://fusionauth.io/ "https://fusionauth.io/")) and resource server. No tokens are exposed to the frontend, preventing JavaScript token theft attacks by using `httpOnly` session cookies. The frontend never interacts directly with the authorization server. [Backend-for-Frontend is the most secure](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#name-mitigated-attack-scenarios "https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#name-mitigated-attack-scenarios") of the three architecture patterns for browser-based apps.
+
 ## Setup & Installation
 
 ### Prerequisites
@@ -32,10 +34,6 @@ If you have the backend and FusionAuth both running, you should be able to log i
 You will not be able to run multiple architecture demos at the same time because they share ports. If you'd like to run multiple apps at the same time, you must change the ports.
 
 All apps share the same FusionAuth instance, so there is no need to run multiple FusionAuth containers.
-
-## How BFF Works
-
-This is a demo of the Backend-for-Frontend (BFF) architecture pattern, specifically as described in the [OAuth 2.0 for Browser-Based Applications](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#name-backend-for-frontend-bff "https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#name-backend-for-frontend-bff") specification draft. The backend is a confidential client that handles (proxies) all of the authentication and authorization interactions with the authorization server ([FusionAuth](https://fusionauth.io/ "https://fusionauth.io/")) and resource server. No tokens are exposed to the frontend, preventing JavaScript token theft attacks by using `httpOnly` session cookies. The frontend never interacts directly with the authorization server. [Backend-for-Frontend is the most secure](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#name-mitigated-attack-scenarios "https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#name-mitigated-attack-scenarios") of the three architecture patterns for browser-based apps.
 
 ## Architecture Overview
 
