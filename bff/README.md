@@ -79,9 +79,9 @@ Here are all the steps for authentication in this BFF example in explicit detail
 
 6.  If there is no session cookie, the user's session is invalid, and/or if there is no refresh token, the backend prepares for an authorization request using [OAuth 2.0 Authorization Code flow](https://datatracker.ietf.org/doc/html/rfc6749#section-4.1 "https://datatracker.ietf.org/doc/html/rfc6749#section-4.1") with [PKCE](https://datatracker.ietf.org/doc/html/rfc7636 "https://datatracker.ietf.org/doc/html/rfc7636") by generating a `state` and...
 
-7.  ...a `code_verifier` and a hash of the code verifier called a `code_challenge`, which is created by hashing the verifier with a function called a `code_challenge_method` *^(PKCE info is set now because creating it on login causes a race condition when setting the cookie)^*
+7.  ...a `code_verifier` and a hash of the code verifier called a `code_challenge`, which is created by hashing the verifier with a function called a `code_challenge_method` *(PKCE info is set now because creating it on login causes a race condition when setting the cookie)*
 
-8.  Backend sets an `httpOnly` PKCE cookie with the `state`, `code_verifier`, and `code_challenge` *^(a user cookie is used because the user's PKCE information must be persisted through the OAuth handshake, but the user session is not created until a successful login)^*
+8.  Backend sets an `httpOnly` PKCE cookie with the `state`, `code_verifier`, and `code_challenge` *(a user cookie is used because the user's PKCE information must be persisted through the OAuth handshake, but the user session is not created until a successful login)*
 
 9.  Backend returns a response informing the frontend that the user is not authenticated
 
