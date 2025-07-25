@@ -268,5 +268,6 @@ export function setupAuthRoutes(
     res.json({ userInfo: freshUserInfo || null });
   });
 
-  return secure; // Return the secure middleware to be used by protected routes
+  // After setting up all routes, return the secure middleware
+  return secure;
 }
