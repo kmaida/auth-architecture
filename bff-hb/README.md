@@ -1,6 +1,6 @@
 # Backend-for-Frontend with FusionAuth Hosted Backend: Auth Architecture
 
-This is a demo of an architecture with an auth Backend-for-Frontend and a Single-Page App. This is a serverless architecture; there is no backend and the frontend directly interacts with the authorization server ([FusionAuth](https://fusionauth.io/ "https://fusionauth.io/")).
+This is a demo of an architecture with a hosted auth Backend-for-Frontend and a Single-Page App. This is a serverless architecture; there is no need to build your own backend app. The frontend directly interacts with the authorization server ([FusionAuth](https://fusionauth.io/ "https://fusionauth.io/")) with the convenience and development ease of [BBOC](https://github.com/kmaida/auth-architecture/tree/main/bboc) and the security of [BFF](https://github.com/kmaida/auth-architecture/tree/main/bff).
 
 ## Architecture Overview
 
