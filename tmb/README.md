@@ -2,6 +2,9 @@
 
 This is a demo of the Token-Mediating Backend (TMB) architecture pattern, specifically as described in the [OAuth 2.0 for Browser-Based Applications](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#name-token-mediating-backend "https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#name-token-mediating-backend") specification draft. The backend is a confidential client that handles (proxies) authentication requests with the authorization server ([FusionAuth](https://fusionauth.io/ "https://fusionauth.io/")). It then delivers access tokens to the frontend in a JSON object so the frontend can directly call the resource server. The frontend never interacts directly with the authorization server. It should store tokens in local app memory, not in localStorage. [Token-Mediating Backend is the second most secure](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#section-6.2.4.2 "https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#section-6.2.4.2") of the three architecture patterns for browser-based apps.
 
+> [!IMPORTANT]  
+> There aren't many situations where you would want to use TMB instead of [BFF](https://github.com/kmaida/auth-architecture/tree/main/bff) or [BFF-HB](https://github.com/kmaida/auth-architecture/tree/main/bff). BFF is more secure and requires a similar amount of work to implement, _unless_ you need to make many calls to cross-domain APIs that require complex permissions and proxying.
+
 ## Architecture Overview
 
 -   **Frontend:** [React](https://react.dev/ "https://react.dev") app with [Vite](https://vite.dev)
