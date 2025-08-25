@@ -2,11 +2,11 @@
 
 This repo contains a set of apps demonstrating different auth architectures, a resource API server, and a <a href="https://fusionauth.io">FusionAuth</a> Docker container with configuration (called a `kickstart`).
 
-- Backend-for-Frontend (BFF) [spec](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#name-backend-for-frontend-bff)
-- Token-Mediating Backend (TMB) [spec](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#name-token-mediating-backend)
-- Browser-based OAuth 2.0 client (BBOC) [spec](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#name-browser-based-oauth-20-clie)
-- Backend-for-Frontend (BFF) with [FusionAuth hosted backend](https://fusionauth.io/docs/apis/hosted-backend)
-- Resource API server
+- [Backend-for-Frontend](https://github.com/kmaida/auth-architecture/tree/main/bff) (BFF) [spec](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#name-backend-for-frontend-bff)
+- [Token-Mediating Backend](https://github.com/kmaida/auth-architecture/tree/main/tmb) (TMB) [spec](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#name-token-mediating-backend)
+- [Browser-based OAuth 2.0 client](https://github.com/kmaida/auth-architecture/tree/main/bboc) (BBOC) [spec](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#name-browser-based-oauth-20-clie)
+- [Backend-for-Frontend with Hosted Backend](https://github.com/kmaida/auth-architecture/tree/main/bff-hb) (BFF-HB) [FusionAuth hosted backend](https://fusionauth.io/docs/apis/hosted-backend)
+- [Resource API server](https://github.com/kmaida/auth-architecture/tree/main/resource-api)
 
 ## Prerequisites
 
