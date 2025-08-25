@@ -61,7 +61,7 @@ Here are all the steps for authentication in this TMB example in explicit detail
 
 1.  User navigates to the frontend app
 
-2.  Frontend calls the backend `/auth/checksession` endpoint with credentials: include to attach the session cookie, if it exists
+2.  Frontend calls the backend `/auth/checksession` endpoint with `credentials: include` to attach the session cookie, if it exists
 
 3.  If present, backend uses the session ID cookie to look up user's session, which stores secure credentials (access token and refresh token), then [verifies the JSON Web Token access token](https://www.youtube.com/shorts/zRY-ElxVa_U "https://www.youtube.com/shorts/zRY-ElxVa_U") (the session cookie is `httpOnly`, only the backend can use the contents of the cookie)
 
