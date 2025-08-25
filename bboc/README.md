@@ -58,7 +58,7 @@ Here are all the steps for authentication in this BBOC example in explicit detai
 
 5.  If not authenticated through refresh automatically, user clicks the Log In button
 
-6.  App prepares for [OAuth 2.0 Authorization Code flow](https://datatracker.ietf.org/doc/html/rfc6749#section-4.1 "https://datatracker.ietf.org/doc/html/rfc6749#section-4.1") with [PKCE](https://datatracker.ietf.org/doc/html/rfc7636 "https://datatracker.ietf.org/doc/html/rfc7636"), generating a `state`, a `code_verifier`, and a hash of the code verifier `called a code_challenge`, which is created with a hashing function called a `code_challenge_method`
+6.  App prepares for [OAuth 2.0 Authorization Code flow](https://datatracker.ietf.org/doc/html/rfc6749#section-4.1 "https://datatracker.ietf.org/doc/html/rfc6749#section-4.1") with [PKCE](https://datatracker.ietf.org/doc/html/rfc7636 "https://datatracker.ietf.org/doc/html/rfc7636"), generating a `state`, a `code_verifier`, and a hash of the code verifier called a `code_challenge`, which is created with a hashing function called a `code_challenge_method`
 
 7.  App temporarily stores the `state`, `code_verifier`, and `code_challenge` in session storage so it will persist through the redirect to the authorization server and back
 
