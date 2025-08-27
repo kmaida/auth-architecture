@@ -67,49 +67,47 @@ Here are all the steps for authentication in this TMB example in explicit detail
 
 4.  If verification shows that the access token is expired, the backend checks for a refresh token and initiates a [refresh grant](https://datatracker.ietf.org/doc/html/rfc6749#section-1.5 "https://datatracker.ietf.org/doc/html/rfc6749#section-1.5") to get new tokens, if possible
 
-5.  If the FusionAuth user session and access token are valid and not expired, the user's authenticated state is maintained and they are logged into the frontend app
+5.  If there is no session cookie, the user's session is invalid, and/or if there is no refresh token, the backend prepares for an authorization request using [OAuth 2.0 Authorization Code flow](https://datatracker.ietf.org/doc/html/rfc6749#section-4.1 "https://datatracker.ietf.org/doc/html/rfc6749#section-4.1") with [PKCE](https://datatracker.ietf.org/doc/html/rfc7636 "https://datatracker.ietf.org/doc/html/rfc7636") by generating a `state` and...
 
-6.  If there is no session cookie, the user's session is invalid, and/or if there is no refresh token, the backend prepares for an authorization request using [OAuth 2.0 Authorization Code flow](https://datatracker.ietf.org/doc/html/rfc6749#section-4.1 "https://datatracker.ietf.org/doc/html/rfc6749#section-4.1") with [PKCE](https://datatracker.ietf.org/doc/html/rfc7636 "https://datatracker.ietf.org/doc/html/rfc7636") by generating a `state` and...
+6.  ...a `code_verifier` and a hash of the code verifier called a `code_challenge`, which is created by hashing the verifier with a function called a `code_challenge_method` *(PKCE info is set now because creating it on login causes a race condition when setting the cookie)*
 
-7.  ...a `code_verifier` and a hash of the code verifier called a `code_challenge`, which is created by hashing the verifier with a function called a `code_challenge_method` *(PKCE info is set now because creating it on login causes a race condition when setting the cookie)*
+7.  Backend sets an `httpOnly` PKCE cookie with the `state`, `code_verifier`, and `code_challenge` *(a user cookie is used because the user's PKCE information must be persisted through the OAuth handshake, but the user session is not created until a successful login)*
 
-8.  Backend sets an `httpOnly` PKCE cookie with the `state`, `code_verifier`, and `code_challenge` *(a user cookie is used because the user's PKCE information must be persisted through the OAuth handshake, but the user session is not created until a successful login)*
+8.  Backend returns a response informing the frontend that the user is not authenticated
 
-9.  Backend returns a response informing the frontend that the user is not authenticated
+9.  User clicks the Log In button
 
-10. User clicks the Log In button
+10. Frontend redirects to the backend `/auth/login` endpoint
 
-11. Frontend redirects to the backend `/auth/login` endpoint
+11. Backend generates an authorization request with the necessary configuration (e.g., `client_id`, `client_secret`, `state`, etc.) and the `code_challenge`, and sends the request to the authorization server's ([FusionAuth](https://fusionauth.io/ "https://fusionauth.io/")'s) `/oauth2/authorize` endpoint
 
-12. Backend generates an authorization request with the necessary configuration (e.g., `client_id`, `client_secret`, `state`, etc.) and the `code_challenge`, and sends the request to the authorization server's ([FusionAuth](https://fusionauth.io/ "https://fusionauth.io/")'s) `/oauth2/authorize` endpoint
+12. Authorization server validates the authorization request, authenticates the user, and redirects to the backend `/auth/callback` endpoint with a code and the same `state` it received with the authorization request
 
-13. Authorization server validates the authorization request, authenticates the user, and redirects to the backend `/auth/callback` endpoint with a code and the same `state` it received with the authorization request
+13. Backend verifies the state the authorization server returned is the same `state` the backend set in the PKCE cookie and sent with the authorization request (steps 6 and 12)
 
-14. Backend verifies the state the authorization server returned is the same `state` the backend set in the PKCE cookie and sent with the authorization request (steps 6 and 12)
+14. Backend sends a token request to the authorization server with the `code` and `code_verifier`
 
-15. Backend sends a token request to the authorization server with the `code` and `code_verifier`
+15. Authorization server validates the token request, verifies the `code` is the same `code` it sent in step 13, and uses the `code_challenge_method` to hash the `code_verifier` and recreate a copy of the `code_challenge`
 
-16. Authorization server validates the token request, verifies the `code` is the same `code` it sent in step 13, and uses the `code_challenge_method` to hash the `code_verifier` and recreate a copy of the `code_challenge`
+16. Authorization server compares its new `code_challenge` to the backend's `code_challenge` (steps 7 and 12) and verifies they are identical
 
-17. Authorization server compares its new `code_challenge` to the backend's `code_challenge` (steps 7 and 12) and verifies they are identical
+17. Authorization server sends an access token and refresh token to the backend
 
-18. Authorization server sends an access token and refresh token to the backend
+18. Backend deletes the PKCE cookie, generates a session ID, and stores the user's tokens and userInfo in a backend session (in-memory in this example, but I recommend Redis for production).
 
-19. Backend deletes the PKCE cookie, generates a session ID, and stores the user's tokens and userInfo in a backend session (in-memory in this example, but I recommend Redis for production).
+19. Backend sets an `httpOnly` cookie for the user's session ID (this only contains the session ID, not tokens)
 
-20. Backend sets an `httpOnly` cookie for the user's session ID (this only contains the session ID, not tokens)
+20. Backend `/auth/token` is now available for the frontend to call when it needs the access token (e.g., to authorize API calls)
 
-21. Backend `/auth/token` is now available for the frontend to call when it needs the access token (e.g., to authorize API calls)
+21. Frontend runs `checkSession`, confirms authentication state, fetches `userInfo`, and uses the information to set user-specific variables, etc.
 
-22. Frontend runs `checkSession`, confirms authentication state, fetches `userInfo`, and uses the information to set user-specific variables, etc.
+22. When the user clicks the Log Out button, the frontend redirects to the backend `/auth/logout` endpoint
 
-23. When the user clicks the Log Out button, the frontend redirects to the backend `/auth/logout` endpoint
+23. Backend redirects to the authorization server's `/oauth2/logout` endpoint with appropriate configuration
 
-24. Backend redirects to the authorization server's `/oauth2/logout` endpoint with appropriate configuration
+24. Authorization server logs the user out and redirects to the backend `/auth/logout/callback` endpoint
 
-25. Authorization server logs the user out and redirects to the backend `/auth/logout/callback` endpoint
-
-26. Backend deletes the server-side user session, clears all cookies, and redirects the unauthenticated user to the frontend homepage
+25. Backend deletes the server-side user session, clears all cookies, and redirects the unauthenticated user to the frontend homepage
 
 ## How TMB API Authorization Works
 
