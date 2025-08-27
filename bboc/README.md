@@ -5,7 +5,7 @@ This is a demo of the Browser-based OAuth 2.0 Client architecture pattern, speci
 > [!CAUTION]
 > **This architecture is insecure!** You _should not_ use Browser-based OAuth 2.0 Client for any applications that require data protection. **Only use BBOC if your app uses auth for convenience and not for security.** (Examples: usernames to show on a gaming leaderboard, link-sharing apps, an app to create meal plans using a public recipe API, etc.) 
 >
-> In addition, users will be logged out if they reload the app. This is because the refresh token is stored in app memory, since there is **no way to persist a refresh token securely in the frontend**.
+> In addition, users will be logged out if they reload the app. This is because the refresh token is stored in app memory, since there is **no way to persist a refresh token securely in the frontend**. To learn more about the security concerns, [check out this video featuring security expert Dr. Philippe De Ryck](https://www.youtube.com/watch?v=2nVYLruX76M).
 >
 > If you are looking for the ease-of-use of BBOC development with the security of BFF, please refer to the [BFF-HB demo](https://github.com/kmaida/auth-architecture/tree/main/bff-hb) in this repo.
 
