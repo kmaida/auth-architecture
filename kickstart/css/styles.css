@@ -179,6 +179,9 @@ legend {
   padding: 0;
   border: none;
 }
+.panel form fieldset + .form-row {
+  display: none !important;
+}
 .panel form .form-row>label:first-of-type {
   text-align: center;
 }
