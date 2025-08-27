@@ -52,35 +52,33 @@ Here are all the steps for authentication in this BBOC example in explicit detai
 
 1.  User navigates to the frontend app (since tokens are stored in app memory only, there will never be an access token or refresh token present on a fresh load of the app) and clicks the login button
 
-2.  App calls a `checkSession` function to determine user's authentication state and verify presence or absence of a refresh token in session storage
+2.  App prepares for [OAuth 2.0 Authorization Code flow](https://datatracker.ietf.org/doc/html/rfc6749#section-4.1 "https://datatracker.ietf.org/doc/html/rfc6749#section-4.1") with [PKCE](https://datatracker.ietf.org/doc/html/rfc7636 "https://datatracker.ietf.org/doc/html/rfc7636"), generating a `state`, a `code_verifier`, and a hash of the code verifier called a `code_challenge`, which is created with a hashing function called a `code_challenge_method`
 
-3.  App prepares for [OAuth 2.0 Authorization Code flow](https://datatracker.ietf.org/doc/html/rfc6749#section-4.1 "https://datatracker.ietf.org/doc/html/rfc6749#section-4.1") with [PKCE](https://datatracker.ietf.org/doc/html/rfc7636 "https://datatracker.ietf.org/doc/html/rfc7636"), generating a `state`, a `code_verifier`, and a hash of the code verifier called a `code_challenge`, which is created with a hashing function called a `code_challenge_method`
+3.  App temporarily stores the `state`, `code_verifier`, and `code_challenge` in session storage so it will persist through the redirect to the authorization server and back
 
-4.  App temporarily stores the `state`, `code_verifier`, and `code_challenge` in session storage so it will persist through the redirect to the authorization server and back
+4.  App sends an authorization request to the authorization server's ([FusionAuth](https://fusionauth.io/ "https://fusionauth.io/")'s) `/oauth2/authorize` endpoint with the necessary configuration (e.g., `client_id`, `state`, etc.) and the `code_challenge`
 
-5.  App sends an authorization request to the authorization server's ([FusionAuth](https://fusionauth.io/ "https://fusionauth.io/")'s) `/oauth2/authorize` endpoint with the necessary configuration (e.g., `client_id`, `state`, etc.) and the `code_challenge`
+5.  Authorization server validates the authorization request, authenticates the user, and redirects to the `/login/callback` page with a code and the same `state` it received with the authorization request
 
-6.  Authorization server validates the authorization request, authenticates the user, and redirects to the `/login/callback` page with a code and the same `state` it received with the authorization request
+6. App verifies the state the authorization server returned is the same `state` set in PKCE session storage and sent with the authorization request (steps 4 and 5)
 
-7. App verifies the state the authorization server returned is the same `state` set in PKCE session storage and sent with the authorization request (steps 4 and 5)
+7. App sends a token request to the authorization server with the `code` and `code_verifier`
 
-8. App sends a token request to the authorization server with the `code` and `code_verifier`
+8. Authorization server validates the token request, verifies the `code` is the same `code` it sent in step 9, and uses the `code_challenge_method` to hash the `code_verifier` and recreate a copy of the `code_challenge`
 
-9. Authorization server validates the token request, verifies the `code` is the same `code` it sent in step 9, and uses the `code_challenge_method` to hash the `code_verifier` and recreate a copy of the `code_challenge`
+9. Authorization server compares its new `code_challenge` to the app's `code_challenge` (steps 4 and 5) and verifies they are identical
 
-10. Authorization server compares its new `code_challenge` to the app's `code_challenge` (steps 4 and 5) and verifies they are identical
+10. Authorization server sends an access token and refresh token to the app
 
-11. Authorization server sends an access token and refresh token to the app
+11. App deletes the PKCE session storage, stores the access token and refresh token in app memory, and fetches `userInfo` from the authorization server using the access token
 
-12. App deletes the PKCE session storage, stores the access token and refresh token in app memory, and fetches `userInfo` from the authorization server using the access token
+12. App sets a timer to refresh the access token using the refresh token before it expires to provide a seamless user experience since the access token expiration must be short (typically 5-15 minutes) in order to minimize the risk of token theft
 
-13. App sets a timer to refresh the access token using the refresh token before it expires to provide a seamless user experience since the access token expiration must be short (typically 5-15 minutes) in order to minimize the risk of token theft
+13. When the user clicks the Log Out button, the app redirects to the authorization server's `/oauth2/logout` endpoint with appropriate configuration
 
-14. When the user clicks the Log Out button, the app redirects to the authorization server's `/oauth2/logout` endpoint with appropriate configuration
+14. Authorization server logs the user out and redirects to the `/logout/callback` page
 
-15. Authorization server logs the user out and redirects to the `/logout/callback` page
-
-16. App deletes all `sessionStorage` and redirects the unauthenticated user to the homepage
+15. App deletes all `sessionStorage` and redirects the unauthenticated user to the homepage
 
 ## How BBOC External Resource Server Authorization Works
 
