@@ -1,9 +1,9 @@
-import { createContext, useContext, useState, useCallback, useRef } from 'react';
+import { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
 import { FusionAuthClient } from '@fusionauth/typescript-client';
 
 import { 
   setupPKCE,
-  clearAuthStorage 
+  clearAuthzVals
 } from '../utils/authUtils.js';
 
 const AuthContext = createContext();
@@ -17,38 +17,8 @@ export function AuthProvider({ children }) {
   const [userInfo, setUserInfo] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [userToken, setUserToken] = useState(null);
+  const refreshTokenRef = useRef(null);
   const refreshTimerRef = useRef(null);
-
-  /**
-   * Check session and refresh tokens if necessary
-   */
-  const checkSession = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      // Skip session check on callback pages
-      const path = window.location.pathname;
-      if (path === '/logout/callback' || path === '/login/callback') {
-        setIsLoading(false);
-        return;
-      }
-      // Check if user is already logged in and if not, try to refresh the session
-      const storedRefreshToken = sessionStorage.getItem('refresh_token');
-      if (!userToken && storedRefreshToken) {
-        try {
-          await refreshAccessToken(storedRefreshToken);
-        } catch (error) {
-          console.error('Failed to refresh token:', error);
-          clearSession();
-          return;
-        }
-      }
-    } catch (error) {
-      console.error('Error checking session:', error);
-      clearSession();
-    } finally {
-      setIsLoading(false);
-    }
-  }, [userToken]);
 
   /**
    * Initiate login process using PKCE
@@ -103,8 +73,6 @@ export function AuthProvider({ children }) {
       console.error('Error exchanging code for token:', error);
       clearSession();
       throw error;
-    } finally {
-      setIsLoading(false);
     }
   }, []);
 
@@ -198,12 +166,10 @@ export function AuthProvider({ children }) {
   const scheduleTokenRefresh = (expiresAt) => {
     clearRefreshTimer();
     const now = Date.now();
-    // Refresh 1 minute before expiry, but never less than 0
     const refreshIn = Math.max(expiresAt - now - 60000, 0);
     refreshTimerRef.current = setTimeout(async () => {
-      const refreshToken = sessionStorage.getItem('refresh_token');
-      if (refreshToken) {
-        await refreshAccessToken(refreshToken);
+      if (refreshTokenRef.current) {
+        await refreshAccessToken(refreshTokenRef.current);
       }
     }, refreshIn);
   };
@@ -215,11 +181,9 @@ export function AuthProvider({ children }) {
   const tokensSuccess = async (tokenRes) => {
     const { access_token, refresh_token, id_token } = tokenRes.response;
     setUserToken(access_token);
-    sessionStorage.setItem('refresh_token', refresh_token);
-    sessionStorage.setItem('id_token', id_token);
+    refreshTokenRef.current = refresh_token;
     // Calculate the timestamp when the access token expires based on its expiry length
     const expiresAt = Date.now() + (tokenRes.response.expires_in * 1000);
-    sessionStorage.setItem('access_token_expires_at', expiresAt);
 
     // Schedule automatic access token refresh for best user experience
     scheduleTokenRefresh(expiresAt);
@@ -227,17 +191,15 @@ export function AuthProvider({ children }) {
     const userInfo = await getUserInfo(access_token);
     setUserInfo(userInfo);
     setLoggedIn(true);
-    setIsLoading(false);
 
-    // Clear PKCE values from session storage
-    sessionStorage.removeItem('state');
-    sessionStorage.removeItem('code_verifier');
-    sessionStorage.removeItem('code_challenge');
+    // Clear PKCE and state values from session storage
+    clearAuthzVals();
 
     // Log successful authentication
     console.log('Authentication successful:', {
       userInfo,
       accessToken: access_token,
+      idToken: id_token,
       refreshToken: refresh_token,
       tokenExpiresAt: new Date(expiresAt).toISOString()
     });
@@ -248,18 +210,22 @@ export function AuthProvider({ children }) {
    */
   const clearSession = () => {
     clearRefreshTimer();
-    clearAuthStorage();
     setUserToken(null);
     setUserInfo(null);
     setLoggedIn(false);
     setIsLoading(false);
   };
 
+  useEffect(() => {
+    return () => {
+      clearRefreshTimer();
+    };
+  }, []);
+
   return (
     <AuthContext.Provider value={{
       loggedIn,
       setLoggedIn,
-      checkSession,
       userInfo,
       setUserInfo,
       isLoading,

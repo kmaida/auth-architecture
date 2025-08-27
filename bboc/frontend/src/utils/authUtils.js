@@ -30,14 +30,10 @@ export const setupPKCE = async () => {
 };
 
 /**
- * Clear all authentication-related browser storage
+ * Clear PKCE and state values from session storage
  */
-export const clearAuthStorage = () => {
-  // Clear session storage
+export const clearAuthzVals = () => {
   sessionStorage.removeItem('state');
   sessionStorage.removeItem('code_verifier');
   sessionStorage.removeItem('code_challenge');
-  sessionStorage.removeItem('id_token');
-  sessionStorage.removeItem('access_token_expires_at');
-  sessionStorage.removeItem('refresh_token');
 };

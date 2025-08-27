@@ -12,12 +12,7 @@ import ResourceApiPage from './pages/ResourceApiPage';
 import './App.css'
 
 function App() {
-  const { checkSession, loggedIn } = useAuth();
-
-  // Check authentication session on initial load only
-  useEffect(() => {
-    checkSession();
-  }, []);
+  const { loggedIn } = useAuth();
 
   // Add body class for authentication state
   useEffect(() => {
