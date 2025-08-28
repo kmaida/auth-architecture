@@ -78,7 +78,7 @@ Here are all the steps for authentication in this BBOC example in explicit detai
 
 14. Authorization server logs the user out and redirects to the `/logout/callback` page
 
-15. App deletes all `sessionStorage` and redirects the unauthenticated user to the homepage
+15. App redirects the unauthenticated user to the homepage
 
 ## How BBOC External Resource Server Authorization Works
 
