@@ -8,6 +8,9 @@ This repo contains a set of apps demonstrating different auth architectures, a r
 - [Backend-for-Frontend with Hosted Backend](https://github.com/kmaida/auth-architecture/tree/main/bff-hb) (BFF-HB) [FusionAuth hosted backend](https://fusionauth.io/docs/apis/hosted-backend)
 - [Resource API server](https://github.com/kmaida/auth-architecture/tree/main/resource-api)
 
+> [!NOTE]
+> An **Angular** version of this architecture demo set is available at [https://github.com/kmaida/auth-architecture-ng](https://github.com/kmaida/auth-architecture-ng).
+
 ## Prerequisites
 
 - [Docker](https://docker.com) (for use of `docker compose`) or a Docker Desktop alternative (like [Podman](https://podman.io/) for PC or [Orbstack](https://orbstack.dev/) for Mac)
