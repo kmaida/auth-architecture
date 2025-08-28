@@ -9,7 +9,7 @@ This repo contains a set of apps demonstrating different auth architectures, a r
 - [Resource API server](https://github.com/kmaida/auth-architecture/tree/main/resource-api)
 
 > [!NOTE]
-> An **Angular** version of this architecture demo set is available at [https://github.com/kmaida/auth-architecture-ng](https://github.com/kmaida/auth-architecture-ng).
+> This repo's demos are built with React and Node. An **Angular** version of this architecture demo set is available at [https://github.com/kmaida/auth-architecture-ng](https://github.com/kmaida/auth-architecture-ng).
 
 ## Prerequisites
 
