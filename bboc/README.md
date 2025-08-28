@@ -19,7 +19,7 @@ This is a demo of the Browser-based OAuth 2.0 Client architecture pattern, speci
 
 -   Serverless architecture with no backend
 -   Frontend user authentication with FusionAuth using OAuth 2.0 Authorization Code flow with PKCE
--   Session persistence with refresh token grant (with short-lived access tokens, refresh token rotation, and proactive session renewal)
+-   Refresh token grant with short-lived access tokens, refresh token rotation, and proactive session renewal
 -   Frontend calls the resource server with access tokens
 
 ## Setup & Installation
