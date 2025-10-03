@@ -93,7 +93,7 @@ export const handleRefreshGrant = async (
   }
   
   try {
-    const userResponse = (await client.retrieveUserUsingJWT(newTokens.access_token)).response;
+    const userResponse = (await client.retrieveUserInfoFromAccessToken(newTokens.access_token)).response;
     
     if (userResponse?.user) {
       // Get existing user session

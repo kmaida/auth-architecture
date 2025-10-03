@@ -189,7 +189,7 @@ export function setupAuthRoutes(
       }
 
       // Retrieve user info from FusionAuth (authorized by the access token)
-      const userResponse = (await client.retrieveUserUsingJWT(accessToken)).response;
+      const userResponse = (await client.retrieveUserInfoFromAccessToken(accessToken)).response;
       if (!userResponse?.user) {
         userInfo = null;
         console.error('Failed to retrieve user information from FusionAuth');
