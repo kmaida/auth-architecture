@@ -104,10 +104,7 @@ export function setupAuthRoutes(
       }
       res.status(200).json({ loggedIn: true, at: at, user });
     } else {
-      // User is not authenticated and doesn't have a refresh token
       // Create and store state, code verifier, and code challenge for authorization request with PKCE
-      // Store in httpOnly cookie to tie this login attempt to this user
-      // (User sessions aren't created until after successful login!)
       const stateValue = generateStateValue();
       const pkcePair = pkceChallenge();
       
@@ -209,14 +206,13 @@ export function setupAuthRoutes(
     } catch (err: any) {
       console.error('Error during OAuth callback:', err);
     }
-    // Redirect user to frontend callback URL
     res.redirect(302, frontendURL);
   });
 
   /*----------- GET /auth/token ------------*/
 
-  // API endpoint the frontend calls to get access token
-  // This is not used by the backend
+  // Callback API endpoint the frontend calls to get the access token
+  // This is not used by the backend; requires frontend w/ session cookie
   app.get('/auth/token', async (req, res, next) => {
     const sid = getUserSessionIdFromCookie(req);
     if (sid) {

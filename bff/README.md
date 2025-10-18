@@ -109,7 +109,7 @@ Here are all the steps for authentication in this BFF example in explicit detail
 
 ## How BFF Local API Authorization Works
 
-When a user requests access to secure data, the backend authorizes access to an API (resource server). The frontend should protect routes that require authentication by checking the session before permitting navigation to the page that will call the secure API. Frontend checks like this improve the user experience.
+When a user requests access to secure data from a local, same-domain API, the backend authorizes access to the resource server. The frontend should protect routes that require authentication by checking the session before permitting navigation to the page that will call the secure API. Frontend checks like this improve the user experience.
 
 1.  Authenticated user navigates to a protected frontend route that calls a secure, local API
 

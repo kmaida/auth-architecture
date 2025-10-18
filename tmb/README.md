@@ -109,7 +109,21 @@ Here are all the steps for authentication in this TMB example in explicit detail
 
 25. Backend deletes the server-side user session, clears all cookies, and redirects the unauthenticated user to the frontend homepage
 
-## How TMB API Authorization Works
+## How BFF Local API Authorization Works
+
+When a user requests access to secure data from a local, same-domain API, the backend authorizes access to the resource server. The frontend should protect routes that require authentication by checking the session before permitting navigation to the page that will call the secure API. Frontend checks like this improve the user experience.
+
+1.  Authenticated user navigates to a protected frontend route that calls a secure, local API
+
+2.  Frontend makes a request to the backend API for protected resources with credentials: include to attach the session cookie (for example, to the `/api/protected-data` endpoint)
+
+3.  Backend uses middleware to use the provided session cookie (containing the session ID) to look up the user's server-side session, retrieve their JWT access token, and verify it
+
+4.  If the user isn't logged in or there's a problem with the session ID or access token, the backend checks for a refresh token and executes a refresh grant if possible; otherwise, it returns a `401: Unauthorized` status
+
+5.  If the access token is successfully verified (or the user is successfully reauthenticated through the refresh grant), protected data is returned to the frontend
+
+## How TMB External Resource Server Authorization Works
 
 When a user requests access to secure data (either from a local backend API or external resource server), the frontend requests the user's access token from the backend in order to authorize access to the API (resource server). The frontend should protect routes that require authentication by checking the session before permitting navigation to the page that will call the secure API. Frontend checks like this improve the user experience.
 

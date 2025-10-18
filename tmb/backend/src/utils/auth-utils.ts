@@ -2,7 +2,7 @@ import express from 'express';
 import { verify, GetPublicKeyOrSecret, JwtPayload } from 'jsonwebtoken';
 import FusionAuthClient from "@fusionauth/typescript-client";
 import jwksClient, { RsaSigningKey } from 'jwks-rsa';
-import { fetchUserSession, sessionCache } from './session';
+import { COOKIE_NAMES, setSessionCookie, fetchUserSession, sessionCache } from './session';
 
 /** Promisify JWT verification 
   * @param token JWT token to verify
@@ -273,8 +273,7 @@ export const scheduleTokenRefresh = (
         Middleware factory
 ---------------------------------*/
 
-/** Create a function to get the public key or secret for JWT verification
- * Factory to create auth middleware ('secure') to secure API endpoints
+/** Factory to create auth middleware ('secure') to secure local API & auth API endpoints
  * Checks if the user is authenticated by verifying JWT in userToken cookie
  * If JWT is invalid or expired, attempt to refresh access token using refresh token
  * If user is authenticated: proceed
@@ -291,36 +290,71 @@ export const createSecureMiddleware = (
   getKey: GetPublicKeyOrSecret
 ) => {
   return async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-    // Get access token from Authorization Bearer header
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    // Get user session ID from cookie
+    const sid = req.cookies[COOKIE_NAMES.USER_SESSION];
+    if (!sid) {
+      // If no user session ID cookie, return 401 Unauthorized
       return res.status(401).json({
         status: 401,
-        message: 'Unauthorized - No valid Authorization header found'
+        message: 'Unauthorized - No user session found'
       });
     }
-    
-    const accessToken = authHeader.substring(7); // Remove 'Bearer ' prefix
-    
-    if (!isValidJWT(accessToken)) {
+    // Fetch user session from cache using session ID
+    const userSession = await fetchUserSession(sid);
+    if (!userSession) {
+      // If no user session found in cache, return 401 Unauthorized
       return res.status(401).json({
         status: 401,
-        message: 'Unauthorized - Invalid access token format'
+        message: 'Unauthorized - User session not found'
+      });
+    }
+    // Extract access and refresh tokens from user session
+    const accessToken = userSession.at || undefined;
+    const refreshToken = userSession.rt || undefined;
+
+    if (!accessToken && !refreshToken) {
+      // If no access token and no refresh token in user session, return 401 Unauthorized
+      return res.status(401).json({
+        status: 401,
+        message: 'Unauthorized - No tokens found in user session'
       });
     }
 
-    // Verify the access token
-    try {
-      await verifyJwtAsync(accessToken, getKey);
-      // If verification successful, proceed to next middleware
-      next();
-    } catch (err) {
-      console.log('Invalid or expired access token:', err);
+    const verifyResult = await verifyJWT(
+      sid,
+      accessToken,
+      refreshToken,
+      res,
+      client,
+      clientId,
+      clientSecret,
+      getKey
+    );
+
+    if (!verifyResult) {
+      // If user not authenticated, return 401 Unauthorized
       return res.status(401).json({
         status: 401,
         message: 'Unauthorized - Invalid or expired access token'
       });
     }
+    // Set session cookie with user session ID
+    setSessionCookie(req, res, sid);
+    // Update user session last access time in cache (tokens are already updated by verifyJWT if refreshed)
+    const currentSession = await fetchUserSession(sid);
+    if (currentSession) {
+      await sessionCache.set(sid, {
+        ...currentSession,
+        lastAccess: Date.now()
+      });
+      
+      // Attach user session data to request for use in protected endpoints
+      (req as any).userSession = currentSession;
+      (req as any).accessToken = currentSession.at;
+    }
+
+    // If user is authenticated, proceed 
+    next();
   };
 };
 

@@ -24,7 +24,7 @@ function ProfilePage() {
       {error && <pre className="error">Error: {error.message}</pre>}
       {!error && (
         userinfo ? (
-          <pre className='json'>{JSON.stringify(userinfo, null, 2)}</pre>
+          <pre className="json">{JSON.stringify(userinfo, null, 2)}</pre>
         ) : (
           <pre>Fetching user info...</pre>
         )
