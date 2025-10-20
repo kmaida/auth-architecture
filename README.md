@@ -2,6 +2,7 @@
 
 This repo contains a set of apps demonstrating different auth architectures, a resource API server, and a <a href="https://fusionauth.io">FusionAuth</a> Docker container with configuration (called a `kickstart`).
 
+- [FusionAuth authorization server](https://github.com/kmaida/auth-architecture/tree/main/fusionauth)
 - [Backend-for-Frontend](https://github.com/kmaida/auth-architecture/tree/main/bff) (BFF) [spec](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#name-backend-for-frontend-bff)
 - [Token-Mediating Backend](https://github.com/kmaida/auth-architecture/tree/main/tmb) (TMB) [spec](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#name-token-mediating-backend)
 - [Browser-based OAuth 2.0 client](https://github.com/kmaida/auth-architecture/tree/main/bboc) (BBOC) [spec](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#name-browser-based-oauth-20-clie)
