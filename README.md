@@ -20,8 +20,8 @@ This repo contains a set of apps demonstrating different auth architectures, a r
 
 1. Clone this repo
 2. Remove the `.sample` suffix from `.env.sample` (and make the changes mentioned in the file)
-3. From the cloned `auth-architecture` root folder, run: `docker compose up -d`
-4. FusionAuth will be installed in a Docker container and will use the included `kickstart.json` to set the appropriate FusionAuth configuration for use with this repo
+3. From the cloned `/fusionauth` folder, run: `docker compose up -d`
+4. FusionAuth will be installed in a Docker container and will use the included `/fusionauth/kickstart/kickstart.json` to set the appropriate FusionAuth configuration for use with this repo
 5. Verify that FusionAuth is installed and configured properly by navigating to `http://localhost:9011/admin`
 6. If you get a login screen at `http://localhost:9011/admin`, the kickstart was successful
 7. Log in with the admin credentials: `admin@example.com` / `password`
