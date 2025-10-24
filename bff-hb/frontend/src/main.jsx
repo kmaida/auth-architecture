@@ -23,9 +23,7 @@ createRoot(document.getElementById('root')).render(
   // <StrictMode> // Commented out for development to avoid double requests
     <BrowserRouter>
       <FusionAuthProvider {...config}>
-        {/* <AuthProvider> */}
-          <App />
-        {/* </AuthProvider> */}
+        <App />
       </FusionAuthProvider>
     </BrowserRouter>
   // </StrictMode>
